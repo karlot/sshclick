@@ -34,6 +34,7 @@ Should be straight forward...
 2. Clone this repo and run pip install
     ```console
     git clone https://github.com/karlot/sshclick
+    cd sshclick
     pip install --editable .
     ```
     NOTE: optionally you can install it in virtualenv if you like
