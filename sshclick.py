@@ -19,7 +19,7 @@ BACKUP_CONFIG_FILE = True
 BACKUP_COPIES = 10
 
 # Setup defaults for local path ssh config
-USER_CONF_FILE = "{}/{}".format(os.environ['HOME'], ".ssh/config")
+USER_CONF_FILE = f"{os.environ['HOME']}/.ssh/config"
 TARGET_CONF_FILE = USER_CONF_FILE
 STDOUT_CONF = False
 
