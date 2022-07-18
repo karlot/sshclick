@@ -75,9 +75,21 @@ Should be straight forward...
       host-show     Display info for host
     ```
 
+
+## Upgrade procedure
+Assuming installation is already done, and previous version is cloned in some local folder
+
+```console
+cd sshclick    # existing cloned repo
+git pull
+pip install --editable .
+```
+
+
 ## SSH Config structure, and important note about comments
 
 sshclick when editing and writing to SSH config file must use specific style, and is internally using comments to "organize" configuration itself. This means comments outside of what sshclick is handling are unsupported and will be lost when sshclick modifies a file.)
+
 
 ## Comment blocks and metadata in SSH Config
 
