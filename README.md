@@ -39,12 +39,12 @@ Should be straight forward...
     ```
     NOTE: optionally you can install it in virtualenv if you like
 
-3. Use it as you like, "sshclick" or shorter "sshc" commands should be available
+3. Use it as you like, "sshclick" and shorter "sshc" command should be available to access SSHClick application
     ```
-    $ sshclick --help
+    $ sshc --help
     Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
-      SSH Click Config manager
+      SSH Config manager
 
       Basically glorified config file scraper & generator. It is for the people
       that do not want to manually handle veeeery  large SSH config files, and
@@ -56,23 +56,14 @@ Should be straight forward...
     Options:
       --debug / --no-debug  Enables debug, what did you expect?
       --sshconfig PATH      Config file, default is ~/.ssh/config
-      --outfile TEXT        Location of output SSH Config file, default is same as
-                            input SSH file
       --stdout              Original SSH config file will not be changed, instead
                             modified SSH Config will be sent to STDOUT.
+
       -h, --help            Show this message and exit.
 
     Commands:
-      group-create  Create new group
-      group-delete  Delete group
-      group-list    Lists all groups
-      group-set     Change group parameters
-      group-show    Shows group details
-      host-create   Create new host configuration
-      host-delete   Delete host from configuration
-      host-list     List hosts
-      host-set      Changes/sets configuration parameters
-      host-show     Display info for host
+      group  Group management commands and options
+      host   Hosts management commands and options
     ```
 
 
