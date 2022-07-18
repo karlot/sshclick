@@ -670,19 +670,20 @@ def host_list(ctx, group_filter, name_filter, verbose):
         print("No host matching any filter!")
         exit(1)
 
-    # Find all possible params to display with inheritence
-    params =[]
+    # Find all possible params across all defined hosts
+    params = []
     for group in filtered_config:
         for host in group["hosts"]:
             for key in host:
                 if (key != "name" and not key in params):
                     params.append(key)
-        for patern in group["patterns"]:
-            for key in patern:
+        for pattern in group["patterns"]:
+            for key in pattern:
                 if (key != "name" and not key in params):
                     params.append(key)
 
-    header = ["name", "group", "type"] + ([f"param:{p}" for p in params] if verbose else [])
+    default_header = ["name", "group", "type"]
+    header = default_header + ([f"param:{p}" for p in params])
     x = PrettyTable(field_names=header)
     x.align = "l"
     
@@ -690,55 +691,55 @@ def host_list(ctx, group_filter, name_filter, verbose):
     for group in filtered_config:
         # Adding line for host
         for host in group["hosts"]:
-            if verbose:
-                inherited = find_inherited_params(host["name"], config)
-                host_params = []
-                # Go trough list of all params we know are available across current host list
-                # for current host we need to combine local and inherited params to fill table row
-                for applied_param in params:
-                    if applied_param in host:
-                        # Handle direct params, and handle if its a list or string
-                        if isinstance(host[applied_param], list):
-                            host_params.append("\n".join(host[applied_param]))
-                        else:
-                            host_params.append(host[applied_param])
+            inherited = find_inherited_params(host["name"], config)
+            host_params = []
+            # Go trough list of all params we know are available across current host list
+            # for current host we need to combine local and inherited params to fill table row
+            for applied_param in params:
+                if applied_param in host:
+                    # Handle direct params, and handle if its a list or string
+                    if isinstance(host[applied_param], list):
+                        host_params.append("\n".join(host[applied_param]))
                     else:
-                        # Handle inherited params
-                        if inherited:
-                            for pattern, key in inherited.items():
-                                if applied_param in key:
-                                    if isinstance(key[applied_param], list):
-                                        host_params.append("\n".join(
-                                            [yellow(f"{val}  ({pattern})") for val in key[applied_param]]
-                                        ))
-                                    else:
-                                        host_params.append(yellow(f"{key[applied_param]}  ({pattern})"))
+                        host_params.append(host[applied_param])
+                else:
+                    # Handle inherited params
+                    if inherited:
+                        for pattern, key in inherited.items():
+                            if applied_param in key:
+                                if isinstance(key[applied_param], list):
+                                    host_params.append("\n".join(
+                                        [yellow(f"{val}  ({pattern})") for val in key[applied_param]]
+                                    ))
                                 else:
-                                    host_params.append("")
-                        else:
-                            host_params.append("")
-            # Add to table
-            x.add_row([host["name"], group["name"], "normal"] + (host_params if verbose else []))
-        # Adding line for pattern
-        for patt in group["patterns"]:
-            if verbose:
-                patt_params = []
-                for p in params:
-                    if p in patt:
-                        # Handle direct params
-                        if isinstance(patt[p], list):
-                            patt_params.append("\n".join(
-                                [cyan(val) for val in patt[p]]
-                            ))
-                        else:
-                            patt_params.append(cyan(patt[p]))
+                                    host_params.append(yellow(f"{key[applied_param]}  ({pattern})"))
+                            else:
+                                host_params.append("")
                     else:
-                        patt_params.append("")
+                        host_params.append("")
+            x.add_row([host["name"], group["name"], "normal"] + host_params)
+        # Adding line for pattern
+        for pattern in group["patterns"]:
+            pattern_params = []
+            for p in params:
+                if p in pattern:
+                    # Handle direct params
+                    if isinstance(pattern[p], list):
+                        pattern_params.append("\n".join(
+                            [cyan(val) for val in pattern[p]]
+                        ))
+                    else:
+                        pattern_params.append(cyan(pattern[p]))
+                else:
+                    pattern_params.append("")
             # Add to table with color to be easily distinguished
-            x.add_row([cyan(patt["name"]), cyan(group["name"]), cyan("pattern")] + (patt_params if verbose else []))
+            x.add_row([cyan(pattern["name"]), cyan(group["name"]), cyan("pattern")] + pattern_params)
 
-    # Print table
-    print(x)
+    # Print table in normal or verbose mode
+    if verbose:
+        print(x)
+    else:
+        print(x.get_string(fields=default_header + ["param:hostname", "param:user"]))
 
 
 # COMMAND: host-show
@@ -757,7 +758,7 @@ def host_show(ctx, name, follow, graph):
 
     # Python does not have "do while" loop. (ಠ_ಠ)
     # we are first checking host that is asked, and then check if that host has a "proxy" defined
-    # if proxy is defined, we add found host to traced list, and seach atached proxy, it his way we
+    # if proxy is defined, we add found host to traced list, and search attached proxy, it his way we
     # can trace full connection path for later graph processing
     while True:
         # At start assume host is "normal" and contains no inherited parameters
@@ -988,3 +989,8 @@ def host_set(ctx, name, target_group_name, rename, parameter, force):
 # COMMAND: revert
 #-------------------------
 # TODO
+
+
+# Added for direct invocation
+if __name__ == "__main__":
+    cli()
