@@ -64,8 +64,8 @@ def cmd(ctx, group_filter, name_filter, verbose):
                 if (key != "name" and not key in params):
                     params.append(key)
 
-    default_header = ["name", "group", "type"]
-    header = default_header + ([f"param:{p}" for p in params])
+    DEFAULT_HEADER = ["name", "group", "type"]
+    header = DEFAULT_HEADER + ([f"param:{p}" for p in params])
     x = PrettyTable(field_names=header)
     x.align = "l"
     
@@ -121,4 +121,4 @@ def cmd(ctx, group_filter, name_filter, verbose):
     if verbose:
         print(x)
     else:
-        print(x.get_string(fields=default_header + [f"param:{i}" for i in DEFAULT_PARAMS]))
+        print(x.get_string(fields=DEFAULT_HEADER + [f"param:{i}" for i in DEFAULT_PARAMS]))

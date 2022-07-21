@@ -18,4 +18,3 @@ def cmd(ctx, name):
 
     lines = generate_ssh_config(new_conf)
     write_ssh_config(ctx, lines)
-

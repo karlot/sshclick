@@ -5,15 +5,14 @@ from lib.sshutils import *
 #------------------------------------------------------------------------------
 # COMMAND: host set
 #------------------------------------------------------------------------------
-@click.command(name="set", help="Changes/sets configuration parameters")
+@click.command(name="set", help="Changes/sets host configuration parameters")
 @click.option("-g", "--group", "target_group_name", default=None, help="Changes group for host")
-@click.option("-r", "--rename", default=None, help="Re-name host")
-@click.option("-p", "--parameter", default=[], multiple=True, help="Sets parameter for the host, must be in 'param=value' format")
+@click.option("-r", "--rename", default=None, help="Rename host")
+@click.option("-p", "--parameter", default=[], multiple=True, help="Sets parameter for the host, must be in 'param=value' format, to unset/remove parameter from host, set it to empty value (example: 'param=')")
 @click.option("--force", is_flag=True, default=False, help="Forces moving host to group that does not exist, by creating new group, and moving host to that group.")
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, target_group_name, rename, parameter, force):
-    # global traced_hosts
     config = ctx.obj['CONFIG']
 
     # Nothing was provided
@@ -83,4 +82,3 @@ def cmd(ctx, name, target_group_name, rename, parameter, force):
 
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)
-

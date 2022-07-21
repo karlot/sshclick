@@ -17,9 +17,3 @@ ssh_group.add_command(group_show.cmd)
 ssh_group.add_command(group_create.cmd)
 ssh_group.add_command(group_set.cmd)
 ssh_group.add_command(group_delete.cmd)
-
-
-
-
-
-

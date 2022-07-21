@@ -12,7 +12,6 @@ from lib.colors import *
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, follow, graph):
-    # global traced_hosts
     config = ctx.obj['CONFIG']
 
     traced_hosts = []

@@ -1,6 +1,5 @@
 import click
 from lib.sshutils import *
-from commands.host import host_show
 
 
 #------------------------------------------------------------------------------
@@ -10,12 +9,11 @@ from commands.host import host_show
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name):
-    # global traced_hosts
     config = ctx.obj['CONFIG']
 
     found_host, found_group = find_host_by_name(config, name)
-    print("Deleted host:")
-    ctx.invoke(host_show.cmd, name=name, graph=False)
+
+    print(f"Deleted host: {name}")
     
     if found_host in found_group["hosts"]:
         found_group["hosts"].remove(found_host)

@@ -17,15 +17,3 @@ ssh_host.add_command(host_show.cmd)
 ssh_host.add_command(host_create.cmd)
 ssh_host.add_command(host_set.cmd)
 ssh_host.add_command(host_delete.cmd)
-
-
-
-
-
-
-
-
-
-
-
-

@@ -12,7 +12,6 @@ from commands.host import host_show
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, group, parameter):
-    # global traced_hosts
     config = ctx.obj['CONFIG']
 
     found_host, _ = find_host_by_name(config, name, exit_on_fail=False)
@@ -29,7 +28,7 @@ def cmd(ctx, name, group, parameter):
 
     # Add all passed parameters to config
     # TODO: here we need to implement validation for all "known" parameters that can be used, and possibly
-    # some normalization to documented "CammelCase" format
+    # some normalization to documented "CamelCase" format
     for item in parameter:
         param, value = item.split("=")
         param = param.lower()
@@ -44,8 +43,8 @@ def cmd(ctx, name, group, parameter):
     group_target = "patterns" if "*" in name else "hosts"
     found_group[group_target].append(new_host)
 
+    # Invoke "host show" command to display new host that is being created
     ctx.invoke(host_show.cmd, name=name, graph=False)
 
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)
-
