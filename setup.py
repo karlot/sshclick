@@ -2,18 +2,22 @@ from setuptools import setup
 from ssh_globals import VERSION
 
 setup(
-    name='sshclick',
+    name="sshclick",
     version=VERSION,
-    py_modules=['sshclick'],
+    description="SSH Config manager",
+    author="Karlo Tisaj",
+    author_email="karlot@gmail.com",
+    url="https://github.com/karlot/sshclick",
+    py_modules=["sshclick"],
     install_requires=[
-        'rich',             #currently refactoring for rich
-        'click',
-        'prettytable',      #TODO: remove when rich fully integrated
-        'pyyaml',
+        "click>=8.1.3",
+        "prettytable>=3.2.0",
+        "pyyaml>=6.0",
+        "rich>=12.5.1",
     ],
     entry_points={
-        'console_scripts': [
-            'sshc = main:cli',
+        "console_scripts": [
+            "sshc = main:cli",
         ],
     },
 )

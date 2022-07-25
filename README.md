@@ -60,13 +60,9 @@ Should be straight forward...
       host   Manage hosts
     ```
 4. Install shell autocompletion (TAB autocompletes on commands, options, and hosts)
-    * __Bash__ - Add this line to your `~/.bashrc` file:
-      ```
+    * __Bash__ - Add this line to end of your `~/.profile` file:
+      ```console
       eval "$(_SSHC_COMPLETE=bash_source sshc)"
-      ```
-    * __Zsh__ - Add this line to your `~/.zshrc` file:
-      ```
-      eval "$(_SSHC_COMPLETE=zsh_source sshc)"
       ```
 
 
