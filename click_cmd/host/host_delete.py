@@ -13,12 +13,12 @@ def cmd(ctx, name):
 
     found_host, found_group = find_host_by_name(config, name)
 
-    print(f"Deleted host: {name}")
-    
     if found_host in found_group["hosts"]:
         found_group["hosts"].remove(found_host)
     if found_host in found_group["patterns"]:
         found_group["patterns"].remove(found_host)
 
+    print(f"Deleted host: {name}")
+    
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)

@@ -80,5 +80,7 @@ def cmd(ctx, name, target_group_name, rename, parameter, force):
             else:
                 error(f"Cannot unset parameter that is not defined!")
 
+    print(f"Modified host: {name}")
+
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)

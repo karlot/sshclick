@@ -1,6 +1,5 @@
 import click
 from lib.sshutils import *
-from click_cmd.group import group_show
 
 
 #------------------------------------------------------------------------------
@@ -27,11 +26,11 @@ def cmd(ctx, name, desc, info):
         "hosts": [],
         "patterns": [],
     }
-    debug(f"Created new group: {new_group}")
 
     # Add new group to config and show newly created group
     config.append(new_group)
-    ctx.invoke(group_show.cmd, name=name)
+    
+    print(f"Created group: {name}")
     
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)

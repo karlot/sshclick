@@ -34,5 +34,7 @@ def cmd(ctx, name, rename, desc, info):
         else:
             gr["info"] = []
 
+    print(f"Modified group: {name}")
+    
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)

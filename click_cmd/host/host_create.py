@@ -1,6 +1,5 @@
 import click
 from lib.sshutils import *
-# from click_cmd.host import host_show
 
 
 #------------------------------------------------------------------------------
@@ -43,8 +42,7 @@ def cmd(ctx, name, group, parameter):
     group_target = "patterns" if "*" in name else "hosts"
     found_group[group_target].append(new_host)
 
-    # Invoke "host show" command to display new host that is being created
-    # ctx.invoke(host_show.cmd, name=name, graph=False)
+    print(f"Created host: {name}")
 
     lines = generate_ssh_config(config)
     write_ssh_config(ctx, lines)
