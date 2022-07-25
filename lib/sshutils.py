@@ -209,9 +209,7 @@ def generate_ssh_config(config):
 
 def write_ssh_config(ctx, lines):
     """ Write generated SSH config to target file """
-    if ctx.obj["STDOUT_CONF"]:
-        print()
-        print("#---------- SSH Config output below this line ----------")
+    if ctx.obj["STDOUT"]:
         print("".join(lines))
     else:
         with open(ctx.obj["USER_CONF_FILE"], "w") as out:
@@ -221,6 +219,14 @@ def write_ssh_config(ctx, lines):
 # Make a copy of input dict with all keys as LC and filtered out based on input filter list
 def filter_dict(d, ignored=[]):
     return {k: v for (k, v) in d.items() if k not in ignored}
+
+
+def get_all_host_names(config):
+    all_hosts = []
+    for g in config:
+        for h in g["hosts"]:
+            all_hosts.append(h["name"])
+    return all_hosts
 
 
 def find_group_by_name(config, name, exit_on_fail=True):
@@ -353,4 +359,13 @@ def generate_graph(traced_hosts):
     trace.border = False
     trace.padding_width = 0
     return trace.get_string()
+
+
+def complete_ssh_host_names(ctx, param, incomplete):
+    #// For some reason I cant get context object initialized by main app when running autocomplete
+    #// so we get used sshconfig file, and parse it directly
+    #// TODO: Try to see if we can force main to parse config, so we dont have to do this
+    config = parse_ssh_config(ctx.parent.parent.params["sshconfig"])
+    all_hosts = get_all_host_names(config)
+    return [k for k in all_hosts if k.startswith(incomplete)]
 

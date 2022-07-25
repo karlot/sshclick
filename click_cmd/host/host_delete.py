@@ -6,7 +6,7 @@ from lib.sshutils import *
 # COMMAND: host delete
 #------------------------------------------------------------------------------
 @click.command(name="delete", help="Delete host from configuration")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name):
     config = ctx.obj['CONFIG']

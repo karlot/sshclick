@@ -10,7 +10,7 @@ from lib.sshutils import *
 @click.option("-r", "--rename", default=None, help="Rename host")
 @click.option("-p", "--parameter", default=[], multiple=True, help="Sets parameter for the host, must be in 'param=value' format, to unset/remove parameter from host, set it to empty value (example: 'param=')")
 @click.option("--force", is_flag=True, default=False, help="Forces moving host to group that does not exist, by creating new group, and moving host to that group.")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name, target_group_name, rename, parameter, force):
     config = ctx.obj['CONFIG']

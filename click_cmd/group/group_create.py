@@ -1,6 +1,6 @@
 import click
 from lib.sshutils import *
-from commands.group import group_show
+from click_cmd.group import group_show
 
 
 #------------------------------------------------------------------------------

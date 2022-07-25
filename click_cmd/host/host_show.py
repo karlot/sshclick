@@ -7,9 +7,9 @@ from lib.colors import *
 # COMMAND: host show
 #------------------------------------------------------------------------------
 @click.command(name="show", help="Display info for host")
-@click.option("--follow", is_flag=True, default=False, help="Follow and displays all connected jump-proxy hosts")
+@click.option("--follow", is_flag=True, help="Follow and displays all connected jump-proxy hosts")
 @click.option("--graph/--no-graph", default=True, help="Shows connection to target as graph (default:true)")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name, follow, graph):
     config = ctx.obj['CONFIG']

@@ -28,8 +28,8 @@ It basically parses your SSH config, and can provide easy commands to list, filt
 
 Should be straight forward...  
 1. Check preconditions:
-    - Python3 & pip installed
-    - Git
+    - python3 & pip installed
+    - git installed
 
 2. Clone this repo and run pip install
     ```console
@@ -39,32 +39,35 @@ Should be straight forward...
     ```
     NOTE: optionally you can install it in virtualenv if you like
 
-3. Use it as you like, "sshclick" and shorter "sshc" command should be available to access SSHClick application
+3. Use it as you like, "sshc" command should be available to access SSHClick application
     ```
     $ sshc --help
     Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
-      SSH Config manager
+      SSHClick - SSH Config manager
 
-      Basically glorified config file scraper & generator. It is for the people
-      that do not want to manually handle veeeery  large SSH config files, and
-      editing is just so darn pain in the ass!
-
-      As this is early alpha, please backup your SSH config files before this
-      software, as you might accidentally lose some configuration.
+      Note: As this is early alpha, backup your SSH config files before this
+      software, as you might accidentally lose some configuration
 
     Options:
-      --debug / --no-debug  Enables debug, what did you expect?
-      --sshconfig PATH      Config file, default is ~/.ssh/config
-      --stdout              Original SSH config file will not be changed, instead
-                            modified SSH Config will be sent to STDOUT.
-
-      -h, --help            Show this message and exit.
+      --sshconfig PATH  Config file, default is ~/.ssh/config
+      --stdout          Send changed SSH config to STDOUT instead to original file
+      --version         Show current version
+      -h, --help        Show this message and exit.
 
     Commands:
-      group  Group management commands and options
-      host   Hosts management commands and options
+      group  Manage groups
+      host   Manage hosts
     ```
+4. Install shell autocompletion (TAB autocompletes on commands, options, and hosts)
+    * __Bash__ - Add this line to your `~/.bashrc` file:
+      ```
+      eval "$(_SSHC_COMPLETE=bash_source sshc)"
+      ```
+    * __Zsh__ - Add this line to your `~/.zshrc` file:
+      ```
+      eval "$(_SSHC_COMPLETE=zsh_source sshc)"
+      ```
 
 
 ## Upgrade procedure
@@ -76,6 +79,13 @@ git pull
 pip install --editable .
 ```
 
+## Uninstall procedure
+Assuming installation is already done, and previous version is cloned in some local folder
+
+```console
+pip uninstall sshclick
+rm -rf sshclick    # existing cloned repo
+```
 
 ## SSH Config structure, and important note about comments
 

@@ -1,15 +1,13 @@
 import os
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
+
 DEBUG = False
 
+# Setup defaults
+DEFAULT_USER_CONF = f"{os.environ['HOME']}/.ssh/config"
 DEFAULT_GROUP_NAME = "default"
-# BACKUP_CONFIG_FILE = True
-# BACKUP_COPIES = 10
-
-# Setup defaults for local path ssh config
-USER_CONF_FILE = f"{os.environ['HOME']}/.ssh/config"
-STDOUT_CONF = True
+DEFAULT_STDOUT = True
 
 # Update this as needed
 PARAMS_WITH_ALLOWED_MULTIPLE_VALUES = [

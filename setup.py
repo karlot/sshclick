@@ -1,20 +1,18 @@
 from setuptools import setup
+from ssh_globals import VERSION
 
 setup(
     name='sshclick',
-    version='0.2.0',
+    version=VERSION,
     py_modules=['sshclick'],
     install_requires=[
-        # 'typer',            #currently refactoring for typer/rich (uses click in backgroud)
-        # 'rich',             #currently refactoring for typer/rich
-        'click',            #TODO: remove when typer fully integrated
+        'rich',             #currently refactoring for rich
+        'click',
         'prettytable',      #TODO: remove when rich fully integrated
         'pyyaml',
     ],
     entry_points={
         'console_scripts': [
-            # 'sshclick = sshclick:cli',
-            # 'sshc = sshclick:cli',
             'sshc = main:cli',
         ],
     },
