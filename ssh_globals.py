@@ -7,7 +7,7 @@ DEBUG = False
 # Setup defaults
 DEFAULT_USER_CONF = f"{os.environ['HOME']}/.ssh/config"
 DEFAULT_GROUP_NAME = "default"
-DEFAULT_STDOUT = False
+DEFAULT_STDOUT = True
 
 # Update this as needed
 PARAMS_WITH_ALLOWED_MULTIPLE_VALUES = [

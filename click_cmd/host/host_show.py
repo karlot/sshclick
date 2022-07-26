@@ -40,11 +40,12 @@ def cmd(ctx, name, follow, graph):
         x.align = "l"
         x.add_row(["name",  found_host["name"],  ""])
         x.add_row(["group", found_group["name"], ""])
+        x.add_row(["info",  found_host["hostinfo"], ""])
         x.add_row(["type",  host_type,           ""])
 
         # Add rows for direct parameters
         for key, value in found_host.items():
-            if key == "name":
+            if key in ["name", "hostinfo"]:
                 continue
             x.add_row([f"param:{key}", value if not isinstance(value, list) else "\n".join(value), ""])
 

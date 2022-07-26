@@ -57,14 +57,14 @@ def cmd(ctx, group_filter, name_filter, verbose):
     for group in filtered_config:
         for host in group["hosts"]:
             for key in host:
-                if (key != "name" and not key in params):
+                if (key not in ["name", "hostinfo"] and not key in params):
                     params.append(key)
         for pattern in group["patterns"]:
             for key in pattern:
-                if (key != "name" and not key in params):
+                if (key not in ["name", "hostinfo"] and not key in params):
                     params.append(key)
 
-    DEFAULT_HEADER = ["name", "group", "type"]
+    DEFAULT_HEADER = ["name", "group", "type", "info"]
     header = DEFAULT_HEADER + ([f"param:{p}" for p in params])
     x = PrettyTable(field_names=header)
     x.align = "l"
@@ -74,6 +74,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
         # Adding line for host
         for host in group["hosts"]:
             inherited = find_inherited_params(host["name"], config)
+            hostinfo = "\n".join(host["hostinfo"])
             host_params = []
             # Go trough list of all params we know are available across current host list
             # for current host we need to combine local and inherited params to fill table row
@@ -99,10 +100,11 @@ def cmd(ctx, group_filter, name_filter, verbose):
                                 host_params.append("")
                     else:
                         host_params.append("")
-            x.add_row([host["name"], group["name"], "normal"] + host_params)
+            x.add_row([host["name"], group["name"], "normal", hostinfo] + host_params)
         # Adding line for pattern
         for pattern in group["patterns"]:
             pattern_params = []
+            hostinfo = "\n".join(pattern["hostinfo"])
             for p in params:
                 if p in pattern:
                     # Handle direct params
@@ -115,7 +117,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
                 else:
                     pattern_params.append("")
             # Add to table with color to be easily distinguished
-            x.add_row([cyan(pattern["name"]), cyan(group["name"]), cyan("pattern")] + pattern_params)
+            x.add_row([cyan(pattern["name"]), cyan(group["name"]), cyan("pattern"), cyan(hostinfo)] + pattern_params)
 
     # Print table in normal or verbose mode
     if verbose:

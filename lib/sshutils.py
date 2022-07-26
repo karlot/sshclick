@@ -5,6 +5,7 @@ from prettytable import PrettyTable
 from ssh_globals import *
 from lib.mylog import *
 
+from rich.pretty import pprint
 
 def parse_ssh_config(file):
     """ Main SSH config parsing function
@@ -28,6 +29,7 @@ def parse_ssh_config(file):
         # Keep track of where we are...
         curr_group_index = 0
         host = None
+        hostinfo = []
 
         # Parse each line of the configuration, line by line
         for config_line_index, line in enumerate(conf_lines):
@@ -59,6 +61,7 @@ def parse_ssh_config(file):
                             debug(f"{host['name']} is normal host!")
                             config[curr_group_index]["hosts"].append(host)
                         host = None
+                        hostinfo = []
 
                     debug(f"Starting new group: {value}")
                     config.append({
@@ -78,6 +81,10 @@ def parse_ssh_config(file):
                 elif metadata == "info":
                     debug(f"Setting 'info' param to '{value}' for group '{config[curr_group_index]['name']}'")
                     config[curr_group_index]["info"].append(value)
+                    continue
+                elif metadata == "host":
+                    debug(f"Host comment found '{value}' storing for next host definition...'")
+                    hostinfo.append(value)
                     continue
                 else:
                     warn(f"Unhandled metadata metadata '{metadata}' on SSH-config line number {config_line_index}")
@@ -117,7 +124,9 @@ def parse_ssh_config(file):
                 debug(f"generating new host info for: {value}")
                 host = {
                     "name": value,
+                    "hostinfo": hostinfo,
                 }
+                hostinfo = []
                 # Reset host specific values when we find new host definition
                 continue
             else:
@@ -150,7 +159,9 @@ def parse_ssh_config(file):
                 debug(f"{host['name']} is normal host!")
                 config[curr_group_index]["hosts"].append(host)
             host = None
-        
+            hostinfo = []
+    
+    pprint(config)
     return config
 
 
@@ -178,11 +189,13 @@ def generate_ssh_config(config):
             for info in group['info']:
                 lines.append(f"#@info: {info}\n")
             lines.append(f"#{'-'*79}\n")        # add horizontal decoration line
-        # Append hosts from each group
-        for host in group["hosts"]:
+        # Append hosts and patterns items from each group
+        for host in group["hosts"] + group["patterns"]:
+            for hostinfo in host["hostinfo"]:
+                lines.append(f"#@host: {hostinfo}\n")
             lines.append(f"Host {host['name']}\n")
             for token, value in host.items():
-                if token == "name":
+                if token in ["name", "hostinfo"]:
                     continue
                 if type(value) is list:
                     for v in value:
@@ -190,19 +203,6 @@ def generate_ssh_config(config):
                 else:
                     lines.append(f"    {token} {value}\n")
             lines.append( "\n")
-        # Append pattern last (as this is usual and probably most correct way)
-        for pattern in group["patterns"]:
-            lines.append(f"Host {pattern['name']}\n")
-            for token, value in pattern.items():
-                if token == "name":
-                    continue
-                if type(value) is list:
-                    for v in value:
-                        lines.append(f"    {token} {v}\n")
-                else:
-                    lines.append(f"    {token} {value}\n")
-            lines.append( "\n")
-        # Add extra line separation between groups
         lines.append( "\n")
     return lines
 
@@ -270,7 +270,7 @@ def find_inherited_params(host_name, config):
         for pattern in group["patterns"]:
             # Check if one of group pattern matches host
             if fnmatch.fnmatch(host_name, pattern["name"]):
-                inherited[pattern["name"]] = filter_dict(pattern, ignored=["name"])
+                inherited[pattern["name"]] = filter_dict(pattern, ignored=["name", "hostinfo"])
 
     # Currently not supporting multiple parameter inheritance, so warn and exit if it's found
     if len(inherited) > 1:
