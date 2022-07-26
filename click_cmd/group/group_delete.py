@@ -6,7 +6,7 @@ from lib.sshutils import *
 # COMMAND: group delete
 #------------------------------------------------------------------------------
 @click.command(name="delete", help="Delete group")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name):
     config = ctx.obj['CONFIG']

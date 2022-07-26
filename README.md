@@ -32,7 +32,7 @@ Should be straight forward...
     - git installed
 
 2. Clone this repo and run pip install
-    ```console
+    ```sh
     git clone https://github.com/karlot/sshclick
     cd sshclick
     pip install --editable .
@@ -40,7 +40,7 @@ Should be straight forward...
     NOTE: optionally you can install it in virtualenv if you like
 
 3. Use it as you like, "sshc" command should be available to access SSHClick application
-    ```
+    ```console
     $ sshc --help
     Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
@@ -61,7 +61,7 @@ Should be straight forward...
     ```
 4. Install shell autocompletion (TAB autocompletes on commands, options, and hosts)
     * __Bash__ - Add this line to end of your `~/.profile` file:
-      ```console
+      ```sh
       eval "$(_SSHC_COMPLETE=bash_source sshc)"
       ```
 
@@ -69,7 +69,7 @@ Should be straight forward...
 ## Upgrade procedure
 Assuming installation is already done, and previous version is cloned in some local folder
 
-```console
+```sh
 cd sshclick    # existing cloned repo
 git pull
 pip install --editable .
@@ -78,7 +78,7 @@ pip install --editable .
 ## Uninstall procedure
 Assuming installation is already done, and previous version is cloned in some local folder
 
-```console
+```sh
 pip uninstall sshclick
 rm -rf sshclick    # existing cloned repo
 ```

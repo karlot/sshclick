@@ -1,35 +1,32 @@
 import click
-import yaml     #TODO: Cmooon...
-from prettytable import PrettyTable
 from lib.sshutils import *
+
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich import box
 
 
 #------------------------------------------------------------------------------
 # COMMAND: group show
 #------------------------------------------------------------------------------
 @click.command(name="show", help="Shows group details")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name):
     config = ctx.obj['CONFIG']
 
-    x = PrettyTable(field_names=["Group Parameter", "Value"])
-    x.align = "l"
-
     found = find_group_by_name(config, name)
-
-    x.add_row(["name", found["name"]])
-    x.add_row(["description", found["desc"]])
-    x.add_row(["info", yaml.dump(found["info"])])
 
     hostlist = []
     for host in found["hosts"]:
         if "hostname" in host:
-            hostlist.append(f"{host['name']} ({host['hostname']})")
+            if "port" in host:
+                hostlist.append(f"{host['name']} ({host['hostname']}:{host['port']})")
+            else:
+                hostlist.append(f"{host['name']} ({host['hostname']})")
         else:
             hostlist.append(f"{host['name']}")
-
-    x.add_row(["hosts", "\n".join(hostlist) + "\n"])
 
     patternlist = []
     for host in found["patterns"]:
@@ -39,7 +36,18 @@ def cmd(ctx, name):
         else:
             patternlist.append(f"{host['name']}")
 
-    x.add_row(["patterns", "\n".join(patternlist)])
 
-    # Print table
-    print(x)
+    # New rich formating
+    table = Table(box=box.SQUARE, style="grey39")
+    table.add_column("Group Parameter", no_wrap=True)
+    table.add_column("Value")
+
+    table.add_row("name",        found["name"],                     style="yellow")
+    table.add_row("description", found["desc"],                     style="yellow")
+    table.add_row("info",        Panel("\n".join(found["info"])),   style="grey39")
+    table.add_row("hosts",       Panel("\n".join(hostlist)),        style="white")
+    table.add_row("patterns",    Panel("\n".join(patternlist)),     style="cyan")
+
+    console = Console()
+    console.print(table)
+

@@ -9,7 +9,7 @@ from lib.sshutils import *
 @click.option("-r", "--rename", default=None, help="Rename group")
 @click.option("-d", "--desc", default=None, help="Set description")
 @click.option("-i", "--info", default=None, multiple=True, help="Set info, can be set multiple times")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name, rename, desc, info):
     config = ctx.obj['CONFIG']

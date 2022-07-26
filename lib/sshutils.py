@@ -229,6 +229,13 @@ def get_all_host_names(config):
     return all_hosts
 
 
+def get_all_group_names(config):
+    all_groups = []
+    for g in config:
+        all_groups.append(g["name"])
+    return all_groups
+
+
 def find_group_by_name(config, name, exit_on_fail=True):
     for group in config:
         if group["name"] == name:
@@ -368,4 +375,12 @@ def complete_ssh_host_names(ctx, param, incomplete):
     config = parse_ssh_config(ctx.parent.parent.params["sshconfig"])
     all_hosts = get_all_host_names(config)
     return [k for k in all_hosts if k.startswith(incomplete)]
+
+def complete_ssh_group_names(ctx, param, incomplete):
+    #// For some reason I cant get context object initialized by main app when running autocomplete
+    #// so we get used sshconfig file, and parse it directly
+    #// TODO: Try to see if we can force main to parse config, so we dont have to do this
+    config = parse_ssh_config(ctx.parent.parent.params["sshconfig"])
+    all_groups = get_all_group_names(config)
+    return [k for k in all_groups if k.startswith(incomplete)]
 

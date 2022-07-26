@@ -1,6 +1,8 @@
 import click
-from prettytable import PrettyTable
 
+from rich.console import Console
+from rich.table import Table
+from rich import box
 
 #------------------------------------------------------------------------------
 # COMMAND: group list
@@ -10,11 +12,13 @@ from prettytable import PrettyTable
 def cmd(ctx):
     config = ctx.obj['CONFIG']
 
-    x = PrettyTable(field_names=["Name", "Hosts", "Desc"])
-    x.align = "l"
-    x.align["Hosts"] = "r"
+    table = Table(box=box.SQUARE, style="grey39")
+    table.add_column("Name", style="yellow")
+    table.add_column("Hosts", justify="right", style="bright_yellow")
+    table.add_column("Desc", style="gray50")
 
     for group in config:
-        x.add_row([group["name"], len(group["hosts"]), group["desc"]])
+        table.add_row(group["name"], str(len(group["hosts"])), group["desc"])
 
-    print(x)
+    console = Console()
+    console.print(table)
