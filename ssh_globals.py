@@ -1,8 +1,11 @@
 import os
+import logging
 
 VERSION = "0.3.1"
 
-DEBUG = False
+# DEBUG = False
+LOGGING_LEVEL = logging.INFO
+# LOGGING_LEVEL = logging.DEBUG
 
 # Setup defaults
 DEFAULT_USER_CONF = f"{os.environ['HOME']}/.ssh/config"

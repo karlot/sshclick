@@ -1,6 +1,6 @@
 import click
 from ssh_globals import *
-from lib.sshutils import parse_ssh_config
+from lib.sshutils import SSH_Config
 
 # Setup click to use both short and long help option
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -24,13 +24,12 @@ def cli(ctx, sshconfig, stdout):
     Note: As this is early alpha, backup your SSH config files before
     this software, as you might accidentally lose some configuration
     """
-    
+    # Prepare Click context object
     ctx.ensure_object(dict)
-    ctx.obj["USER_CONF_FILE"] = sshconfig
-    ctx.obj["STDOUT"] = stdout
 
     # Parse ssh config file and store config in the context
-    ctx.obj["CONFIG"] = parse_ssh_config(sshconfig)
+    config = SSH_Config(file=sshconfig, stdout=stdout).read().parse()
+    ctx.obj["CONFIG"] = config
 
 
 # Top full commands

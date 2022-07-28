@@ -1,40 +1,42 @@
 import click
-from lib.sshutils import *
-
+from lib.sshutils import SSH_Config
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
 
-
 #------------------------------------------------------------------------------
 # COMMAND: group show
 #------------------------------------------------------------------------------
 @click.command(name="show", help="Shows group details")
-@click.argument("name", shell_complete=complete_ssh_group_names)
+# @click.argument("name", shell_complete=complete_ssh_group_names)
+@click.argument("name")
 @click.pass_context
 def cmd(ctx, name):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj['CONFIG']
 
-    found = find_group_by_name(config, name)
+    found_group = config.find_group_by_name(name, throw_on_fail=False)
+    if not found_group:
+        print(f"Cannot show group '{name}', it is not defined in configuration!")
+        ctx.exit(1)
 
     hostlist = []
-    for host in found["hosts"]:
-        if "hostname" in host:
-            if "port" in host:
-                hostlist.append(f"{host['name']} ({host['hostname']}:{host['port']})")
-            else:
-                hostlist.append(f"{host['name']} ({host['hostname']})")
+    for host in found_group.hosts:
+        if "hostname" in host.params:
+            h_name = host.params["hostname"]
+            h_port = (":" + host.params["port"]) if "port" in host.params else ""
+            hostlist.append(f"{host.name} ({h_name}{h_port})")
         else:
-            hostlist.append(f"{host['name']}")
+            hostlist.append(host.name)
 
     patternlist = []
-    for host in found["patterns"]:
+    for host in found_group.patterns:
         # hack to search via case insensitive info
-        if "hostname" in host:
-            patternlist.append(f"{host['name']} ({host['hostname']})")
+        if "hostname" in host.params:
+            h_name = host.params["hostname"]
+            patternlist.append(f"{host.name} ({h_name})")
         else:
-            patternlist.append(f"{host['name']}")
+            patternlist.append(host.name)
 
 
     # New rich formating
@@ -42,11 +44,11 @@ def cmd(ctx, name):
     table.add_column("Group Parameter", no_wrap=True)
     table.add_column("Value")
 
-    table.add_row("name",        found["name"],                     style="yellow")
-    table.add_row("description", found["desc"],                     style="yellow")
-    table.add_row("info",        Panel("\n".join(found["info"])),   style="grey39")
-    table.add_row("hosts",       Panel("\n".join(hostlist)),        style="white")
-    table.add_row("patterns",    Panel("\n".join(patternlist)),     style="cyan")
+    table.add_row("name",        found_group.name,                   style="yellow")
+    table.add_row("description", found_group.desc,                   style="yellow")
+    table.add_row("info",        Panel("\n".join(found_group.info)), style="grey39")
+    table.add_row("hosts",       Panel("\n".join(hostlist)),         style="white")
+    table.add_row("patterns",    Panel("\n".join(patternlist)),      style="cyan")
 
     console = Console()
     console.print(table)

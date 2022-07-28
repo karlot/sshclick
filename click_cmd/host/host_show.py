@@ -9,7 +9,8 @@ from lib.colors import *
 @click.command(name="show", help="Display info for host")
 @click.option("--follow", is_flag=True, help="Follow and displays all connected jump-proxy hosts")
 @click.option("--graph/--no-graph", default=True, help="Shows connection to target as graph (default:true)")
-@click.argument("name", shell_complete=complete_ssh_host_names)
+# @click.argument("name", shell_complete=complete_ssh_host_names)
+@click.argument("name")
 @click.pass_context
 def cmd(ctx, name, follow, graph):
     config = ctx.obj['CONFIG']
@@ -33,19 +34,19 @@ def cmd(ctx, name, follow, graph):
             host_type = cyan("pattern")
         else:
             host_type = "normal"
-            inherited_params = find_inherited_params(name, config)
+            inherited_params = config.find_inherited_params(name)
 
         # Prepare table for host output
         x = PrettyTable(field_names=["Parameter", "Value", "Inherited-from"])
         x.align = "l"
         x.add_row(["name",  found_host["name"],  ""])
         x.add_row(["group", found_group["name"], ""])
-        x.add_row(["info",  found_host["hostinfo"], ""])
+        x.add_row(["info",  found_host["info"],  ""])
         x.add_row(["type",  host_type,           ""])
 
         # Add rows for direct parameters
         for key, value in found_host.items():
-            if key in ["name", "hostinfo"]:
+            if key in ["name", "info"]:
                 continue
             x.add_row([f"param:{key}", value if not isinstance(value, list) else "\n".join(value), ""])
 

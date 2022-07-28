@@ -1,6 +1,5 @@
 import click
-from lib.sshutils import *
-
+from lib.sshutils import SSH_Config, SSH_Group
 
 #------------------------------------------------------------------------------
 # COMMAND: group create
@@ -11,27 +10,20 @@ from lib.sshutils import *
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, desc, info):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj['CONFIG']
 
     # Check if already group exists
-    found = find_group_by_name(config, name, exit_on_fail=False)
-    if found:
-        error(f"Cannot create new group '{name}', as group already exists with this name")
-        exit(1)
+    found_group = config.find_group_by_name(name, throw_on_fail=False)
+    if found_group:
+        print(f"Cannot create new group '{name}', as group already exists with this name")
+        ctx.exit(1)
 
-    new_group = {
-        "name": name,
-        "desc": desc,
-        "info": info,
-        "hosts": [],
-        "patterns": [],
-    }
+    new_group = SSH_Group(name, desc=desc, info=info)
 
     # Add new group to config and show newly created group
-    config.append(new_group)
+    config.groups.append(new_group)
     
-    print(f"Created group: {name}")
-    
-    lines = generate_ssh_config(config)
-    write_ssh_config(ctx, lines)
+    config.generate_ssh_config().write_out()
+    if not config.stdout:
+        print(f"Created group: {name}")
     

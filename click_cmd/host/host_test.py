@@ -7,7 +7,8 @@ from lib.sshutils import *
 #------------------------------------------------------------------------------
 @click.command(name="test", help="Test SSH host connection")
 @click.option("--timeout", default=3, help="Timeout for SSH connection")
-@click.argument("name", shell_complete=complete_ssh_host_names)
+# @click.argument("name", shell_complete=complete_ssh_host_names)
+@click.argument("name")
 @click.pass_context
 def cmd(ctx, name, timeout):
     config = ctx.obj['CONFIG']

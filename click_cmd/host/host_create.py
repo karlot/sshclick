@@ -13,7 +13,7 @@ from lib.sshutils import *
 def cmd(ctx, name, group, parameter):
     config = ctx.obj['CONFIG']
 
-    found_host, _ = find_host_by_name(config, name, exit_on_fail=False)
+    found_host, _ = find_host_by_name(config, name, throw_on_fail=False)
     if found_host:
         error(f"Cannot create host '{name}' as it already exists!")
         exit(1)

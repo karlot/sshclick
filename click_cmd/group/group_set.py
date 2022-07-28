@@ -1,6 +1,5 @@
 import click
-from lib.sshutils import *
-
+from lib.sshutils import SSH_Config
 
 #------------------------------------------------------------------------------
 # COMMAND: group-set
@@ -9,32 +8,36 @@ from lib.sshutils import *
 @click.option("-r", "--rename", default=None, help="Rename group")
 @click.option("-d", "--desc", default=None, help="Set description")
 @click.option("-i", "--info", default=None, multiple=True, help="Set info, can be set multiple times")
-@click.argument("name", shell_complete=complete_ssh_group_names)
+# @click.argument("name", shell_complete=complete_ssh_group_names)
+@click.argument("name")
 @click.pass_context
 def cmd(ctx, name, rename, desc, info):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj['CONFIG']
 
     # Nothing was provided
     if not rename and not desc and not info:
-        error("Calling set without doing anything is not valid. Run with '-h' for help.")
-        exit(1)
+        print("Calling set on group without specifying any option is not valid!")
+        print("Run 'sshc group set -h' for help.")
+        ctx.exit(1)
 
     # Find group by name
-    gr = find_group_by_name(config, name)
+    found_group = config.find_group_by_name(name, throw_on_fail=False)
+    if not found_group:
+        print(f"Cannot modify group '{name}', it is not defined in configuration!")
+        ctx.exit(1)
 
     if rename:
-        gr["name"] = rename
+        found_group.name = rename
     
     if desc:
-        gr["desc"] = desc
+        found_group.desc = desc
 
     if info:
         if len(info[0]) > 0:
-            gr["info"] = info
+            found_group.info = info
         else:
-            gr["info"] = []
+            found_group.info = []
 
-    print(f"Modified group: {name}")
-    
-    lines = generate_ssh_config(config)
-    write_ssh_config(ctx, lines)
+    config.generate_ssh_config().write_out()
+    if not config.stdout:
+        print(f"Modified group: {name}")
