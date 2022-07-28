@@ -1,6 +1,6 @@
 import click
-from lib.sshutils import *
-from lib.colors import *
+from lib.sshutils import SSH_Config
+# from lib.colors import *
 
 
 #------------------------------------------------------------------------------
@@ -13,7 +13,7 @@ from lib.colors import *
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, follow, graph):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj['CONFIG']
 
     traced_hosts = []
     traced_host_tables = []
@@ -27,7 +27,7 @@ def cmd(ctx, name, follow, graph):
         inherited_params = {}
 
         # Search for host in current configuration
-        found_host, found_group = find_host_by_name(config, name)
+        found_host, found_group = config.find_host_by_name(name)
 
         # If this host is "pattern" type
         if "*" in name:

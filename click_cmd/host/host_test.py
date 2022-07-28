@@ -1,6 +1,6 @@
 import click
 import subprocess
-from lib.sshutils import *
+from lib.sshutils import SSH_Config
 
 #------------------------------------------------------------------------------
 # COMMAND: host connect
@@ -11,10 +11,14 @@ from lib.sshutils import *
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, timeout):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj['CONFIG']
 
-    found_host, _ = find_host_by_name(config, name)
-    hostname = found_host["hostname"]
+    found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
+    if not found_host:
+        print(f"Cannot test host '{name}' as it is not defined in configuration!")
+        ctx.exit(1)
+
+    hostname = found_host.params["hostname"]
 
     #// SSH Command method via subprocess
     #------------------------------------------------

@@ -17,4 +17,5 @@ PARAMS_WITH_ALLOWED_MULTIPLE_VALUES = [
     "localforward",
     "remoteforward",
     "dynamicforward",
+    "test",
 ]

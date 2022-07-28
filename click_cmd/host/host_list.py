@@ -2,7 +2,7 @@ import click
 import re
 import copy
 from lib.sshutils import *
-from lib.colors import *
+# from lib.colors import *
 
 from rich.console import Console
 from rich.table import Table
