@@ -17,7 +17,7 @@ def cmd(ctx, name, target_group_name, parameter, force):
 
     found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
     if found_host:
-        print(f"Cannot create host '{name}' as it already exists!")
+        print(f"Cannot create host '{name}' as it already exists in configuration!")
         ctx.exit(1)
     
     # Find group by name where to store config
@@ -25,7 +25,7 @@ def cmd(ctx, name, target_group_name, parameter, force):
     if not found_group:
         if not force:
             print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
-            print(f"Create group first, or use '--force' option to create it automatically!")
+            print("Create group first, or use '--force' option to create it automatically!")
             ctx.exit(1)
         else:
             # Create new group

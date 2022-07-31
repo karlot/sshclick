@@ -20,35 +20,35 @@ def cmd(ctx, name):
         print(f"Cannot show group '{name}', it is not defined in configuration!")
         ctx.exit(1)
 
-    hostlist = []
+    host_list = []
     for host in found_group.hosts:
         if "hostname" in host.params:
             h_name = host.params["hostname"]
             h_port = (":" + host.params["port"]) if "port" in host.params else ""
-            hostlist.append(f"{host.name} ({h_name}{h_port})")
+            host_list.append(f"{host.name} ({h_name}{h_port})")
         else:
-            hostlist.append(host.name)
+            host_list.append(host.name)
 
-    patternlist = []
+    pattern_list = []
     for host in found_group.patterns:
         # hack to search via case insensitive info
         if "hostname" in host.params:
             h_name = host.params["hostname"]
-            patternlist.append(f"{host.name} ({h_name})")
+            pattern_list.append(f"{host.name} ({h_name})")
         else:
-            patternlist.append(host.name)
+            pattern_list.append(host.name)
 
 
-    # New rich formating
-    table = Table(box=box.SQUARE, style="grey39")
+    # New rich formatting
+    table = Table(box=box.SQUARE, style="grey35")
     table.add_column("Group Parameter", no_wrap=True)
     table.add_column("Value")
 
-    table.add_row("name",        found_group.name,                   style="yellow")
-    table.add_row("description", found_group.desc,                   style="yellow")
-    table.add_row("info",        Panel("\n".join(found_group.info)), style="grey39")
-    table.add_row("hosts",       Panel("\n".join(hostlist)),         style="white")
-    table.add_row("patterns",    Panel("\n".join(patternlist)),      style="cyan")
+    table.add_row("name",        found_group.name,                   style="white")
+    table.add_row("description", found_group.desc,                   style="grey50")
+    table.add_row("info",        Panel("\n".join(found_group.info)), style="grey50")
+    table.add_row("hosts",       Panel("\n".join(host_list)),         style="white")
+    table.add_row("patterns",    Panel("\n".join(pattern_list)),      style="cyan")
 
     console = Console()
     console.print(table)

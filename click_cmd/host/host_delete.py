@@ -1,6 +1,5 @@
 import click
 from lib.sshutils import SSH_Config
- #mtel-serv-backup-stari
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete
@@ -14,7 +13,7 @@ def cmd(ctx, name):
 
     found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
     if not found_host:
-        print(f"Cannot delete host '{name}' as it does not exists!")
+        print(f"Cannot delete host '{name}' as it is not defined in configuration!")
         ctx.exit(1)
     
     if found_host.type == "normal":

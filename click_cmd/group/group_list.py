@@ -12,9 +12,9 @@ from rich import box
 def cmd(ctx):
     config: SSH_Config = ctx.obj['CONFIG']
 
-    table = Table(box=box.SQUARE, style="grey39")
-    table.add_column("Name", style="yellow")
-    table.add_column("Hosts", justify="right", style="bright_yellow")
+    table = Table(box=box.SQUARE, style="grey35")
+    table.add_column("Name", style="white")
+    table.add_column("Num.Hosts", justify="right", style="bright_yellow")
     table.add_column("Desc", style="gray50")
 
     for group in config.groups:

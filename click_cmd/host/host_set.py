@@ -24,7 +24,7 @@ def cmd(ctx, name, target_group_name, rename, parameter, force):
 
     found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
     if not found_host:
-        print(f"Cannot set anything on host '{name}' as host does not exist!")
+        print(f"Cannot set anything on host '{name}' as it is not defined in configuration!")
         ctx.exit(1)
     
     # Move host to different group
