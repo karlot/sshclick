@@ -1,82 +1,81 @@
 import click
-from lib.sshutils import *
-from lib.colors import *
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_host_names
+from lib.sshextras import generate_graph
 
+from rich.console import Console
+console = Console()
+
+# Help autocomplete with host styles
+enabled_styles = ["panels", "card", "simple", "table", "table2", "json"]
+def complete_styles(ctx, param, incomplete):
+    return [k for k in enabled_styles if k.startswith(incomplete)]
 
 #------------------------------------------------------------------------------
 # COMMAND: host show
 #------------------------------------------------------------------------------
 @click.command(name="show", help="Display info for host")
 @click.option("--follow", is_flag=True, help="Follow and displays all connected jump-proxy hosts")
-@click.option("--graph/--no-graph", default=True, help="Shows connection to target as graph (default:true)")
+@click.option("--graph",  is_flag=True, help="Shows connection to target as graph (default:false)")
+@click.option("--style", default="panels", show_default="panels", envvar='SSHC_HOST_STYLE',
+    help="Select output rendering style for host details: [panels, card, simple, table, table2, json]",
+    shell_complete=complete_styles)
 @click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
-def cmd(ctx, name, follow, graph):
-    config = ctx.obj['CONFIG']
+def cmd(ctx, name, follow, graph, style):
+    config: SSH_Config = ctx.obj
 
+    # Keep list of linked hosts via jumpproxy option
     traced_hosts = []
-    traced_host_tables = []
 
-    # Python does not have "do while" loop. (ಠ_ಠ)
     # we are first checking host that is asked, and then check if that host has a "proxy" defined
-    # if proxy is defined, we add found host to traced list, and search attached proxy, it his way we
+    # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
     # can trace full connection path for later graph processing
     while True:
-        # At start assume host is "normal" and contains no inherited parameters
-        inherited_params = {}
-
         # Search for host in current configuration
-        found_host, found_group = find_host_by_name(config, name)
+        found_host, _ = config.find_host_by_name(name,throw_on_fail=False)
+        if not found_host:
+            print(f"Cannot show host '{name}' as it is not defined in configuration!")
+            ctx.exit(1)
 
-        # If this host is "pattern" type
-        if "*" in name:
-            host_type = cyan("pattern")
-        else:
-            host_type = "normal"
-            inherited_params = find_inherited_params(name, config)
+        #TODO: Should this be part of configuration parsing stage?
+        inherited_params: list[tuple[str, dict]] = []
+        if found_host.type == "normal":
+            inherited_params = config.find_inherited_params(name)
+            found_host.inherited_params = inherited_params
 
-        # Prepare table for host output
-        x = PrettyTable(field_names=["Parameter", "Value", "Inherited-from"])
-        x.align = "l"
-        x.add_row(["name",  found_host["name"],  ""])
-        x.add_row(["group", found_group["name"], ""])
-        x.add_row(["type",  host_type,           ""])
-
-        # Add rows for direct parameters
-        for key, value in found_host.items():
-            if key == "name":
-                continue
-            x.add_row([f"param:{key}", value if not isinstance(value, list) else "\n".join(value), ""])
-
-        # Add rows for inherited parameters
-        for pattern, data in inherited_params.items():
-            for param, value in data.items():
-                if not param in found_host:
-                    if isinstance(value, list):
-                        x.add_row([f"param:{param}", "\n".join([yellow(v) for v in value]), yellow(pattern)])
-                    else:
-                        x.add_row([f"param:{param}", yellow(value), yellow(pattern)])
-                    found_host[param] = value
+        # Set SSH host print style from user input
+        found_host.print_style = style
 
         # Add current host, and its table to traced lists
         traced_hosts.append(found_host)
-        traced_host_tables.append(x)
 
-        # Depending on proxy info in parameters, we continue or exit the loop
-        if "proxyjump" in found_host:
-            name = found_host["proxyjump"]
+        # Find proxy info if it exists, if not, break the loop
+        proxyjump = None
+        if "proxyjump" in found_host.params:
+            proxyjump = found_host.params["proxyjump"]
+        else:
+            for _, params in inherited_params:
+                for key, value in params.items():
+                    if key == "proxyjump":
+                        proxyjump = value
+
+        # If there is connected host, we switch "name" and continue the loop
+        # Otherwise we exit the loop
+        if proxyjump:
+            name = proxyjump
         else:
             break
-
-    # Print collected host table(s)
-    # In follow mode we print all connected host tables, otherwise we print only target host table
+    
+    # Print collected host data
     if not follow:
-        print(traced_host_tables[0])
+        console.print(traced_hosts[0])
     else:
-        for i, table in enumerate(traced_host_tables):
-            print(table)
-            if i < len(traced_host_tables) - 1:
-                print(green("  | via jump proxy"))
-        
+        for i, output in enumerate(traced_hosts):
+            console.print(output)
+            if i < len(traced_hosts) - 1:
+                console.print("  [bright_green]▼ via proxy[/]")
+    
+    #TODO: Make better graph output
     if graph:
-        print("\n" + generate_graph(traced_hosts) + "\n")
+        console.print("\n", generate_graph(traced_hosts), "\n")

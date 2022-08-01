@@ -1,6 +1,6 @@
 import click
-from lib.sshutils import *
-
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_host_names
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete
@@ -9,16 +9,18 @@ from lib.sshutils import *
 @click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
-    found_host, found_group = find_host_by_name(config, name)
-
-    if found_host in found_group["hosts"]:
-        found_group["hosts"].remove(found_host)
-    if found_host in found_group["patterns"]:
-        found_group["patterns"].remove(found_host)
-
-    print(f"Deleted host: {name}")
+    found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
+    if not found_host:
+        print(f"Cannot delete host '{name}' as it is not defined in configuration!")
+        ctx.exit(1)
     
-    lines = generate_ssh_config(config)
-    write_ssh_config(ctx, lines)
+    if found_host.type == "normal":
+        found_group.hosts.remove(found_host)
+    else:
+        found_group.patterns.remove(found_host)
+
+    config.generate_ssh_config().write_out()
+    if not config.stdout:
+        print(f"Deleted host: {name}")

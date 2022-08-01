@@ -1,22 +1,24 @@
 import click
-from lib.sshutils import *
-
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_group_names
 
 #------------------------------------------------------------------------------
 # COMMAND: group delete
 #------------------------------------------------------------------------------
 @click.command(name="delete", help="Delete group")
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     # Find group by name
-    find_group_by_name(config, name)
+    found_group = config.find_group_by_name(name, throw_on_fail=False)
+    if not found_group:
+        print(f"Cannot delete group '{name}', it is not defined in configuration!")
+        ctx.exit(1)
     
-    new_conf = [gr for gr in config if gr["name"] != name]
+    config.groups.remove(found_group)
 
-    print(f"Deleted group: {name}")
-
-    lines = generate_ssh_config(new_conf)
-    write_ssh_config(ctx, lines)
+    config.generate_ssh_config().write_out()
+    if not config.stdout:
+        print(f"Deleted group: {name}")

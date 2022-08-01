@@ -1,6 +1,8 @@
 import click
-from prettytable import PrettyTable
-
+from lib.sshutils import SSH_Config
+from rich.console import Console
+from rich.table import Table
+from rich import box
 
 #------------------------------------------------------------------------------
 # COMMAND: group list
@@ -8,13 +10,15 @@ from prettytable import PrettyTable
 @click.command(name="list", help="Lists all groups")
 @click.pass_context
 def cmd(ctx):
-    config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
-    x = PrettyTable(field_names=["Name", "Hosts", "Desc"])
-    x.align = "l"
-    x.align["Hosts"] = "r"
+    table = Table(box=box.SQUARE, style="grey35")
+    table.add_column("Name", style="white")
+    table.add_column("Num.Hosts", justify="right", style="bright_yellow")
+    table.add_column("Desc", style="gray50")
 
-    for group in config:
-        x.add_row([group["name"], len(group["hosts"]), group["desc"]])
+    for group in config.groups:
+        table.add_row(group.name, str(len(group.hosts)), group.desc)
 
-    print(x)
+    console = Console()
+    console.print(table)
