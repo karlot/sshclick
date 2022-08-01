@@ -1,8 +1,8 @@
-from rich.table import Table
+# from rich.table import Table
 from prettytable import PrettyTable
 from lib.sshutils import SSH_Host
 
-#TODO: Broken...
+#TODO: Try to rework with Rich components !!!
 def generate_graph(traced_hosts: list[SSH_Host]):
     """
     Function that generates nice "graph" view of connected hosts

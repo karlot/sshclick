@@ -6,11 +6,11 @@ from lib.sshutils import *
 from rich.console import Console
 from rich.table import Table
 from rich import box
-from rich.pretty import pprint
+from rich.pretty import pprint, Pretty
+from rich.panel import Panel
 
 console = Console()
 
-#TODO: Rework this list logic...
 #------------------------------------------------------------------------------
 # COMMAND: host-list
 #------------------------------------------------------------------------------
@@ -22,8 +22,8 @@ console = Console()
 def cmd(ctx, group_filter, name_filter, verbose):
     config: SSH_Config = ctx.obj['CONFIG']
 
-    #TODO: RE-Check if this still works
-    filtered_groups = []
+    # Filter out groups and hosts if filters are defined via CLI
+    filtered_groups: list[SSH_Group] = []
     for group in config.groups:
         # If group filter is defined, check if current group matches the name to progress
         if group_filter:
@@ -34,102 +34,80 @@ def cmd(ctx, group_filter, name_filter, verbose):
         # When group is not skipped, check if name filter is used, and filter out groups
         if name_filter:
             # Make a new copy of group, so we dont mess original config
-            group_copy = copy.deepcopy(group)
+            group_copy = copy.copy(group)
+            group_copy.hosts = []
+            group_copy.patterns = []
+            include_group = False
 
-            filtered_hosts = []
-            filtered_patterns = []
-
-            for host in group_copy.hosts:
+            for host in group.hosts + group.patterns:
                 match = re.search(name_filter, host.name)
                 if match:
-                    filtered_hosts.append(host)
-            for pattern in group_copy.patterns:
-                match = re.search(name_filter, pattern.name)
-                if match:
-                    filtered_patterns.append(pattern)
-
-            group_copy.hosts = filtered_hosts
-            group_copy.patterns = filtered_patterns
-            filtered_groups.append(group_copy)
+                    include_group = True
+                    if host.type == "normal":
+                        group_copy.hosts.append(host)
+                    else:
+                        group_copy.patterns.append(host)
+            if include_group:
+                filtered_groups.append(group_copy)
         else:
             filtered_groups.append(group)
 
     if not filtered_groups:
         print("No host is matching any given filter!")
         ctx.exit(1)
-
-    # Generate flat list of all of all hosts
-    # TODO: Move to sshutils? Or as method on config itself?
-    flat_config = []
-    for group in config.groups:
-        for h in group.hosts + group.patterns:
-            flat_config.append(h)
-
-    DEFAULT_HEADER = ["name", "group", "type"]
-    DEFAULT_PARAMS = ["hostname", "user"]
-
-    # Find all possible params across all showed hosts
-    params = [*DEFAULT_PARAMS]
-    for host in flat_config:
-        for key in host.params:
-            if (not key in params):
-                params.append(key)
     
-    header = DEFAULT_HEADER + ([f"param:{p}" for p in params])
-    table = Table(*header, box=box.SQUARE)
+    # This lists define host properties and which parameters will be displayed
+    host_props = ["name", "group", "type"]
+    params     = ["hostname", "user"]
+
+    # If output is verbose, we need to find all parameters, and add them to params list
+    if verbose:
+        # Generate flat list of all of all hosts
+        # TODO: Move to sshutils? Or as method on config itself?
+        flat_config: list[SSH_Host] = []
+        for group in filtered_groups:
+            for h in group.hosts + group.patterns:
+                flat_config.append(h)
+
+        for host in flat_config:
+            for i_params in host.params:
+                if (not i_params in params):
+                    params.append(i_params)
     
-    # Generate rows
+    header = host_props + ([f"param:{p}" for p in params])
+    table = Table(*header, box=box.SQUARE, style="gray35")
+
+    # Start adding rows    
     for group in filtered_groups:
-        # Adding line for host
-        for host in group.hosts:
-            inherited = config.find_inherited_params(host.name)
+        # Iterate trough hosts and patters
+        for host in group.hosts + group.patterns:
+            inherited: list[tuple[str, dict]] = []
+            if host.type == "normal":
+                inherited = config.find_inherited_params(host.name)
             host_params = []
             # Go trough list of all params we know are available across current host list
-            # for current host we need to combine local and inherited params to fill table row
-            for applied_param in params:
-                if applied_param in host:
+            for table_param in params:
+                if table_param in host.params:
                     # Handle direct params, and handle if its a list or string
-                    if isinstance(host[applied_param], list):
-                        host_params.append("\n".join(host[applied_param]))
+                    if isinstance(host.params[table_param], list):
+                        host_params.append("\n".join(host.params[table_param]))
                     else:
-                        host_params.append(host[applied_param])
+                        host_params.append(host.params[table_param])
                 else:
-                    # Handle inherited params
+                    # Handle inherited params (only valid for "normal" hosts)
                     if inherited:
-                        for pattern, key in inherited.items():
-                            if applied_param in key:
-                                if isinstance(key[applied_param], list):
-                                    host_params.append("\n".join(
-                                        [f"{val}  ({pattern})" for val in key[applied_param]]
-                                    ))
+                        for pattern, i_params in inherited:
+                            if table_param in i_params:
+                                if isinstance(i_params[table_param], list):
+                                    table_param = "\n".join([f"{val}  ({pattern})" for val in i_params[table_param]])
+                                    host_params.append(table_param)
                                 else:
-                                    host_params.append(yellow(f"{key[applied_param]}  ({pattern})"))
+                                    host_params.append(f"[yellow]{i_params[table_param]}  ({pattern})[/]")
                             else:
                                 host_params.append("")
                     else:
                         host_params.append("")
-            x.add_row([host["name"], group["name"], "normal"] + host_params)
-        # Adding line for pattern
-        for pattern in group["patterns"]:
-            pattern_params = []
-            for p in params:
-                if p in pattern:
-                    # Handle direct params
-                    if isinstance(pattern[p], list):
-                        pattern_params.append("\n".join(
-                            [cyan(val) for val in pattern[p]]
-                        ))
-                    else:
-                        pattern_params.append(cyan(pattern[p]))
-                else:
-                    pattern_params.append("")
-            # Add to table with color to be easily distinguished
-            x.add_row([cyan(pattern["name"]), cyan(group["name"]), cyan("pattern")] + pattern_params)
+            row = [host.__dict__[prop] for prop in host_props] + host_params
+            table.add_row(*row) if host.type == "normal" else table.add_row(*row, style="cyan")
 
     console.print(table)
-
-    # Print table in normal or verbose mode
-    # if verbose:
-    #     print(x)
-    # else:
-    #     print(x.get_string(fields=DEFAULT_HEADER + [f"param:{i}" for i in DEFAULT_PARAMS]))

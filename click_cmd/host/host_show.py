@@ -22,29 +22,24 @@ def cmd(ctx, name, follow, graph, style):
     # Keep list of linked hosts via jumpproxy option
     traced_hosts = []
 
-    # Python does not have "do while" loop. (ಠ_ಠ)
     # we are first checking host that is asked, and then check if that host has a "proxy" defined
-    # if proxy is defined, we add found host to traced list, and search attached proxy, it his way we
+    # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
     # can trace full connection path for later graph processing
     while True:
-        # At start assume host is "normal" and contains no inherited parameters
-        inherited_params: list[tuple[str, dict]] = []
-
         # Search for host in current configuration
         found_host, _ = config.find_host_by_name(name,throw_on_fail=False)
         if not found_host:
             print(f"Cannot show host '{name}' as it is not defined in configuration!")
             ctx.exit(1)
 
-        # If this host is "normal" try to find inherited parameters
+        #TODO: Should this be part of configuration parsing stage?
+        inherited_params: list[tuple[str, dict]] = []
         if found_host.type == "normal":
             inherited_params = config.find_inherited_params(name)
+            found_host.inherited_params = inherited_params
 
-        # We have everything to print out host information
+        # Set SSH host print style from user input
         found_host.print_style = style
-        
-        #TODO: Should this be part of configuration parsing stage?
-        found_host.inherited_params = inherited_params
 
         # Add current host, and its table to traced lists
         traced_hosts.append(found_host)
@@ -54,17 +49,19 @@ def cmd(ctx, name, follow, graph, style):
         if "proxyjump" in found_host.params:
             proxyjump = found_host.params["proxyjump"]
         else:
-            for pattern, params in inherited_params:
-                for key, val in params.items():
+            for _, params in inherited_params:
+                for key, value in params.items():
                     if key == "proxyjump":
-                        proxyjump = val
+                        proxyjump = value
 
+        # If there is connected host, we switch "name" and continue the loop
+        # Otherwise we exit the loop
         if proxyjump:
             name = proxyjump
         else:
             break
     
-    # Print collected host table(s)
+    # Print collected host data
     if not follow:
         console.print(traced_hosts[0])
     else:
