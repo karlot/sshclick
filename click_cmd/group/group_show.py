@@ -1,19 +1,20 @@
 import click
-from lib.sshutils import SSH_Config
-from rich.console import Console
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_group_names
+
 from rich.table import Table
 from rich.panel import Panel
 from rich import box
+from rich.console import Console
 
 #------------------------------------------------------------------------------
 # COMMAND: group show
 #------------------------------------------------------------------------------
 @click.command(name="show", help="Shows group details")
-# @click.argument("name", shell_complete=complete_ssh_group_names)
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     found_group = config.find_group_by_name(name, throw_on_fail=False)
     if not found_group:

@@ -1,7 +1,8 @@
 import click
 from ssh_globals import *
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
-from rich.pretty import pprint
+from lib.ssh_config import SSH_Config
+from lib.ssh_group import SSH_Group
+from lib.ssh_host import SSH_Host
 
 #------------------------------------------------------------------------------
 # COMMAND: host create
@@ -13,7 +14,7 @@ from rich.pretty import pprint
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, target_group_name, parameter, force):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
     if found_host:
@@ -53,8 +54,6 @@ def cmd(ctx, name, target_group_name, parameter, force):
         else:
             # Simple single keyword
             new_host.params[param] = value
-
-    pprint(new_host)
 
     if new_host.type == "normal":
         found_group.hosts.append(new_host)

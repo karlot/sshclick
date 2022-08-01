@@ -21,7 +21,7 @@ class SSH_Config:
         self.ssh_config_lines: list[str] = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME)]
+        self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME, desc="Default group")]
 
         # options
         self.stdout: bool = stdout
@@ -261,7 +261,7 @@ class SSH_Config:
         return found_host, found_group
 
 
-    def get_all_host_names(self) -> list:
+    def get_all_host_names(self) -> list[str]:
         """
         Return all host names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
@@ -273,12 +273,12 @@ class SSH_Config:
         return all_hosts
 
 
-    def get_all_group_names(self) -> list:
+    def get_all_group_names(self) -> list[str]:
         """
         Return all group names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_groups = list[str] = []
+        all_groups: list[str] = []
         for group in self.groups:
             all_groups.append(group.name)
         return all_groups

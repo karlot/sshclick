@@ -1,34 +1,34 @@
 # SSH Click Config manager (sshclick)
 
 Terminal based assisted management of your SSH config files.  
-Built out of my own frustration with managing messy and huge ssh_config files.
+Built out of boredom with managing messy and huge ssh_config files.
 
-VERY EARLY VERSION, backup your SSH config files before using! :D
+EARLY VERSION, backup your SSH config files before using!
+
 
 ## Why?
 
-There are plentiful of tools that try to approach managing and organizing remote host configuration in different ways. Many of them implement their specific configurations, and/or full UIs how to save and organize various configuration information.
-Problem is that many of such management tools do not work in standard server terminal, or control actual users SSH config (some have option to render "their" configuration to SSH config, or some weird piping or aliases setup to workaround the problem).
-
-Why is this problem (at least for me), and what am I trying to solve with this tool?
+What am I trying to solve with this tool?
 * I need something that works fast and great in terminal, and does not require complex setup.
-* Managing some other configuration that renders to SSH config is extra step that I don't like.
+* Managing some other configuration files that renders to SSH config is extra step that I don't like.
 * SSH config is already feature-full with all options SSH client support, why inventing extra layer?
 * SSH config is the only config I need to backup.
-* I need quick way to search, group and visualize all hosts inside configuration (especially since it can grow huge)
+* I need quick way to search, group and visualize all hosts inside SSH configuration (especially since it can grow huge)
 
-If you have same thoughts, this tool might be for you.
 
 ## What does it do?
 
-sshclick is just a tool designed to work with existing SSH configuration on your Linux/Windows/WSL terminal environment.  
+SSHClick (sshc) is just a tool designed to work with existing SSH configuration files on your Linux/Windows/WSL terminal environment.  
 It basically parses your SSH config, and can provide easy commands to list, filter, modify or view specific Host entries.
+Trough additional "magic" comments it can add abstractions such as "groups" and various information that is both readable in the configuration file, and can be parsed and printed while using the tool.
+
 
 ## Installation procedure
 
 Should be straight forward...  
 1. Check preconditions:
     - python3 & pip installed
+    - separate venv or pyenv setup (optional, but usually preferable)
     - git installed
 
 2. Clone this repo and run pip install
@@ -37,7 +37,7 @@ Should be straight forward...
     cd sshclick
     pip install --editable .
     ```
-    NOTE: optionally you can install it in virtualenv if you like
+    NOTE: its installed as "editable" so binary file will point to your cloned repo
 
 3. Use it as you like, "sshc" command should be available to access SSHClick application
     ```console
@@ -59,10 +59,14 @@ Should be straight forward...
       group  Manage groups
       host   Manage hosts
     ```
-4. Install shell autocompletion (TAB autocompletes on commands, options, and hosts)
+4. Install shell autocompletion (TAB auto-completes on commands, options, groups and hosts)
     * __Bash__ - Add this line to end of your `~/.profile` file:
       ```sh
       eval "$(_SSHC_COMPLETE=bash_source sshc)"
+      ```
+    * __Zsh__ - Add this line to end of your `~/.zshrc` file:
+      ```sh
+      eval "$(_SSHC_COMPLETE=zsh_source sshc)"
       ```
 
 
@@ -70,7 +74,7 @@ Should be straight forward...
 Assuming installation is already done, and previous version is cloned in some local folder
 
 ```sh
-cd sshclick    # existing cloned repo
+cd sshclick    # existing cloned repo folder
 git pull
 pip install --editable .
 ```
@@ -80,7 +84,7 @@ Assuming installation is already done, and previous version is cloned in some lo
 
 ```sh
 pip uninstall sshclick
-rm -rf sshclick    # existing cloned repo
+rm -rf sshclick    # existing cloned repo folder
 ```
 
 ## SSH Config structure, and important note about comments

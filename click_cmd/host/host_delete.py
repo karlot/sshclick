@@ -1,15 +1,15 @@
 import click
-from lib.sshutils import SSH_Config
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_host_names
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete
 #------------------------------------------------------------------------------
 @click.command(name="delete", help="Delete host from configuration")
-# @click.argument("name", shell_complete=complete_ssh_host_names)
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
     if not found_host:

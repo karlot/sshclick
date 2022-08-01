@@ -10,7 +10,7 @@ from rich import box
 @click.command(name="list", help="Lists all groups")
 @click.pass_context
 def cmd(ctx):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     table = Table(box=box.SQUARE, style="grey35")
     table.add_column("Name", style="white")

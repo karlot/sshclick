@@ -1,5 +1,8 @@
 import click
-from lib.sshutils import SSH_Config
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_group_names
+
+#TODO: Check click.edit for multiline edit option (info, or even params?)
 
 #------------------------------------------------------------------------------
 # COMMAND: group-set
@@ -8,11 +11,10 @@ from lib.sshutils import SSH_Config
 @click.option("-r", "--rename", default=None, help="Rename group")
 @click.option("-d", "--desc", default=None, help="Set description")
 @click.option("-i", "--info", default=None, multiple=True, help="Set info, can be set multiple times")
-# @click.argument("name", shell_complete=complete_ssh_group_names)
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name, rename, desc, info):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     # Nothing was provided
     if not rename and not desc and not info:

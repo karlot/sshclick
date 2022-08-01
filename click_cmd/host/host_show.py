@@ -1,10 +1,15 @@
 import click
-
-from lib.sshutils import SSH_Config
+from lib.ssh_config import SSH_Config
+from lib.sshutils import complete_ssh_host_names
 from lib.sshextras import generate_graph
 
 from rich.console import Console
 console = Console()
+
+# Help autocomplete with host styles
+enabled_styles = ["panels", "card", "simple", "table", "table2", "json"]
+def complete_styles(ctx, param, incomplete):
+    return [k for k in enabled_styles if k.startswith(incomplete)]
 
 #------------------------------------------------------------------------------
 # COMMAND: host show
@@ -12,12 +17,13 @@ console = Console()
 @click.command(name="show", help="Display info for host")
 @click.option("--follow", is_flag=True, help="Follow and displays all connected jump-proxy hosts")
 @click.option("--graph",  is_flag=True, help="Shows connection to target as graph (default:false)")
-@click.option("--style", default="panels")
-# @click.argument("name", shell_complete=complete_ssh_host_names)
-@click.argument("name")
+@click.option("--style", default="panels", show_default="panels", envvar='SSHC_HOST_STYLE',
+    help="Select output rendering style for host details: [panels, card, simple, table, table2, json]",
+    shell_complete=complete_styles)
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx, name, follow, graph, style):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     # Keep list of linked hosts via jumpproxy option
     traced_hosts = []

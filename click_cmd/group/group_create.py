@@ -1,5 +1,6 @@
 import click
-from lib.sshutils import SSH_Config, SSH_Group
+from lib.ssh_config import SSH_Config
+from lib.ssh_group import SSH_Group
 
 #------------------------------------------------------------------------------
 # COMMAND: group create
@@ -10,7 +11,7 @@ from lib.sshutils import SSH_Config, SSH_Group
 @click.argument("name")
 @click.pass_context
 def cmd(ctx, name, desc, info):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     # Check if already group exists
     found_group = config.find_group_by_name(name, throw_on_fail=False)

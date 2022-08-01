@@ -13,6 +13,7 @@ class SSH_Host:
     inherited_params: list[tuple[str, dict]] = field(default_factory=list)
     print_style: str = "panel1"
 
+    # Method for interaction with printing the object via Rich library
     def __rich__(self):
         try:
             style = importlib.import_module(f'lib.host_styles.{self.print_style}')

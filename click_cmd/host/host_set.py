@@ -1,7 +1,11 @@
+import imp
 import click
 from ssh_globals import *
-from lib.sshutils import SSH_Config, SSH_Group
-from rich.pretty import pprint
+from lib.ssh_config import SSH_Config
+from lib.ssh_group import SSH_Group
+from lib.sshutils import complete_ssh_host_names
+
+#TODO: Check click.edit for multiline edit option (info, or even params?)
 
 #------------------------------------------------------------------------------
 # COMMAND: host set
@@ -10,15 +14,15 @@ from rich.pretty import pprint
 @click.option("-g", "--group", "target_group_name", default=None, help="Changes group for host")
 @click.option("-r", "--rename", default=None, help="Rename host")
 @click.option("-p", "--parameter", default=[], multiple=True, help="Sets parameter for the host, must be in 'param=value' format, to unset/remove parameter from host, set it to empty value (example: 'param=')")
+@click.option("-i", "--info", default=None, multiple=True, help="Set host info, can be set multiple times")
 @click.option("--force", is_flag=True, default=False, help="Forces moving host to group that does not exist, by creating new group, and moving host to that group.")
-# @click.argument("name", shell_complete=complete_ssh_host_names)
-@click.argument("name")
+@click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
-def cmd(ctx, name, target_group_name, rename, parameter, force):
-    config: SSH_Config = ctx.obj['CONFIG']
+def cmd(ctx, name, target_group_name, rename, parameter, info, force):
+    config: SSH_Config = ctx.obj
 
     # Nothing was provided
-    if not target_group_name and not rename and not parameter:
+    if not target_group_name and not rename and not parameter and not info:
         print("Calling set without setting anything is not valid. Run with '-h' for help.")
         ctx.exit(1)
 
@@ -54,7 +58,14 @@ def cmd(ctx, name, target_group_name, rename, parameter, force):
     # Rename a host
     if rename:
         found_host.name = rename
-    
+
+    # Add info
+    if info:
+        if len(info[0]) > 0:
+            found_host.info = info
+        else:
+            found_host.info = []
+
     # Sets parameters for host (or erase them if value is provided as unset)
     for item in parameter:
         param, value = item.split("=")

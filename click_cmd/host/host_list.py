@@ -1,13 +1,13 @@
 import click
 import re
 import copy
-from lib.sshutils import *
+from lib.ssh_config import SSH_Config
+from lib.ssh_group import SSH_Group
+from lib.ssh_host import SSH_Host
 
 from rich.console import Console
 from rich.table import Table
 from rich import box
-from rich.pretty import pprint, Pretty
-from rich.panel import Panel
 
 console = Console()
 
@@ -20,7 +20,7 @@ console = Console()
 @click.option("-v", "--verbose", is_flag=True,  default=False, help="Show verbose info (all parameters)")
 @click.pass_context
 def cmd(ctx, group_filter, name_filter, verbose):
-    config: SSH_Config = ctx.obj['CONFIG']
+    config: SSH_Config = ctx.obj
 
     # Filter out groups and hosts if filters are defined via CLI
     filtered_groups: list[SSH_Group] = []
@@ -62,13 +62,10 @@ def cmd(ctx, group_filter, name_filter, verbose):
 
     # If output is verbose, we need to find all parameters, and add them to params list
     if verbose:
-        # Generate flat list of all of all hosts
-        # TODO: Move to sshutils? Or as method on config itself?
         flat_config: list[SSH_Host] = []
         for group in filtered_groups:
             for h in group.hosts + group.patterns:
                 flat_config.append(h)
-
         for host in flat_config:
             for i_params in host.params:
                 if (not i_params in params):
