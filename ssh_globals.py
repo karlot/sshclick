@@ -1,7 +1,7 @@
 import os.path
 import logging
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 # Setup defaults
 LOGGING_LEVEL = logging.INFO

@@ -1,10 +1,34 @@
 # SSH Click Config manager (sshclick)
 
+## Links
+
+- [Intro](#intro)
+- [Why?](#why)
+- [What does it do](#what-does-it-do)
+  - [Installation procedure](#installation-procedure)
+  - [Upgrade procedure](#upgrade-procedure)
+  - [Uninstall procedure](#uninstall-procedure)
+- [SSH Config structure](#ssh-config-structure-and-important-note-about-comments)
+  - [Comment blocks and metadata](#comment-blocks-and-metadata-in-ssh-config)
+- [Example usage and features](#example-usage-and-features)
+  - [Group commands and options](#group-commands-and-options)
+  - [Host commands and options](#host-commands-and-options)
+  - [Output styling and user ENV variables](#output-styling-and-user-env-variables)
+- [Recorded demos](#recorded-demos)
+  - [sshc group operations](#demo-showing-some-sshc-group-operations)
+  - [sshc host operations](#demo-showing-some-sshc-host-operations)
+- [Author](#author)
+- [License](#license)
+
+
+## Intro
 Terminal based assisted management of your SSH config files.  
-Built out of boredom with managing messy and huge ssh_config files.
+Built out of boredom with managing messy and huge ssh_config files.  
 
-EARLY VERSION, backup your SSH config files before using!
+EARLY VERSION, backup your SSH config files before using!  
+SSHClick can be used with "show" and "list" commands for hosts, without modifying your SSH Config!  
 
+**Only commands that modify configuration will edit and rewrite/restructure your SSH Config file. In that case, any added comment or infos that are not in form that SSHClick understand will be discarded, and configuration will be re-formatted to match SSHClick style. See below details to understand how SSH Click would keep your config organized**
 
 ## Why?
 
@@ -23,12 +47,14 @@ It basically parses your SSH config, and can provide easy commands to list, filt
 Trough additional "magic" comments it can add abstractions such as "groups" and various information that is both readable in the configuration file, and can be parsed and printed while using the tool.
 
 
-## Installation procedure
+### Installation procedure
 
 Should be straight forward...  
+
 1. Check preconditions:
-    - python3 & pip installed
-    - separate venv or pyenv setup (optional, but usually preferable)
+    - Currently only tested on Linux (Debian 10,11, Ubuntu 20.04,22.04), but should work on other systems as well
+    - Minimum python3.7 (tested up to 3.10) & pip installed
+      - it is preferable to not use system python version, to install "custom" user python on linux, you can try using pyenv (https://github.com/pyenv/pyenv
     - git installed
 
 2. Clone this repo and run pip install
@@ -39,27 +65,9 @@ Should be straight forward...
     ```
     NOTE: its installed as "editable" so binary file will point to your cloned repo
 
-3. Use it as you like, "sshc" command should be available to access SSHClick application
-    ```console
-    $ sshc --help
-    Usage: sshc [OPTIONS] COMMAND [ARGS]...
+3. Use it as you like, "sshc" command should be available to access SSHClick application, see below chapter for [usage](#example-usage-and-features)
 
-      SSHClick - SSH Config manager
-
-      Note: As this is early alpha, backup your SSH config files before this
-      software, as you might accidentally lose some configuration
-
-    Options:
-      --sshconfig PATH  Config file, default is ~/.ssh/config
-      --stdout          Send changed SSH config to STDOUT instead to original file
-      --version         Show current version
-      -h, --help        Show this message and exit.
-
-    Commands:
-      group  Manage groups
-      host   Manage hosts
-    ```
-4. Install shell autocompletion (TAB auto-completes on commands, options, groups and hosts)
+4. Install shell autocompletion (_TAB-TAB auto-completes on commands, options, groups and hosts_)
     * __Bash__ - Add this line to end of your `~/.profile` file:
       ```sh
       eval "$(_SSHC_COMPLETE=bash_source sshc)"
@@ -70,37 +78,43 @@ Should be straight forward...
       ```
 
 
-## Upgrade procedure
+### Upgrade procedure
+
 Assuming installation is already done, and previous version is cloned in some local folder
 
 ```sh
-cd sshclick    # existing cloned repo folder
+cd sshclick     # existing cloned repo folder
 git pull
 pip install --editable .
 ```
 
-## Uninstall procedure
+
+### Uninstall procedure
+
 Assuming installation is already done, and previous version is cloned in some local folder
 
 ```sh
 pip uninstall sshclick
-rm -rf sshclick    # existing cloned repo folder
+rm -r sshclick    # existing cloned repo folder
 ```
 
 ## SSH Config structure, and important note about comments
 
-sshclick when editing and writing to SSH config file must use specific style, and is internally using comments to "organize" configuration itself. This means comments outside of what sshclick is handling are unsupported and will be lost when sshclick modifies a file.)
+SSHClick when editing and writing to SSH config file must use specific style, and is internally using comments to "organize" configuration itself. This means comments outside of what sshclick is handling are unsupported and will be lost when SSHClick modifies a file.)
 
 
-## Comment blocks and metadata in SSH Config
+### Comment blocks and metadata in SSH Config
 
-sshclick uses comments to add extra information which it can use to add concept of grouping to hosts.  
-Special "metadata" lines start with "#@" followed by some of meta-tags like "group", "desc", "info". This are all considered group metadata tags, as they apply on the group. Note that line separations are added only for visual aid, they are ignored at parsing, but are included when modifying SSH config.  
-**Currently host based tags are not supported**
+SSHClick uses comments to add extra information which it can use to add concept of grouping and extra information to hosts. Special "metadata" lines start with `#@` followed by some of meta-tags like `group`, `desc`, `info`. This are all considered group metadata tags, as they apply on the group level. Note that line separations above and below "group header" are added only for visual aid, they are ignored at parsing, but are included when modifying/generating SSH config file.  
 
-This "headers" can be added manually in SSH config, or sshclick can add them and move hosts under specific group.
+This "headers" can be added manually also in SSH config, or sshclick can add them and move hosts under specific group, using `sshc` cli tool
 
-Start of the "GROUP HEADER" looks like this:
+Normally start of the "GROUP HEADER" inside SSH Config would look like below.  
+- `#@group:` is KEY metadata tag, that during "parsing" defines that all hosts configured below this "tag" belong to this group
+- `#@desc:` is tag that adds "description" to defined group, and will display in usual group display commands
+- `#@info:` is tag that adds extra information lines tied to the group, multiple info lines can be defined, and its usually used to store some group level details important to the user
+
+Following is sample how group header is rendered by SSHClick:
 ```
 #-------------------------------------------------------------------------------
 #@group: <GROUP-NAME>       [MANDATORY]   <-- This line starts new group
@@ -108,13 +122,206 @@ Start of the "GROUP HEADER" looks like this:
 #@info: <GROUP-INFO-LINES>  [OPTIONAL,MULTIPLE]
 #-------------------------------------------------------------------------------
 Host ...    <-- this hosts definitions are part of the defined group
+    param1 value1
+    param2 value2
+
+#@host:  <HOST-INFO-LINES>  [OPTIONAL,MULTIPLE] <-- Add info to following host(below)
 Host ...
 
 <ANOTHER GROUP HEADER>
 ```
 
-If there are no groups, then all hosts are considered to be part of "default" group.
+If there are no groups defined, then all hosts are considered to be part of "default" group. SSHClick can be used to move hosts between groups and handle keeping SSH config "tidy" and with consistent format.
+
+
+## Example usage and features
+
+SSHClick is deploying `sshc` cli tool that allows interacting with your SSH Config file and perform various organization,listing, displaying and modification of SSH Group/Host configuration parameters.  
+`sshc` comes with pre-built lots of help options so each level of commands provide `--help` options to provide you info what commands and options are available at which command level.  
+
+For example to check version, type: `sshc --version`  
+_Sample output:_
+```console
+$ sshc --version
+SSHClick (sshc) - Version: 0.4.1
+```
+
+If you run `sshc` command alone, or adding `-h` or `--help` option, it will show help what else must be added to the command...  
+_Example:_
+```console
+$ sshc --help
+Usage: sshc [OPTIONS] COMMAND [ARGS]...
+
+  SSHClick - SSH Config manager
+
+  Note: As this is early alpha, backup your SSH config files before this
+  software, as you might accidentally lose some configuration
+
+Options:
+  --sshconfig PATH  Config file, default is ~/.ssh/config
+  --stdout          Send changed SSH config to STDOUT instead to original file
+  --version         Show current version
+  -h, --help        Show this message and exit.
+
+Commands:
+  group  Manage groups
+  host   Manage hosts
+```
+
+Main sub-commands are for seprate control of:  
+- Groups (via `sshc group` command)
+  - Allows operation of groups inside SSH config
+- Hosts (via `sshc host` command)
+  - Allows operation of hosts inside SSH config
+
+### `group` commands and options
+
+To manage "groups" type `sshc group --help` to see options.  
+_example:_
+```console
+$ sshc group --help
+Usage: sshc group [OPTIONS] COMMAND [ARGS]...
+
+  Manage groups
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  create  Create new group
+  delete  Delete group
+  list    Lists all groups
+  set     Change group parameters
+  show    Shows group details
+```
+
+### `host` commands and options
+
+To manage "groups" type `sshc host --help` to see options.  
+_example:_
+```console
+$ sshc host --help
+Usage: sshc host [OPTIONS] COMMAND [ARGS]...
+
+  Manage hosts
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  create  Create new host configuration
+  delete  Delete host from configuration
+  list    List hosts
+  set     Changes/sets host configuration parameters
+  show    Display info for host
+  test    Test SSH host connection
+```
+
+### Output styling and user ENV variables
+
+`sshc host show` can display host output is several formats, you can specify it with `sshc host show <host> --style <style>`  
+Available styles are:
+
+| Style              | Description                                       |
+|--------------------|---------------------------------------------------|
+| `panels` (default) | Display data in several panels                    |
+| `card`             | Add data to single "card"                         |
+| `simple`           | Simple output with minimal decorations            |
+| `table`            | Flat table with 3 columns                         |
+| `table2`           | Nested table with separated host SSH params       |
+| `json`             | JSON output, useful for binding with other tools |
+
+If you want to have some style statically set for your shell, you can export ENV variable with `export SSHC_HOST_STYLE=table`, and add it to `.profile` or `.bashrc` or `.zshrc`, so its set when shell session is starting, to set "default" style to that one.
+
+In case user do not line "fancy" colors in output, you can set ENV variable to disable all color outputs with `export NO_COLOR=1`. If you want it permanently you can add it to startup "rc" files as well.
+
+
+> NOTE! When sending output into non-terminal such as to file, SSHClick will recognize that and will remove all ANSI Escape characters (colors and stuff...) so that output is captured in clear way.
+
+
+## Recorded demos
+
+Following demos will use this config sample file as input (located in ~/.ssh/config):
+
+```
+#<<<<< SSH Config file managed by sshclick >>>>>
+
+#-------------------------------------------------------------------------------
+#@group: network
+#@desc: Network devices in my lab
+#@info: user='admin' password='password'
+#@info: Not really, but for demo its ok :)
+#-------------------------------------------------------------------------------
+Host net-switch1
+    hostname 10.1.1.1
+
+Host net-switch2
+    hostname 10.1.1.2
+
+Host net-switch3
+    hostname 10.1.1.3
+
+Host net-*
+    user admin
+
+
+#-------------------------------------------------------------------------------
+#@group: jumphost
+#@desc: Edge-server / SSH bastion
+#@info: Used for jump-proxy from intnet to internal lab servers
+#-------------------------------------------------------------------------------
+Host jumper1
+    hostname 123.123.123.123
+    user master
+    port 1234
+
+
+#-------------------------------------------------------------------------------
+#@group: lab-servers
+#@desc: Testing/Support servers
+#@info: Some [red]important[/] detail here!
+#@info: We can have color markups in descriptions and info lines
+#-------------------------------------------------------------------------------
+Host lab-serv1
+    hostname 10.10.0.1
+    user admin
+
+Host lab-serv2
+    hostname 10.16.141
+
+Host lab-*
+    user user123
+    proxyjump jumper1
+
+Host server-behind-lab
+    hostname 10.30.0.1
+    user testuser
+    port 1234
+    proxyjump lab-serv1
+
+```
+
+### Demo showing some `sshc group` operations:
+[![asciicast](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89.svg)](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89)
+
+
+### Demo showing some `sshc host` operations:
+[![asciicast](https://asciinema.org/a/wzLefl49CRErBoFwC6ir96FFA.svg)](https://asciinema.org/a/wzLefl49CRErBoFwC6ir96FFA)
+
+
+### Demo displaying "end-to-end" tunnel visualization in graph
+[![asciicast](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE.svg)](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE)
+
+
+## Author
+
+Karlo Tisaj  
+email: karlot@gmail.com  
+github: https://github.com/karlot
 
 
 ## License
-MIT License
+
+[MIT License](LICENSE)
+
+
