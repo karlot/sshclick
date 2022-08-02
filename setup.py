@@ -12,7 +12,6 @@ setup(
     install_requires=[
         "click>=8.1.3",
         "prettytable>=3.2.0",
-        "pyyaml>=6.0",
         "rich>=12.5.1",
     ],
     entry_points={
