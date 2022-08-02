@@ -7,10 +7,10 @@ class SSH_Host:
     name: str
     group: str
     type: str = "normal"
-    info: list[str] = field(default_factory=list)
-    params: dict[str, str] = field(default_factory=dict)
+    info: list = field(default_factory=list)
+    params: dict = field(default_factory=dict)
 
-    inherited_params: list[tuple[str, dict]] = field(default_factory=list)
+    inherited_params: list = field(default_factory=list)
     print_style: str = "panel1"
 
     # Method for interaction with printing the object via Rich library

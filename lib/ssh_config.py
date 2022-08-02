@@ -16,12 +16,12 @@ class SSH_Config:
     generating and writing contents back to SSH configuration file
     """
 
-    def __init__(self, file: str, config_lines: list[str] = [], stdout: bool = DEFAULT_STDOUT):
+    def __init__(self, file: str, config_lines: list = [], stdout: bool = DEFAULT_STDOUT):
         self.ssh_config_file: str = file
-        self.ssh_config_lines: list[str] = config_lines
+        self.ssh_config_lines: list = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME, desc="Default group")]
+        self.groups: list = [SSH_Group(name=DEFAULT_GROUP_NAME, desc="Default group")]
 
         # options
         self.stdout: bool = stdout
@@ -30,7 +30,7 @@ class SSH_Config:
         self.current_grindex: int = 0
         self.current_group: str = DEFAULT_GROUP_NAME
         self.current_host: SSH_Host = None
-        self.current_host_info: list[str] = []
+        self.current_host_info: list = []
 
 
     def read(self):
@@ -261,35 +261,35 @@ class SSH_Config:
         return found_host, found_group
 
 
-    def get_all_host_names(self) -> list[str]:
+    def get_all_host_names(self) -> list:
         """
         Return all host names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_hosts: list[str] = []
+        all_hosts: list = []
         for group in self.groups:
             for host in group.hosts:
                 all_hosts.append(host.name)
         return all_hosts
 
 
-    def get_all_group_names(self) -> list[str]:
+    def get_all_group_names(self) -> list:
         """
         Return all group names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_groups: list[str] = []
+        all_groups: list = []
         for group in self.groups:
             all_groups.append(group.name)
         return all_groups
 
 
-    def find_inherited_params(self, host_name: str) -> list[tuple[str, dict]]:
+    def find_inherited_params(self, host_name: str) -> list:
         """
         Returns array of 2-item tuples, where first item is name of pattern from
         which params are inherited, and second item is parameters dictionary from the pattern
         """
-        inherited: list[tuple] = []
+        inherited: list = []
         for group in self.groups:
             for pattern in group.patterns:
                 # Check if any one of pattern (from all groups) will match host name

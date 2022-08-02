@@ -2,7 +2,6 @@ from lib.sshutils import SSH_Host
 
 from rich.table import Table
 from rich.panel import Panel
-from rich.console import Group
 from rich import box
 
 #------------------------------------------------------------------------------
