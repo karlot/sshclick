@@ -225,7 +225,7 @@ class SSH_Config:
                 out.writelines(self.ssh_config_lines)
         
 
-    def find_group_by_name(self, name: str, throw_on_fail: bool = True) -> SSH_Group | None:
+    def find_group_by_name(self, name: str, throw_on_fail: bool = True):
         """
         Find group in configuration that matches the name (strict match, one only!)
         On success returns matched group, on fail depending on 'throw_on_fail' flag
@@ -239,7 +239,7 @@ class SSH_Config:
         raise Exception(f"Requested group '{name}' not found in the SSH configuration")
 
 
-    def find_host_by_name(self, name: str, throw_on_fail: bool = True) -> tuple[SSH_Host | None, SSH_Group | None]:
+    def find_host_by_name(self, name: str, throw_on_fail: bool = True):
         """
         Find host in configuration that matches the name (strict match, one only!)
         On success returns host and his assigned group, on fail depending on 'throw_on_fail' flag
