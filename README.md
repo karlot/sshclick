@@ -111,21 +111,24 @@ This "headers" can be added manually also in SSH config, or sshclick can add the
 
 Normally start of the "GROUP HEADER" inside SSH Config would look like below.  
 - `#@group:` is KEY metadata tag, that during "parsing" defines that all hosts configured below this "tag" belong to this group
-- `#@desc:` is tag that adds "description" to defined group, and will display in usual group display commands
-- `#@info:` is tag that adds extra information lines tied to the group, multiple info lines can be defined, and its usually used to store some group level details important to the user
+- `#@desc:` is optional tag that adds "description" to defined group, and will display in usual group display commands
+- `#@info:` is optional tag that can appear multiple times, adding extra information lines tied to the group.
+
+Additionally each "host" definition can have optional meta info:
+- `#@host:` is optional tag that can appear multiple times, that can hold some information about the host, this meta info when defined applies to next "host" definition that will appear. If this key is added after "host" keyword, it will be applied to next host, for that reason, keep this host meta info above the actual host definition.
 
 Following is sample how group header is rendered by SSHClick:
 ```
 #-------------------------------------------------------------------------------
 #@group: <GROUP-NAME>       [MANDATORY]   <-- This line starts new group
-#@desc: <GROUP-DESCRIPTION> [OPTIONAL]
+#@desc: <GROUP-DESCRIPTION> [OPTIONAL, SINGLE]
 #@info: <GROUP-INFO-LINES>  [OPTIONAL,MULTIPLE]
 #-------------------------------------------------------------------------------
 Host ...    <-- this hosts definitions are part of the defined group
     param1 value1
     param2 value2
 
-#@host:  <HOST-INFO-LINES>  [OPTIONAL,MULTIPLE] <-- Add info to following host(below)
+#@host: <HOST-INFO-LINES>  [OPTIONAL,MULTIPLE] <-- Adds info to following host
 Host ...
 
 <ANOTHER GROUP HEADER>
@@ -168,7 +171,7 @@ Commands:
   host   Manage hosts
 ```
 
-Main sub-commands are for seprate control of:  
+Main sub-commands are for separate control of:  
 - Groups (via `sshc group` command)
   - Allows operation of groups inside SSH config
 - Hosts (via `sshc host` command)
