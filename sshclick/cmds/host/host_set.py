@@ -1,4 +1,3 @@
-import imp
 import click
 from sshclick.globals import *
 from sshclick.sshc import SSH_Config, SSH_Group, complete_ssh_host_names

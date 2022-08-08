@@ -1,5 +1,6 @@
 import re
 import fnmatch
+import copy
 
 from ..globals import *
 from .ssh_host import SSH_Host
@@ -7,6 +8,7 @@ from .ssh_group import SSH_Group
 
 import logging
 logging.basicConfig(level=logging.INFO)
+
 
 class SSH_Config:
     """
@@ -298,3 +300,39 @@ class SSH_Config:
 
         return inherited
 
+
+    def filter_config(self, group_filter: str, name_filter: str) -> list:
+        """
+        Function takes optional group and name regex, and if they are not None or empty,
+        function creates a new list of SSH groups and their SSH hosts, but with all
+        non-matching items removed.
+        """
+        filtered_groups: list[SSH_Group] = []
+        for group in self.groups:
+            # If group filter is defined, check if current group matches the name to progress
+            if group_filter:
+                group_match = re.search(group_filter, group.name)
+                if not group_match:
+                    continue
+            
+            # When group is not skipped, check if name filter is used, and filter out groups
+            if name_filter:
+                # Make a new copy of group, so we dont mess original config
+                group_copy = copy.copy(group)
+                group_copy.hosts = []
+                group_copy.patterns = []
+                include_group = False
+
+                for host in group.hosts + group.patterns:
+                    match = re.search(name_filter, host.name)
+                    if match:
+                        include_group = True
+                        if host.type == "normal":
+                            group_copy.hosts.append(host)
+                        else:
+                            group_copy.patterns.append(host)
+                if include_group:
+                    filtered_groups.append(group_copy)
+            else:
+                filtered_groups.append(group)
+        return filtered_groups

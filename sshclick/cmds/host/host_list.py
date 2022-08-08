@@ -1,6 +1,4 @@
 import click
-import re
-import copy
 from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 from rich.console import Console
@@ -21,34 +19,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
     config: SSH_Config = ctx.obj
 
     # Filter out groups and hosts if filters are defined via CLI
-    filtered_groups: list[SSH_Group] = []
-    for group in config.groups:
-        # If group filter is defined, check if current group matches the name to progress
-        if group_filter:
-            group_match = re.search(group_filter, group.name)
-            if not group_match:
-                continue
-        
-        # When group is not skipped, check if name filter is used, and filter out groups
-        if name_filter:
-            # Make a new copy of group, so we dont mess original config
-            group_copy = copy.copy(group)
-            group_copy.hosts = []
-            group_copy.patterns = []
-            include_group = False
-
-            for host in group.hosts + group.patterns:
-                match = re.search(name_filter, host.name)
-                if match:
-                    include_group = True
-                    if host.type == "normal":
-                        group_copy.hosts.append(host)
-                    else:
-                        group_copy.patterns.append(host)
-            if include_group:
-                filtered_groups.append(group_copy)
-        else:
-            filtered_groups.append(group)
+    filtered_groups = config.filter_config(group_filter, name_filter)
 
     if not filtered_groups:
         print("No host is matching any given filter!")
