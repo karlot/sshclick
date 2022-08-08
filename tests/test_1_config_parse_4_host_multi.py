@@ -1,4 +1,4 @@
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 #------------------------------------------------------------------------------
 # Test parsing multiple hosts
@@ -13,7 +13,7 @@ def test_parse_single_host():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test1", group="default"),
             SSH_Host(name="test2", group="default"),
         ])
@@ -40,7 +40,7 @@ def test_parse_single_host_with_params():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test1", group="default", params={
                 "hostname": "1.2.3.4",
                 "port": "2222",
@@ -70,7 +70,7 @@ def test_parse_single_host_with_info():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test1", group="default", info=["testinfo1"]),
             SSH_Host(name="test2", group="default", info=["testinfo2"])
         ])
@@ -98,7 +98,7 @@ def test_parse_single_host_with_info_and_params():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test1", group="default", info=["testinfo1"], params={
                 "hostname":"1.2.3.4",
                 "port":"1111",

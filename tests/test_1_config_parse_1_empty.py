@@ -1,4 +1,4 @@
-from lib.sshutils import SSH_Config, SSH_Group
+from sshclick.sshc import SSH_Config, SSH_Group
 
 #-----------------------------------
 # FILE CONTENT SAMPLES FOR PARSING
@@ -14,7 +14,7 @@ config2="""
 """
 
 # Expected empty result after parsing (containing single default SSH group)
-result_empty = [SSH_Group(name='default')]
+result_empty = [SSH_Group(name='default', desc="Default group")]
 
 #-----------------------------------
 # Tests

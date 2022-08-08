@@ -1,5 +1,5 @@
 import pytest
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 #-----------------------------------
 # FILE CONTENT SAMPLES FOR PARSING
@@ -68,7 +68,7 @@ def test_get_host_ok():
     })
 
     assert host == expected_host
-    assert group == SSH_Group(name='default', desc='', info=[], hosts=[expected_host], patterns=[])
+    assert group == SSH_Group(name='default', desc="Default group", info=[], hosts=[expected_host], patterns=[])
 
 
 def test_get_all_host_names():

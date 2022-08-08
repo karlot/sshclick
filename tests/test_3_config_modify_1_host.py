@@ -1,4 +1,4 @@
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 #------------------------------------------------------------------------------
 # Test parsing configuration and add new host then verify rendering output is
@@ -24,7 +24,7 @@ def test_add_new_host():
 
     found_host, found_group = config.find_host_by_name("testnew")
     assert found_host == new_host
-    assert found_group == SSH_Group(name="default", hosts=[new_host])
+    assert found_group == SSH_Group(name="default", desc="Default group", hosts=[new_host])
 
     config.generate_ssh_config()
     assert config.ssh_config_lines == config1_modified_lines

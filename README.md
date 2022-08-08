@@ -1,24 +1,26 @@
 # SSH Click Config manager (sshclick)
 
+Check this page on [GitHub](https://github.com/karlot/sshclick)
+
 ## Links
 
-- [Intro](#intro)
-- [Why?](#why)
-- [What does it do](#what-does-it-do)
-  - [Installation procedure](#installation-procedure)
-  - [Upgrade procedure](#upgrade-procedure)
-  - [Uninstall procedure](#uninstall-procedure)
-- [SSH Config structure](#ssh-config-structure-and-important-note-about-comments)
-  - [Comment blocks and metadata](#comment-blocks-and-metadata-in-ssh-config)
-- [Example usage and features](#example-usage-and-features)
-  - [Group commands and options](#group-commands-and-options)
-  - [Host commands and options](#host-commands-and-options)
-  - [Output styling and user ENV variables](#output-styling-and-user-env-variables)
-- [Recorded demos](#recorded-demos)
-  - [sshc group operations](#demo-showing-some-sshc-group-operations)
-  - [sshc host operations](#demo-showing-some-sshc-host-operations)
-- [Author](#author)
-- [License](#license)
+- [Intro](https://github.com/karlot/sshclick#intro)
+- [Why?](https://github.com/karlot/sshclick#why)
+- [What does it do](https://github.com/karlot/sshclick#what-does-it-do)
+  - [Installation procedure](https://github.com/karlot/sshclick#installation-procedure)
+  - [Upgrade procedure](https://github.com/karlot/sshclick#upgrade-procedure)
+  - [Uninstall procedure](https://github.com/karlot/sshclick#uninstall-procedure)
+- [SSH Config structure](https://github.com/karlot/sshclick#ssh-config-structure-and-important-note-about-comments)
+  - [Comment blocks and metadata](https://github.com/karlot/sshclick#comment-blocks-and-metadata-in-ssh-config)
+- [Example usage and features](https://github.com/karlot/sshclick#example-usage-and-features)
+  - [Group commands and options](https://github.com/karlot/sshclick#group-commands-and-options)
+  - [Host commands and options](https://github.com/karlot/sshclick#host-commands-and-options)
+  - [Output styling and user ENV variables](https://github.com/karlot/sshclick#output-styling-and-user-env-variables)
+- [Recorded demos](https://github.com/karlot/sshclick#recorded-demos)
+  - [sshc group operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-group-operations)
+  - [sshc host operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-host-operations)
+- [Author](https://github.com/karlot/sshclick#author)
+- [License](https://github.com/karlot/sshclick#license)
 
 
 ## Intro
@@ -51,21 +53,26 @@ Trough additional "magic" comments it can add abstractions such as "groups" and 
 
 Should be straight forward...  
 
-1. Check preconditions:
+1. **Check preconditions:**
     - Currently only tested on Linux (Debian 10,11, Ubuntu 20.04,22.04), but should work on other systems as well
-    - Minimum python3.7 (tested up to 3.10) & pip installed
-      - it is preferable to not use system python version, to install "custom" user python on linux, you can try using pyenv (https://github.com/pyenv/pyenv
+    - Minimum python3.7 (tested up to 3.11 beta) & pip installed
+        - it is preferable to not use system python version, to install "custom" user python on linux, you can try using pyenv (https://github.com/pyenv/pyenv
     - git installed
 
-2. Clone this repo and run pip install
-    ```sh
-    git clone https://github.com/karlot/sshclick
-    cd sshclick
-    pip install --editable .
-    ```
-    NOTE: its installed as "editable" so binary file will point to your cloned repo
+2. **Install package:**
+    - from PyPI using pip
+        ```
+        pip install sshclick
+        ```
 
-3. Use it as you like, "sshc" command should be available to access SSHClick application, see below chapter for [usage](#example-usage-and-features)
+    - (OR) from source using pip
+        ```sh
+        git clone https://github.com/karlot/sshclick
+        cd sshclick
+        pip install .
+        ```
+
+3. Use it as you like, `sshc` command should be available to access SSHClick application, see below chapter for basic [usage](https://github.com/karlot/sshclick#example-usage-and-features)
 
 4. Install shell autocompletion (_TAB-TAB auto-completes on commands, options, groups and hosts_)
     * __Bash__ - Add this line to end of your `~/.profile` file:
@@ -80,23 +87,33 @@ Should be straight forward...
 
 ### Upgrade procedure
 
-Assuming installation is already done, and previous version is cloned in some local folder
+* Upgrade from new PyPI release:  
+  ```sh
+  pip install --upgrade sshclick
+  ```
 
-```sh
-cd sshclick     # existing cloned repo folder
-git pull
-pip install --editable .
-```
+* Upgrade from source:
+  Assuming installation is already done, and previous version is cloned in some local folder
+
+  ```sh
+  cd sshclick     # cd into existing previously cloned repo folder
+  git pull
+  pip install --upgrade .
+  ```
 
 
 ### Uninstall procedure
-
-Assuming installation is already done, and previous version is cloned in some local folder
-
-```sh
-pip uninstall sshclick
-rm -r sshclick    # existing cloned repo folder
+Simply run:
 ```
+pip uninstall sshclick
+```
+
+In case you have installed from cloned source code, you can delete locally cloned repo.
+```sh
+rm -r sshclick
+```
+
+---
 
 ## SSH Config structure, and important note about comments
 

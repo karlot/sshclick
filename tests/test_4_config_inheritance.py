@@ -1,4 +1,5 @@
-from lib.sshutils import SSH_Config
+from sshclick.sshc import SSH_Config
+
 
 #------------------------------------------------------------------------------
 # Test parsing configuration and add new group then verify rendering output is
