@@ -1,6 +1,6 @@
 import os.path
 
-VERSION = "0.4.2"
+VERSION = "0.4.3"
 
 # Setup defaults
 DEFAULT_USER_CONF = os.path.expanduser("~/.ssh/config")

@@ -1,4 +1,4 @@
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 #------------------------------------------------------------------------------
 # Test parsing groups with group metadata (desc and multi-info)
@@ -35,7 +35,7 @@ def test_parse_groups_with_hosts():
     config = SSH_Config("none", lines).parse().groups
 
     assert config == [
-        SSH_Group(name="default"),
+        SSH_Group(name="default", desc="Default group"),
         SSH_Group(name="testgroup-1", desc="this is description 1", info=["info line 1-1", "info line 1-2"], hosts=[
             SSH_Host(name="test1", group="testgroup-1", info=["hostinfo1"], params={
                 "hostname":"1.2.3.4",
@@ -98,7 +98,7 @@ def test_parse_groups_with_hosts_full():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="defaulthost", group="default", info=["some-host-info"], params={
                 "hostname":"2.2.3.3",
             }),

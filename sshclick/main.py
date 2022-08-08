@@ -25,8 +25,3 @@ def cli(ctx, sshconfig: str, stdout: bool):
 from .cmds import cmd_group, cmd_host
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
-
-
-# Entrypoint when we test directly
-if __name__ == '__main__':
-    cli()

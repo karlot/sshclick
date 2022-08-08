@@ -1,4 +1,4 @@
-from lib.sshutils import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 
 #------------------------------------------------------------------------------
 # Parsing single host
@@ -12,7 +12,7 @@ def test_parse_host():
     config = SSH_Config("none", lines).parse().groups
 
     assert config == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test", group="default")
         ])
     ]
@@ -33,7 +33,7 @@ def test_parse_host_with_params():
     config = SSH_Config("none", lines).parse().groups
 
     assert config == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test", group="default", params={
                 "hostname":"1.2.3.4",
                 "port":"2222",
@@ -56,7 +56,7 @@ def test_parse_host_with_info():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test", group="default", info=["testinfo"])
         ])
     ]
@@ -78,7 +78,7 @@ def test_parse_host_with_info_and_params():
     groups = SSH_Config("none", lines).parse().groups
     
     assert groups == [
-        SSH_Group(name="default", hosts=[
+        SSH_Group(name="default", desc="Default group", hosts=[
             SSH_Host(name="test", group="default", info=["testinfo"], params={
                 "hostname":"1.2.3.4",
                 "port":"2222",
