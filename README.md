@@ -320,7 +320,7 @@ Host server-behind-lab
     proxyjump lab-serv1
 
 ```
-
+<!-- 
 ### Demo showing some `sshc group` operations:
 [![asciicast](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89.svg)](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89)
 
@@ -330,7 +330,7 @@ Host server-behind-lab
 
 
 ### Demo displaying "end-to-end" tunnel visualization in graph
-[![asciicast](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE.svg)](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE)
+[![asciicast](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE.svg)](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE) -->
 
 
 ## Author
