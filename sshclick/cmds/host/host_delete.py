@@ -1,6 +1,6 @@
 import click
 from sshclick.sshc import SSH_Config
-from sshclick.sshc import complete_ssh_host_names, expand_host_names
+from sshclick.sshc import complete_ssh_host_names, expand_names
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete
@@ -19,8 +19,7 @@ If multiple regex matches are defined, results from all individual matches will 
 Regex NAMES example command: (sshc host delete r:^test_ r:_test$)
 -> will delete all hosts which names start with "test_" or end with "_test"
 
-Whenever target host list is larger than single host, confirmation dialog will appear to confirm if
-deletion is ok to continue.
+Confirmation dialog will appear to confirm if deletion is ok to continue.
 """
 
 # Parameters help:
@@ -34,17 +33,14 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 def cmd(ctx, names, yes):
     config: SSH_Config = ctx.obj
 
-    selected_hosts_list = list(expand_host_names(names, config))
+    selected_hosts_list = list(expand_names(names, config.get_all_host_names()))
     selected_hosts_list.sort()
     
-    # When more than single
+    # Deleting requires confirmation
     if not yes:
-        if len(selected_hosts_list) > 1:
-            print("Multiple hosts are selected for action:")
-            for name in selected_hosts_list:
-                print(f" - {name}")
-            if not click.confirm('Are you sure?'):
-                ctx.exit(1)
+        print(f"Following hosts will be deleted: [{','.join(selected_hosts_list)}]")
+        if not click.confirm('Are you sure?'):
+            ctx.exit(1)
 
     # When deleting multiple hosts, iterate over all of them
     for name in selected_hosts_list:
@@ -58,6 +54,7 @@ def cmd(ctx, names, yes):
         else:
             found_group.patterns.remove(found_host)
 
-        config.generate_ssh_config().write_out()
         if not config.stdout:
             print(f"Deleted host: {name}")
+
+    config.generate_ssh_config().write_out()

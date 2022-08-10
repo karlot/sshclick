@@ -5,7 +5,7 @@ from sshclick.sshc import SSH_Config, complete_ssh_host_names
 # COMMAND: host rename
 #------------------------------------------------------------------------------
 SHORT_HELP = "Rename existing host"
-LONG_HELP  = "Rename existing host from configuration"
+LONG_HELP  = "Rename existing host in configuration"
 
 #------------------------------------------------------------------------------
 
@@ -31,5 +31,4 @@ def cmd(ctx, name, new_name):
     if not config.stdout:
         print(f"Renamed host: {name} -> {new_name}")
 
-    # Write out modified config
     config.generate_ssh_config().write_out()

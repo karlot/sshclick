@@ -1,5 +1,6 @@
 import click
-from sshclick.sshc import SSH_Config, complete_ssh_group_names
+from sshclick.sshc import SSH_Config
+from sshclick.sshc import complete_ssh_group_names
 
 from rich.table import Table
 from rich.panel import Panel
@@ -9,7 +10,17 @@ from rich.console import Console
 #------------------------------------------------------------------------------
 # COMMAND: group show
 #------------------------------------------------------------------------------
-@click.command(name="show", help="Shows group details")
+SHORT_HELP = "Shows group details"
+LONG_HELP  = """
+Display/Shows details from a group
+
+Currently WIP - command will allow some styles in outputs...
+"""
+
+# Parameters help:
+#------------------------------------------------------------------------------
+
+@click.command(name="show", short_help=SHORT_HELP, help=LONG_HELP)
 @click.argument("name", shell_complete=complete_ssh_group_names)
 @click.pass_context
 def cmd(ctx, name):

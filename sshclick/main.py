@@ -1,4 +1,4 @@
-__version__ = "0.5.0a"
+__version__ = "0.5.0a0"
 
 import click
 import os.path
@@ -15,7 +15,7 @@ DEFAULT_USER_CONF = os.path.expanduser(USER_SSH_CONFIG)
 MAIN_HELP = f"""
 SSHClick - SSH Config manager. version {__version__}
 
-Note: As this is early alpha, backup your SSH config files before
+NOTE: As this is early alpha, backup your SSH config files before
 this software, as you might accidentally lose some configuration
 """
 

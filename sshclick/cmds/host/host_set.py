@@ -1,6 +1,6 @@
 import click
 from sshclick.sshc import SSH_Config, SSH_Group
-from sshclick.sshc import complete_ssh_host_names, complete_ssh_group_names, complete_params, expand_host_names
+from sshclick.sshc import complete_ssh_host_names, complete_ssh_group_names, complete_params, expand_names
 from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
 #------------------------------------------------------------------------------
@@ -56,7 +56,8 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 def cmd(ctx, names, info, parameter, target_group_name, force, yes):
     config: SSH_Config = ctx.obj
 
-    selected_hosts_list = list(expand_host_names(names, config))
+    selected_hosts_list = list(expand_names(names, config.get_all_host_names()))
+
     selected_hosts_list.sort()
 
     # Nothing was provided
@@ -64,12 +65,10 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
         print("Calling set without setting anything is not valid on host(s). Run with 'sshc host set -h' for help.")
         ctx.exit(1)
 
-    # When more than single
+    # For setting stuff, we confirm only if it applies on more hosts
     if not yes:
         if len(selected_hosts_list) > 1:
-            print("Multiple hosts are selected for action:")
-            for name in selected_hosts_list:
-                print(f" - {name}")
+            print(f"Following hosts will be changed: [{','.join(selected_hosts_list)}]")
             if not click.confirm('Are you sure?'):
                 ctx.exit(1)
 

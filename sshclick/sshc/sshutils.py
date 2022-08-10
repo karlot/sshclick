@@ -59,19 +59,21 @@ def complete_styles(ctx, param, incomplete) -> list:
     return [k for k in ENABLED_STYLES if k.startswith(incomplete)]
 
 
-def expand_host_names(names: tuple, config: SSH_Config) -> set:
-    all_hosts = config.get_all_host_names()
-    selected_hosts = set()
+# We use this functions to give a tuple of group/host names as input, where some names
+# can be regexes (with "r:"" prefix), and we evaluate regex based on "all_names" list
+# which we use to create a set of expanded hostnames, direct ones, and expanded ones from
+# regex processing. Then return final list...
+def expand_names(names: tuple, all_names: list) -> set:
+    selected = set()
 
-    # Here we check if for each name we can treat it as regex
     for name in names:
         if name.startswith("r:"):
             name_re = name.split(":")[1]
             # print(f"Got regex type name def - '{name_re}'")
-            for host_name in all_hosts:
-                match = re.search(name_re, host_name)
+            for i_name in all_names:
+                match = re.search(name_re, i_name)
                 if match:
-                    selected_hosts.add(host_name)
+                    selected.add(i_name)
         else:
-            selected_hosts.add(name)
-    return selected_hosts
+            selected.add(name)
+    return selected

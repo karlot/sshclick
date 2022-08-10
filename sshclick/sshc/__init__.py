@@ -8,6 +8,6 @@ from .sshutils import complete_ssh_host_names
 from .sshutils import complete_ssh_group_names
 from .sshutils import complete_params
 from .sshutils import complete_styles
-from .sshutils import expand_host_names
+from .sshutils import expand_names
 
 from .ssh_parameters import *
