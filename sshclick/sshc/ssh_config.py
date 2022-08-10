@@ -2,13 +2,12 @@ import re
 import fnmatch
 import copy
 
-from ..globals import *
 from .ssh_host import SSH_Host
 from .ssh_group import SSH_Group
+from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
 import logging
 logging.basicConfig(level=logging.INFO)
-
 
 class SSH_Config:
     """
@@ -17,20 +16,21 @@ class SSH_Config:
     Main class for handling SSH configuration, reading from file, parsing and
     generating and writing contents back to SSH configuration file
     """
+    DEFAULT_GROUP_NAME: str = "default"
 
-    def __init__(self, file: str, config_lines: list = [], stdout: bool = DEFAULT_STDOUT):
+    def __init__(self, file: str, config_lines: list = [], stdout: bool = False):
         self.ssh_config_file: str = file
         self.ssh_config_lines: list = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: list = [SSH_Group(name=DEFAULT_GROUP_NAME, desc="Default group")]
+        self.groups: list = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
 
         # options
         self.stdout: bool = stdout
 
         # parsing "cache" info
         self.current_grindex: int = 0
-        self.current_group: str = DEFAULT_GROUP_NAME
+        self.current_group: str = self.DEFAULT_GROUP_NAME
         self.current_host: SSH_Host = None
         self.current_host_info: list = []
 
@@ -56,7 +56,7 @@ class SSH_Config:
             # Reset "cache" since we flushed host info
             self.current_host = None
 
-
+    # TODO: Add ability to separate host parameters with optional "=" sign
     def parse(self):
         """
         Parse config lines one by one and generate configuration structure
@@ -175,7 +175,7 @@ class SSH_Config:
 
         for group in self.groups:
             # Ship default group as it does not have to be specified
-            render_header = False if group.name == DEFAULT_GROUP_NAME else True
+            render_header = False if group.name == self.DEFAULT_GROUP_NAME else True
             
             if render_header:
                 # Add extra blank line when outputting new group header
@@ -270,7 +270,7 @@ class SSH_Config:
         """
         all_hosts: list = []
         for group in self.groups:
-            for host in group.hosts:
+            for host in group.hosts + group.patterns:
                 all_hosts.append(host.name)
         return all_hosts
 
@@ -336,3 +336,15 @@ class SSH_Config:
             else:
                 filtered_groups.append(group)
         return filtered_groups
+
+
+    def move_host_to_group(self, found_host: SSH_Host, found_group: SSH_Group, target_group: SSH_Group) -> None:
+        """
+        Function that moves host from one group to other group
+        """
+        if found_host.type == "normal":
+            target_group.hosts.append(found_host)
+            found_group.hosts.remove(found_host)
+        else:
+            target_group.patterns.append(found_host)
+            found_group.patterns.remove(found_host)

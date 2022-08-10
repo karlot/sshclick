@@ -3,11 +3,9 @@ import click
 #------------------------------------------------------------------------------
 # GROUP Commands
 #------------------------------------------------------------------------------
-@click.group(name="group")
+@click.group(name="group", help="Command group for managing groups")
 def ssh_group():
-    """
-    Manage groups
-    """
+    pass
 
 #// Linking other sub-commands
 from .group import group_create, group_delete, group_list, group_set, group_show

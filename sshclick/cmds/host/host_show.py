@@ -1,29 +1,51 @@
 import click
-from sshclick.sshc import SSH_Config, complete_ssh_host_names, generate_graph
+from sshclick.sshc import SSH_Config
+from sshclick.sshc import complete_ssh_host_names, complete_styles, generate_graph
 
 from rich.console import Console
 console = Console()
-
-# Help autocomplete with host styles
-enabled_styles = ["panels", "card", "simple", "table", "table2", "json"]
-def complete_styles(ctx, param, incomplete):
-    return [k for k in enabled_styles if k.startswith(incomplete)]
+styles_str = ",".join(complete_styles(None, None, ""))
 
 #------------------------------------------------------------------------------
 # COMMAND: host show
 #------------------------------------------------------------------------------
-@click.command(name="show", help="Display info for host")
-@click.option("--follow", is_flag=True, help="Follow and displays all connected jump-proxy hosts")
-@click.option("--graph",  is_flag=True, help="Shows connection to target as graph (default:false)")
-@click.option("--style", default="panels", show_default="panels", envvar='SSHC_HOST_STYLE',
-    help="Select output rendering style for host details: [panels, card, simple, table, table2, json]",
-    shell_complete=complete_styles)
+SHORT_HELP = "Show current host configuration"
+LONG_HELP  = """
+Shows details about host and its configuration
+
+Command can generate nice representation of configuration for given HOST.
+If HOST is using "proxyjump" properties, command will try to collect also all info
+from intermediate hosts/proxies as well. This relations can then be showed when using
+option --follow, to display all interconnected host path. (NOTE: This relations can
+only be understand and showed if "proxyjump" hosts are also part of the configuration!!!)
+
+Additionally when using --graph option, command can "draw" visualization of
+connection path, and defined end-to-end tunnels
+
+\b
+SSHC can ready some of this options via users ENV variables
+(trough local shell files such as: .bashrc, .zshrc, etc...)
+export SSHC_HOST_STYLE=table1
+export SSHC_HOST_FOLLOW=0
+export SSHC_HOST_GRAPH=1
+"""
+
+# Parameters help:
+FOLLOW_HELP =  "Follow and displays all connected hosts via proxyjump (works only for locally defined hosts)"
+GRAPH_HELP  =  "Shows connection to target as graph with tunnels visualizations"
+STYLE_HELP  = f"Select output rendering style for host details: ({styles_str}), (default: panels)"
+#------------------------------------------------------------------------------
+
+@click.command(name="show", short_help=SHORT_HELP, help=LONG_HELP)
+@click.option("--style", default="panels", envvar='SSHC_HOST_STYLE',  help=STYLE_HELP, shell_complete=complete_styles)
+@click.option("--follow", is_flag=True,    envvar='SSHC_HOST_FOLLOW', help=FOLLOW_HELP)
+@click.option("--graph",  is_flag=True,    envvar='SSHC_HOST_GRAPH',  help=GRAPH_HELP)
 @click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
-def cmd(ctx, name, follow, graph, style):
+def cmd(ctx, name, style, follow, graph):
     config: SSH_Config = ctx.obj
 
-    # Keep list of linked hosts via jumpproxy option
+    # Keep list of linked hosts via proxyjump option
     traced_hosts = []
 
     # we are first checking host that is asked, and then check if that host has a "proxy" defined

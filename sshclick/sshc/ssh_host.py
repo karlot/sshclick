@@ -5,6 +5,7 @@ from rich.console import Console
 console = Console()
 
 DEBUG_STYLES = False
+ENABLED_STYLES = ["panels", "card", "simple", "table", "table2", "json"]
 
 @dataclass
 class SSH_Host:

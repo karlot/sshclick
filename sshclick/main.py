@@ -1,23 +1,35 @@
+__version__ = "0.5.0a"
+
 import click
-from .globals import *
+import os.path
 from .sshc import SSH_Config
 
 # Setup click to use both short and long help option
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+USER_SSH_CONFIG   = "~/.ssh/config"
+CONTEXT_SETTINGS  = dict(help_option_names=['-h', '--help'])
+DEFAULT_USER_CONF = os.path.expanduser(USER_SSH_CONFIG)
 
-@click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("--sshconfig", default=DEFAULT_USER_CONF, help="Config file, default is ~/.ssh/config")
-@click.option("--stdout",    default=DEFAULT_STDOUT, is_flag=True, help="Send changed SSH config to STDOUT instead to original file")
-@click.version_option(VERSION, message="SSHClick (sshc) - Version: %(version)s")
+#------------------------------------------------------------------------------
+# COMMAND: sshc
+#------------------------------------------------------------------------------
+MAIN_HELP = f"""
+SSHClick - SSH Config manager. version {__version__}
+
+Note: As this is early alpha, backup your SSH config files before
+this software, as you might accidentally lose some configuration
+"""
+
+# Parameters help:
+SSHCONFIG_HELP = f"Config file (default: {USER_SSH_CONFIG})"
+STDOUT_HELP    =  "Send changed SSH config to STDOUT instead to original file, can be enabled with setting ENV variable (export SSHC_STDOUT=1)"
+#------------------------------------------------------------------------------
+
+@click.group(context_settings=CONTEXT_SETTINGS, help=MAIN_HELP)
+@click.option("--sshconfig", default=DEFAULT_USER_CONF, envvar="SSHC_SSHCONFIG", help=SSHCONFIG_HELP)
+@click.option("--stdout",    is_flag=True,              envvar="SSHC_STDOUT",    help=STDOUT_HELP)
+@click.version_option(__version__, message="SSHClick (sshc) - Version: %(version)s")
 @click.pass_context
 def cli(ctx, sshconfig: str, stdout: bool):
-    """
-    SSHClick - SSH Config manager
-
-    Note: As this is early alpha, backup your SSH config files before
-    this software, as you might accidentally lose some configuration
-    """
-    # Prepare Click context object
     ctx.obj = SSH_Config(file=sshconfig, stdout=stdout).read().parse()
 
 

@@ -1,18 +1,40 @@
 import click
-from sshclick.globals import *
 from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import complete_ssh_group_names, complete_params
+from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
 #------------------------------------------------------------------------------
 # COMMAND: host create
 #------------------------------------------------------------------------------
-@click.command(name="create", help="Create new host configuration")
-@click.option("-g", "--group", "target_group_name", default=DEFAULT_GROUP_NAME, help="Sets group for the host")
-@click.option("-p", "--parameter", default=[], multiple=True, help="Sets parameter for the host, must be in 'param=value' format")
-@click.option("--force", is_flag=True, default=False, help="Forces automatically create group for host if group is missing")
+SHORT_HELP = "Create new host"
+LONG_HELP  = """
+Create new host and save it to config file
+
+Command can be used to create a single HOST definition, and also set definitions within single command.
+Later definitions can be changes with "sshc host set" commands.
+
+If autocomplete is enabled, command will try to give suggestions for your inputs on definition of GROUP and well known PARAM names.
+"""
+
+# Parameters help:
+INFO_HELP  = "Set host info, can be set multiple times, or set to empty value to clear it (example: -i '')"
+PARAM_HELP = "Sets parameter for the host, takes 2 values (<sshparam> <value>). To unset/remove parameter from host, set its value to empty string like this (example: -p user '')"
+GROUP_HELP = "Defined in which group host will be created, if not specified, 'default' group will be used"
+FORCE_HELP = "Allows during host creation, to create group for host if target group is missing/not yet defined."
+#------------------------------------------------------------------------------
+
+@click.command(name="create", short_help=SHORT_HELP, help=LONG_HELP)
+@click.option("-i", "--info", multiple=True, help=INFO_HELP)
+@click.option("-p", "--parameter", nargs=2, multiple=True, help=PARAM_HELP, shell_complete=complete_params)
+@click.option("-g", "--group", "target_group_name", help=GROUP_HELP, shell_complete=complete_ssh_group_names)
+@click.option("--force", is_flag=True, help=FORCE_HELP)
 @click.argument("name")
 @click.pass_context
-def cmd(ctx, name, target_group_name, parameter, force):
+def cmd(ctx, name, info, parameter, target_group_name, force):
     config: SSH_Config = ctx.obj
+
+    if not target_group_name:
+        target_group_name = SSH_Config.DEFAULT_GROUP_NAME
 
     found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
     if found_host:
@@ -22,27 +44,25 @@ def cmd(ctx, name, target_group_name, parameter, force):
     # Find group by name where to store config
     found_group = config.find_group_by_name(target_group_name, throw_on_fail=False)
     if not found_group:
-        if not force:
+        if force:
+            new_group = SSH_Group(name=target_group_name)
+            config.groups.append(new_group)
+            found_group = new_group
+        else:
             print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
             print("Create group first, or use '--force' option to create it automatically!")
             ctx.exit(1)
-        else:
-            # Create new group
-            new_group = SSH_Group(name=target_group_name)
-            # Add new group to config and set it as target group
-            config.groups.append(new_group)
-            found_group = new_group
 
     # This is patter host
     target_type = "pattern" if "*" in name else "normal"
-    new_host = SSH_Host(name=name, group=target_group_name, type=target_type)
+    new_host = SSH_Host(name=name, group=target_group_name, type=target_type, info=list(info))
 
     # Add all passed parameters to config
-    # TODO: here we need to implement validation for all "known" parameters that can be used, and possibly
-    # some normalization to documented "CamelCase" format
-    for item in parameter:
-        param, value = item.split("=")
+    for param, value in parameter:
         param = param.lower()           # parametar keyword will be lowercased as they are case insensitive
+        if not value or value.isspace():
+            print(f"Cannot define empty value for parameter during host creation!")
+            ctx.exit(1)
         if param in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
             # We need to handle host parameter as "list"
             if not param in new_host.params:

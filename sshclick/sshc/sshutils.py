@@ -1,7 +1,13 @@
 import os.path
+import re
+
 from .ssh_config import SSH_Config
+from .ssh_host import ENABLED_STYLES
+from .ssh_parameters import ALL_PARAM_LC_NAMES
+
 from rich.console import Console
 err = Console(stderr=True)
+
 
 # Make a copy of input dict with all keys as LC and filtered out based on input filter list
 def filter_dict(d: dict, ignored: list = []) -> dict:
@@ -10,7 +16,7 @@ def filter_dict(d: dict, ignored: list = []) -> dict:
 
 # Custom parsing trough parent object types until required parameters are found
 # Then build config object and bound it to ctx.obj
-def build_context_config(ctx):
+def build_context_config(ctx) -> None:
     if ctx.obj is None:
         current_obj = ctx.parent
         try:
@@ -31,19 +37,41 @@ def build_context_config(ctx):
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_host_names(ctx, param, incomplete):
+def complete_ssh_host_names(ctx, param, incomplete) -> list:
     build_context_config(ctx)
-
     all_hosts = ctx.obj.get_all_host_names()
     return [k for k in all_hosts if k.startswith(incomplete)]
 
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_group_names(ctx, param, incomplete):
+def complete_ssh_group_names(ctx, param, incomplete) -> list:
     build_context_config(ctx)
-
     all_groups = ctx.obj.get_all_group_names()
     return [k for k in all_groups if k.startswith(incomplete)]
 
 
+def complete_params(ctx, param, incomplete) -> list:
+    return [k for k in ALL_PARAM_LC_NAMES if k.startswith(incomplete)]
+
+
+def complete_styles(ctx, param, incomplete) -> list:
+    return [k for k in ENABLED_STYLES if k.startswith(incomplete)]
+
+
+def expand_host_names(names: tuple, config: SSH_Config) -> set:
+    all_hosts = config.get_all_host_names()
+    selected_hosts = set()
+
+    # Here we check if for each name we can treat it as regex
+    for name in names:
+        if name.startswith("r:"):
+            name_re = name.split(":")[1]
+            # print(f"Got regex type name def - '{name_re}'")
+            for host_name in all_hosts:
+                match = re.search(name_re, host_name)
+                if match:
+                    selected_hosts.add(host_name)
+        else:
+            selected_hosts.add(name)
+    return selected_hosts

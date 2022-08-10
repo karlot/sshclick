@@ -1,19 +1,40 @@
 import click
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Host
 
 from rich.console import Console
 from rich.table import Table
 from rich import box
-
 console = Console()
 
 #------------------------------------------------------------------------------
 # COMMAND: host-list
 #------------------------------------------------------------------------------
-@click.command(name="list", help="List hosts")
-@click.option("-g", "--group",  "group_filter", default=None,  help="Filter for group that host belongs to (regex)")
-@click.option("-n", "--name",   "name_filter",  default=None,  help="Filter for host name (regex)")
-@click.option("-v", "--verbose", is_flag=True,  default=False, help="Show verbose info (all parameters)")
+SHORT_HELP = "List configured hosts"
+LONG_HELP  = """
+List hosts from current configuration
+
+Command allows displaying hosts with various properties, and filtering output list for easier searching.
+SSHC will display also usually not visible "INHERITANCE" of parameters trough "PATTERNS", and from
+which pattern parameter for given host would be applied (inherited).
+
+Normal output will try to show only most important information about listed hosts, while if requested,
+VERBOSE option will try to show ALL defined/inherited parameters for all listed hosts.
+Alternatively for details on only single host, use "sshc host show" command.
+
+Host list can be limited with filters, to only show specific hosts that match NAME regex or GROUP regex.
+When both NAME and GROUP regex are defined, output must satisfy both filters.
+"""
+
+# Parameters help:
+GROUP_HELP   = "Filter for host groups (regex)"
+NAME_HELP    = "Filter for host names (regex)"
+VERBOSE_HELP = "Show verbose info (all parameters)"
+#------------------------------------------------------------------------------
+
+@click.command(name="list", short_help=SHORT_HELP, help=LONG_HELP)
+@click.option("-g", "--group",  "group_filter", help=GROUP_HELP)
+@click.option("-n", "--name",   "name_filter",  help=NAME_HELP)
+@click.option("-v", "--verbose", is_flag=True,  help=VERBOSE_HELP)
 @click.pass_context
 def cmd(ctx, group_filter, name_filter, verbose):
     config: SSH_Config = ctx.obj
