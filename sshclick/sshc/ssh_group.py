@@ -11,7 +11,7 @@ class SSH_Group:
 
     print_style: str = ""
 
-    def __rich__():
+    def __rich__(self):
         pass
 
 

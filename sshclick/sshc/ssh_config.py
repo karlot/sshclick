@@ -2,6 +2,7 @@ import re
 import fnmatch
 import copy
 
+from typing import List, Union
 from .ssh_host import SSH_Host
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
@@ -31,7 +32,7 @@ class SSH_Config:
         # parsing "cache" info
         self.current_grindex: int = 0
         self.current_group: str = self.DEFAULT_GROUP_NAME
-        self.current_host: SSH_Host = None
+        self.current_host: Union[None,SSH_Host] = None
         self.current_host_info: list = []
 
 
@@ -307,7 +308,7 @@ class SSH_Config:
         function creates a new list of SSH groups and their SSH hosts, but with all
         non-matching items removed.
         """
-        filtered_groups: list[SSH_Group] = []
+        filtered_groups: List[SSH_Group] = []
         for group in self.groups:
             # If group filter is defined, check if current group matches the name to progress
             if group_filter:
