@@ -70,13 +70,15 @@ class SSH_Config:
             if not line:
                 continue
             
-            # Process special metadata for grouping: "#@group", "#@desc", "#@info"
-            if line.startswith("#@"):
-                match = re.search(r"^#@(\w+):\s*(.+)$", line)
+            # Reworked parsing method... special "meta" keys not needed, regex now parses words
+            # so its much more "freely" in reading from config file writing is still in legacy style
+            # in future, output config write styles could be changed... 
+            if line.startswith("#"):
+                match = re.search(r"^#[\s@]*(group|desc|info|host)[\s:]+(.+)$", line)
 
                 # In case special comment is unreadable
                 if not match:
-                    logging.warning(f"META: Unmatched metadata line {line} on SSH-config line number {config_line_index}")
+                    logging.debug(f"DROP COMMENT: '{line}'")
                     continue
                 
                 metadata, value = match.groups()
@@ -108,13 +110,8 @@ class SSH_Config:
                     continue
 
                 else:
-                    logging.warning(f"META: Unhandled metadata metadata '{metadata}' on SSH-config line number {config_line_index}")
+                    logging.warning(f"META: Unhandled metadata metadata '{metadata}' on SSH-config line number: {config_line_index}")
                     continue
-
-            # Ignore rest of commented lines
-            if line.startswith("#"):
-                logging.debug(f"DROP COMMENT: '{line}'")
-                continue
 
             # Here we expect only normal ssh config lines "Host" is usually the keyword that begins definition
             # if we find any other keyword before first host keyword is defined, configuration is wrong probably
@@ -170,6 +167,8 @@ class SSH_Config:
         internal object model.
         """
         SSHCONFIG_INDENT = "    "
+        SSHCONFIG_META_PREFIX = "@"
+        SSHCONFIG_META_SEPARATOR = ": "
 
         # First we lines before we flush them into file
         lines = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
@@ -183,19 +182,19 @@ class SSH_Config:
                 lines.append("\n")
                 # Start header line for the group with known metadata
                 lines.append(f"#{'-'*79}\n")        # add horizontal decoration line
-                lines.append(f"#@group: {group.name}\n")
+                lines.append(f"#{SSHCONFIG_META_PREFIX}group{SSHCONFIG_META_SEPARATOR}{group.name}\n")
                 if group.desc:
-                    lines.append(f"#@desc: {group.desc}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}desc{SSHCONFIG_META_SEPARATOR}{group.desc}\n")
                 for info in group.info:
-                    lines.append(f"#@info: {info}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}info{SSHCONFIG_META_SEPARATOR}{info}\n")
                 lines.append(f"#{'-'*79}\n")        # add horizontal decoration line
 
             # Append hosts and patterns items from group
             for host in group.hosts + group.patterns:
                 # If there is host-info assigned to host, add it before adding "host" definition
                 for host_info in host.info:
-                    lines.append(f"#@host: {host_info}\n")
-                
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}host{SSHCONFIG_META_SEPARATOR}{host_info}\n")
+
                 # Add "host" line definition
                 lines.append(f"Host {host.name}\n")
 

@@ -21,7 +21,7 @@ Host net-*
 
 
 #-------------------------------------------------------------------------------
-#@group: jumphost
+#@group jumphost
 #@desc: Edge-server / SSH bastion
 #@info: Used for jump-proxy from intnet to internal lab servers
 #-------------------------------------------------------------------------------
@@ -32,20 +32,24 @@ Host jumper1
 
 
 #-------------------------------------------------------------------------------
-#@group: lab-servers
-#@desc: Testing/Support servers
-#@info: Some [red]important[/] detail here!
-#@info: We can have color markups in descriptions and info lines
+# group: lab-servers
+# desc:  Testing/Support servers
+# info:  Some [red]important[/] detail here!
+# info:  We can have color markups in descriptions and info lines
 #-------------------------------------------------------------------------------
-#@host: adding info line
+
+# host: adding host info/comment line
 Host lab-serv1
     hostname 10.10.0.1
     user admin
 
 Host lab-serv2
-    hostname 10.16.141
+    hostname 10.10.0.1
 
-Host server-behind-lab
+Host lab-serv3
+    hostname 10.10.0.1
+
+Host server-behind-lab-serv1
     hostname 10.30.0.1
     user testuser
     port 1234

@@ -13,20 +13,30 @@ def render(host: SSH_Host):
     out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
-    panel_data = f"""\
+    grp_inputs = []
+
+    #// Add Host data panel to the group
+    #// -----------------------------------------------------------------------
+    host_panel_data = f"""\
     [bright_white]Name [/]:  {host.name}
     [bright_white]Group[/]:  {host.group}
     [bright_white]Type [/]:  {out_type}\
     """
-    host_panel = Panel(dedent(panel_data), border_style="grey35", title="Host", title_align="left")
-    info_panel = Panel(out_info,           border_style="grey35", style="gray50", title="Info", title_align="left")
+    grp_inputs.append(Panel(dedent(host_panel_data), border_style="grey35", title="Host", title_align="left"))
 
+    #// Add Host info panel to the group (if host info exist)
+    #// -----------------------------------------------------------------------
+    if host.info:
+        grp_inputs.append(Panel(out_info, border_style="grey35", style="gray50", title="Info", title_align="left"))
+
+    #// Prepare table with params and append it to the group
+    #// -----------------------------------------------------------------------
     param_table = Table(box=box.ROUNDED, style="grey35", show_header=True, show_edge=True, expand=True)
     param_table.add_column("Param")
     param_table.add_column("Value")
     param_table.add_column("Inherited-from")
 
-    # Add rows for SSH Config parameters
+    # Add rows for SSH Config parameter table
     for key, value in host.params.items():
         output_value = value if not isinstance(value, list) else "\n".join(value)
         param_table.add_row(key, output_value)
@@ -38,6 +48,8 @@ def render(host: SSH_Host):
                 output_value = value if not isinstance(value, list) else "\n".join(value)
                 param_table.add_row(param, output_value, pattern, style="yellow")
 
-    panel_group = Group(host_panel, info_panel, param_table) if host.info else Group(host_panel, param_table)
+    grp_inputs.append(param_table)
 
-    return Panel.fit(panel_group, box=box.SIMPLE, padding=(0,0))
+    #// Render output
+    #// -----------------------------------------------------------------------
+    return Panel.fit(Group(*grp_inputs), box=box.SIMPLE, padding=(0,0))

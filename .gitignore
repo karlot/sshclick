@@ -10,6 +10,9 @@ __pycache__
 .mypy_cache
 .pytest_cache
 
+# pyenv stuff
+.python-version
+
 # Builds
 build
 dist

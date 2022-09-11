@@ -9,19 +9,25 @@ from rich import box
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
     out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
-    out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
+    #// Add Host data information
+    #// -----------------------------------------------------------------------
     layout_table = Table("", box=box.ROUNDED, style="grey35" ,show_edge=True, show_header=False)
     layout_table.add_row(f"[bright_white]Name [/]:  {host.name}")
     layout_table.add_row(f"[bright_white]Group[/]:  {host.group}")
     layout_table.add_row(f"[bright_white]Type [/]:  {out_type}")
 
+    #// Add Host info panel (if host info exist)
+    #// -----------------------------------------------------------------------
     if host.info:
         layout_table.add_row("")
+        out_info = "\n".join(host.info)
         layout_table.add_row(f"[gray50]{out_info}[/]")
 
     layout_table.add_row("")
 
+    #// Prepare table with params and append it to the layout table
+    #// -----------------------------------------------------------------------
     param_table = Table(box=box.SIMPLE, style="grey35", show_header=True, show_edge=False, pad_edge=False)
     param_table.add_column("Param")
     param_table.add_column("Value")
@@ -40,6 +46,7 @@ def render(host: SSH_Host):
                 param_table.add_row(param, output_value, pattern, style="yellow")
 
     layout_table.add_row(param_table)
-    wrapper_panel = Panel(layout_table, box=box.SIMPLE, padding=(0,0))
 
-    return wrapper_panel
+    #// Render output
+    #// -----------------------------------------------------------------------
+    return Panel(layout_table, box=box.SIMPLE, padding=(0,0))
