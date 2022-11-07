@@ -35,5 +35,7 @@ def cli(ctx, sshconfig: str, stdout: bool):
 
 # Top full commands
 from .cmds import cmd_group, cmd_host
+from .cmds.cmd_host import host_list
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
+cli.add_command(host_list.cmd, "ls")
