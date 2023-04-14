@@ -29,13 +29,18 @@ STDOUT_HELP    =  "Send changed SSH config to STDOUT instead to original file, c
 @click.option("--stdout",    is_flag=True,              envvar="SSHC_STDOUT",    help=STDOUT_HELP)
 @click.version_option(__version__, message="SSHClick (sshc) - Version: %(version)s")
 @click.pass_context
-def cli(ctx, sshconfig: str, stdout: bool):
+def cli(ctx: click.core.Context, sshconfig: str, stdout: bool):
     ctx.obj = SSH_Config(file=sshconfig, stdout=stdout).read().parse()
 
 
 # Top full commands
 from .cmds import cmd_group, cmd_host
-from .cmds.cmd_host import host_list
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
-cli.add_command(host_list.cmd, "ls")
+
+#// Top level aliases
+from .cmds.cmd_group import group_list
+cli.add_command(group_list.cmd, "groups")
+
+from .cmds.cmd_host import host_list
+cli.add_command(host_list.cmd, "hosts")

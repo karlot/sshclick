@@ -1,5 +1,5 @@
 import click
-from sshclick.sshc import SSH_Config, SSH_Group
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 from sshclick.sshc import complete_ssh_host_names, complete_ssh_group_names, complete_params, expand_names
 from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
@@ -56,8 +56,7 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 def cmd(ctx, names, info, parameter, target_group_name, force, yes):
     config: SSH_Config = ctx.obj
 
-    selected_hosts_list = list(expand_names(names, config.get_all_host_names()))
-
+    selected_hosts_list = expand_names(names, config.get_all_host_names())
     selected_hosts_list.sort()
 
     # Nothing was provided
@@ -74,25 +73,25 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
 
     # When setting stuff on multiple hosts, iterate over them
     for name in selected_hosts_list:
-        found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
-        if not found_host:
+        if not config.check_host_by_name(name):
             print(f"Cannot set anything on host '{name}' as it is not defined in configuration!")
             ctx.exit(1)
+
+        found_host, found_group = config.get_host_by_name(name)
         
         # Move host to different group
         if target_group_name:
             # Find target group
-            target_group = config.find_group_by_name(target_group_name, throw_on_fail=False)
-
-            if not target_group:
-                if force:
-                    new_group = SSH_Group(name=target_group_name)
-                    config.groups.append(new_group)
-                    target_group = new_group
-                else:
-                    print(f"Cannot move host '{name}' to group '{target_group_name}' which does not exist!")
-                    print("Consider using --force to automatically create target group, or create it manually first.")
-                    ctx.exit(1)
+            target_group_exists = config.check_group_by_name(target_group_name)    
+            if not target_group_exists and not force:
+                print(f"Cannot move host '{name}' to group '{target_group_name}' which does not exist!")
+                print("Consider using --force to automatically create target group, or create it manually first.")
+                ctx.exit(1)
+            elif not target_group_exists:
+                target_group = SSH_Group(name=target_group_name)
+                config.groups.append(target_group)
+            else:
+                target_group = config.get_group_by_name(target_group_name)
 
             # Move host to target group
             config.move_host_to_group(found_host, found_group, target_group)

@@ -37,29 +37,26 @@ Host test2
 #-----------------------------------
 # Tests
 #-----------------------------------
-def test_get_host_nok_nofail():
+def test_check_host_bad():
     config = SSH_Config("none", config1.splitlines())
     config.parse()
 
-    host, group = config.find_host_by_name("test", throw_on_fail=False)
-    
-    assert host == None
-    assert group == None
+    assert not config.check_host_by_name("test")
 
 
-def test_get_host_nok_exception():
+def test_get_host_exception():
     config = SSH_Config("none", config1.splitlines())
     config.parse()
 
     with pytest.raises(Exception):
-        _, _ = config.find_host_by_name("test", throw_on_fail=True)
-    
+        config.get_host_by_name("test")
+
 
 def test_get_host_ok():
     config = SSH_Config("none", config2.splitlines())
     config.parse()
 
-    host, group = config.find_host_by_name("test")
+    host, group = config.get_host_by_name("test")
     
     expected_host = SSH_Host(name='test', group="default", info=["testinfo"], params={
         "hostname": "1.2.3.4",

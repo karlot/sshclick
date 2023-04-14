@@ -28,8 +28,7 @@ def cmd(ctx, name, desc, info):
     config: SSH_Config = ctx.obj
 
     # Check if already group exists
-    found_group = config.find_group_by_name(name, throw_on_fail=False)
-    if found_group:
+    if not config.check_group_by_name(name):
         print(f"Cannot create new group '{name}', as group already exists with this name")
         ctx.exit(1)
 
@@ -37,8 +36,7 @@ def cmd(ctx, name, desc, info):
 
     # Add new group to config and show newly created group
     config.groups.append(new_group)
-    
     config.generate_ssh_config().write_out()
+
     if not config.stdout:
         print(f"Created group: {name}")
-    

@@ -39,12 +39,13 @@ def cmd(ctx, name, desc, info):
         print("Run 'sshc group set -h' for help.")
         ctx.exit(1)
 
-    # Find group by name
-    found_group = config.find_group_by_name(name, throw_on_fail=False)
-    if not found_group:
+    if not config.check_group_by_name(name):
         print(f"Cannot modify group '{name}', it is not defined in configuration!")
         ctx.exit(1)
 
+    found_group = config.get_group_by_name(name)
+
+    # If new description is set
     if desc:
         found_group.desc = desc.strip()
 
@@ -58,7 +59,7 @@ def cmd(ctx, name, desc, info):
     else:
         found_group.info = []
 
+    config.generate_ssh_config().write_out()
+
     if not config.stdout:
         print(f"Modified group: {name}")
-
-    config.generate_ssh_config().write_out()

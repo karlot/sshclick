@@ -29,7 +29,7 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 def cmd(ctx, names, yes):
     config: SSH_Config = ctx.obj
 
-    selected_group_list = list(expand_names(names, config.get_all_group_names()))
+    selected_group_list = expand_names(names, config.get_all_group_names())
     selected_group_list.sort()
 
     # Deleting requires confirmation
@@ -38,18 +38,21 @@ def cmd(ctx, names, yes):
         if not click.confirm('Are you sure?'):
             ctx.exit(1)
 
-    # When deleting multiple hosts, iterate over all of them
+    # When deleting multiple groups, iterate over all of them
+    config_updated = False
     for name in selected_group_list:
 
         # Find group by name
-        found_group = config.find_group_by_name(name, throw_on_fail=False)
-        if not found_group:
+        if not config.check_group_by_name(name):
             print(f"Cannot delete group '{name}', it is not defined in configuration!")
             continue
-        
-        config.groups.remove(found_group)
+
+        config.groups.remove(config.get_group_by_name(name))
+        config_updated = True
 
         if not config.stdout:
             print(f"Deleted group: {name}")
 
-    config.generate_ssh_config().write_out()
+    # ReWrite config only when config was actually changed
+    if config_updated:
+        config.generate_ssh_config().write_out()

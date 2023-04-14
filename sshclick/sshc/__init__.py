@@ -9,5 +9,6 @@ from .sshutils import complete_ssh_group_names
 from .sshutils import complete_params
 from .sshutils import complete_styles
 from .sshutils import expand_names
+from .sshutils import trace_jumphosts
 
 from .ssh_parameters import *

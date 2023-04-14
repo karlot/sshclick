@@ -26,12 +26,13 @@ Currently WIP - command will allow some styles in outputs...
 def cmd(ctx, name):
     config: SSH_Config = ctx.obj
 
-    found_group = config.find_group_by_name(name, throw_on_fail=False)
-    if not found_group:
+    if not config.check_group_by_name(name):
         print(f"Cannot show group '{name}', it is not defined in configuration!")
         ctx.exit(1)
 
-    host_list = []
+    found_group = config.get_group_by_name(name)
+    host_list: list[str] = []
+
     for host in found_group.hosts:
         if "hostname" in host.params:
             h_name = host.params["hostname"]
@@ -40,7 +41,7 @@ def cmd(ctx, name):
         else:
             host_list.append(host.name)
 
-    pattern_list = []
+    pattern_list: list[str] = []
     for host in found_group.patterns:
         # hack to search via case insensitive info
         if "hostname" in host.params:

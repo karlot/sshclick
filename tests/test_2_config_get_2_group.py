@@ -32,12 +32,11 @@ Host test2
 #-----------------------------------
 # Tests
 #-----------------------------------
-def test_get_group_nok_nofail():
+def test_check_group_nok():
     config = SSH_Config("none", config1.splitlines())
     config.parse()
 
-    group = config.find_group_by_name("testgroup-2", throw_on_fail=False)
-    assert group == None
+    assert not config.check_group_by_name("testgroup-2")
 
 
 def test_get_group_nok_exception():
@@ -45,14 +44,14 @@ def test_get_group_nok_exception():
     config.parse()
 
     with pytest.raises(Exception):
-        _ = config.find_group_by_name("testgroup-2", throw_on_fail=True)
+        config.get_group_by_name("testgroup-2")
     
 
 def test_get_group_ok():
     config = SSH_Config("none", config2.splitlines())
     config.parse()
 
-    group = config.find_group_by_name("testgroup-2", throw_on_fail=True)
+    group = config.get_group_by_name("testgroup-2")
     
     assert group == SSH_Group(name="testgroup-2", desc="this is description 2", info=["info line 2-1", "info line 2-2"], hosts=[
         SSH_Host(name='test2', group="testgroup-2", info=["hostinfo2"], params={

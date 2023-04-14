@@ -1,0 +1,5 @@
+TODOs:
+- [ ] Move inherited parameters processing from "trace_jumphosts". That should be done during Config parsing!
+- [ ] Implement that HOST TEST uses paramiko to perform native SSH testing, not relying on SSH command
+- [ ] Implement HOST TEST to verify and print graph of linked connection trace-ing, and passed test for all connected hosts
+- [ ] Add option for SSHClick config trough SSH Config file notation... "#@config host-style:simple" for example

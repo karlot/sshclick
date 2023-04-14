@@ -20,10 +20,10 @@ TIME_HELP  = "Timeout for SSH connection"
 @click.option("--timeout", default=3, help=TIME_HELP)
 @click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
-def cmd(ctx, name, timeout):
+def cmd(ctx: click.core.Context, name: str, timeout: int):
     config: SSH_Config = ctx.obj
 
-    found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
+    found_host, _ = config.get_host_by_name(name)
     if not found_host:
         print(f"Cannot test host '{name}' as it is not defined in configuration!")
         ctx.exit(1)

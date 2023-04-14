@@ -17,19 +17,15 @@ LONG_HELP  = "Rename existing group in configuration"
 def cmd(ctx, name, new_name):
     config: SSH_Config = ctx.obj
 
-    found_group = config.find_group_by_name(name, throw_on_fail=False)
-    if not found_group:
+    if not config.check_group_by_name(name):
         print(f"Cannot rename group '{name}', as it is not defined in configuration!")
         ctx.exit(1)
-
-    found_target_group = config.find_group_by_name(new_name, throw_on_fail=False)
-    if found_target_group:
+    if config.check_group_by_name(new_name):
         print(f"Cannot rename group '{name}' to '{new_name}' as new name is already used!")
         ctx.exit(1)
 
-    found_group.name = new_name
+    config.get_group_by_name(name).name = new_name
+    config.generate_ssh_config().write_out()
     
     if not config.stdout:
         print(f"Renamed group: {name} -> {new_name}")
-
-    config.generate_ssh_config().write_out()

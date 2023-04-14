@@ -16,19 +16,15 @@ LONG_HELP  = "Rename existing host in configuration"
 def cmd(ctx, name, new_name):
     config: SSH_Config = ctx.obj
 
-    found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
-    if not found_host:
+    if (not config.check_host_by_name(name)):
         print(f"Cannot rename host '{name}' as it is not defined in configuration!")
         ctx.exit(1)
-
-    found_target_host, _ = config.find_host_by_name(new_name, throw_on_fail=False)
-    if found_target_host:
+    if (config.check_host_by_name(new_name)):
         print(f"Cannot rename host '{name}' to '{new_name}' as new name is already used!")
         ctx.exit(1)
 
-    found_host.name = new_name
+    config.get_host_by_name(name)[0].name = new_name
+    config.generate_ssh_config().write_out()
 
     if not config.stdout:
         print(f"Renamed host: {name} -> {new_name}")
-
-    config.generate_ssh_config().write_out()

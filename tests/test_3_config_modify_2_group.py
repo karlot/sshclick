@@ -20,7 +20,7 @@ def test_add_new_group():
     new_group = SSH_Group(name="testgroup")
     config.groups.append(new_group)
 
-    found_group = config.find_group_by_name("testgroup")
+    found_group = config.get_group_by_name("testgroup")
     assert found_group == new_group
 
     config.generate_ssh_config()
@@ -57,7 +57,7 @@ def test_add_new_group_complex():
     new_group = SSH_Group(name="testgroup", desc="description123")
     config.groups.append(new_group)
 
-    found_group = config.find_group_by_name("testgroup")
+    found_group = config.get_group_by_name("testgroup")
     assert found_group == new_group
 
     config.generate_ssh_config()

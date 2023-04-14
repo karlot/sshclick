@@ -19,10 +19,10 @@ def test_add_new_host():
 
     new_host = SSH_Host(name="testnew", info=["some-host-info"], group="default", params={"hostname": "2.2.3.3"})
 
-    group = config.find_group_by_name("default")
+    group = config.get_group_by_name("default")
     group.hosts.append(new_host)
 
-    found_host, found_group = config.find_host_by_name("testnew")
+    found_host, found_group = config.get_host_by_name("testnew")
     assert found_host == new_host
     assert found_group == SSH_Group(name="default", desc="Default group", hosts=[new_host])
 
@@ -84,7 +84,7 @@ def test_add_new_host_complex():
     new_host = SSH_Host(name="test-new", info=["this is a new host"], group="testgroup", params={"hostname": "1.1.1.1"})
     new_pattern = SSH_Host(name="test-*", group="testgroup", params={"user": "test4321"})
 
-    group = config.find_group_by_name("testgroup")
+    group = config.get_group_by_name("testgroup")
     group.hosts.append(new_host)
     group.patterns.append(new_pattern)
 

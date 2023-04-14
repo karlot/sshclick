@@ -36,22 +36,22 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
     if not target_group_name:
         target_group_name = SSH_Config.DEFAULT_GROUP_NAME
 
-    found_host, _ = config.find_host_by_name(name, throw_on_fail=False)
-    if found_host:
+    if config.check_host_by_name(name):
         print(f"Cannot create host '{name}' as it already exists in configuration!")
         ctx.exit(1)
-    
+        
     # Find group by name where to store config
-    found_group = config.find_group_by_name(target_group_name, throw_on_fail=False)
-    if not found_group:
-        if force:
-            new_group = SSH_Group(name=target_group_name)
-            config.groups.append(new_group)
-            found_group = new_group
-        else:
-            print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
-            print("Create group first, or use '--force' option to create it automatically!")
-            ctx.exit(1)
+    target_group_exists = config.check_group_by_name(target_group_name)
+
+    if not target_group_exists and not force:
+        print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
+        print("Create group first, or use '--force' option to create it automatically!")
+        ctx.exit(1)
+    elif not target_group_exists:
+        target_group = SSH_Group(name=target_group_name)
+        config.groups.append(target_group)
+    else:
+        target_group = config.get_group_by_name(target_group_name)
 
     # This is patter host
     target_type = "pattern" if "*" in name else "normal"
@@ -73,11 +73,14 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
             # Simple single keyword
             new_host.params[param] = value
 
+    # Append new host to the group
     if new_host.type == "normal":
-        found_group.hosts.append(new_host)
+        target_group.hosts.append(new_host)
     else:
-        found_group.patterns.append(new_host)
+        target_group.patterns.append(new_host)
 
+    # Generate new config
     config.generate_ssh_config().write_out()
+
     if not config.stdout:
         print(f"Created host: {name}")

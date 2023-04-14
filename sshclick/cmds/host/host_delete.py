@@ -33,7 +33,7 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 def cmd(ctx, names, yes):
     config: SSH_Config = ctx.obj
 
-    selected_hosts_list = list(expand_names(names, config.get_all_host_names()))
+    selected_hosts_list = expand_names(names, config.get_all_host_names())
     selected_hosts_list.sort()
     
     # Deleting requires confirmation
@@ -44,10 +44,11 @@ def cmd(ctx, names, yes):
 
     # When deleting multiple hosts, iterate over all of them
     for name in selected_hosts_list:
-        found_host, found_group = config.find_host_by_name(name, throw_on_fail=False)
-        if not found_host:
+        if not config.check_host_by_name(name):
             print(f"Cannot delete host '{name}' as it is not defined in configuration!")
             continue
+
+        found_host, found_group = config.get_host_by_name(name)
         
         if found_host.type == "normal":
             found_group.hosts.remove(found_host)

@@ -1,7 +1,7 @@
 import os.path
 import re
 
-from .ssh_config import SSH_Config
+from .ssh_config import SSH_Config, SSH_Host
 from .ssh_host import ENABLED_STYLES
 from .ssh_parameters import ALL_PARAM_LC_NAMES
 
@@ -37,7 +37,7 @@ def build_context_config(ctx) -> None:
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_host_names(ctx, param, incomplete) -> list:
+def complete_ssh_host_names(ctx, param, incomplete) -> list[str]:
     build_context_config(ctx)
     all_hosts = ctx.obj.get_all_host_names()
     return [k for k in all_hosts if k.startswith(incomplete)]
@@ -45,25 +45,25 @@ def complete_ssh_host_names(ctx, param, incomplete) -> list:
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_group_names(ctx, param, incomplete) -> list:
+def complete_ssh_group_names(ctx, param, incomplete) -> list[str]:
     build_context_config(ctx)
     all_groups = ctx.obj.get_all_group_names()
     return [k for k in all_groups if k.startswith(incomplete)]
 
 
-def complete_params(ctx, param, incomplete) -> list:
+def complete_params(ctx, param, incomplete) -> list[str]:
     return [k for k in ALL_PARAM_LC_NAMES if k.startswith(incomplete)]
 
 
-def complete_styles(ctx, param, incomplete) -> list:
+def complete_styles(ctx, param, incomplete) -> list[str]:
     return [k for k in ENABLED_STYLES if k.startswith(incomplete)]
 
 
 # We use this functions to give a tuple of group/host names as input, where some names
-# can be regexes (with "r:"" prefix), and we evaluate regex based on "all_names" list
-# which we use to create a set of expanded hostnames, direct ones, and expanded ones from
+# can be regexps (with "r:"" prefix), and we evaluate regex based on "all_names" list
+# which we use to create a set of expanded host names; direct ones, and expanded ones from
 # regex processing. Then return final list...
-def expand_names(names: tuple, all_names: list) -> set:
+def expand_names(names: tuple, all_names: list) -> list[str]:
     selected = set()
 
     for name in names:
@@ -76,4 +76,55 @@ def expand_names(names: tuple, all_names: list) -> set:
                     selected.add(i_name)
         else:
             selected.add(name)
-    return selected
+    return list(selected)
+
+
+# Function to trace connected hosts via "proxyjump" SSH parameter
+# For target host, return a list of hosts in order of connections to reach the target host
+# In case host is directly reachable (no "proxyjump" param), it will return list of single (target) host
+def trace_jumphosts(name: str, config: SSH_Config, ctx, style: str) -> list[SSH_Host]:
+
+    # Keep list of linked hosts via proxyjump option
+    traced_hosts: list[SSH_Host] = []
+
+    # we are first checking host that is asked, and then check if that host has a "proxy" defined
+    # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
+    # can trace full connection path for later graph processing
+    while True:
+        # Search for host in current configuration
+        if (not config.check_host_by_name(name)):
+            print(f"Cannot get info for used host '{name}' as it is not defined in configuration!")
+            ctx.exit(1)
+
+        found_host = config.get_host_by_name(name)[0]
+
+        #TODO: This should be moved outside this function, in config parse stage
+        inherited_params: list[tuple[str, dict]] = []
+        if found_host.type == "normal":
+            inherited_params = config.find_inherited_params(name)
+            found_host.inherited_params = inherited_params
+
+        # Set SSH host print style from user input
+        found_host.print_style = style
+
+        # Add current host, and its table to traced lists
+        traced_hosts.append(found_host)
+
+        # Find proxy info if it exists, if not, break the loop
+        proxyjump = None
+        if "proxyjump" in found_host.params:
+            proxyjump = found_host.params["proxyjump"]
+        else:
+            for _, params in inherited_params:
+                for key, value in params.items():
+                    if key == "proxyjump":
+                        proxyjump = value
+
+        # If there is connected host, we switch "name" and continue the loop
+        # Otherwise we exit the loop
+        if proxyjump:
+            name = proxyjump
+        else:
+            break
+    
+    return traced_hosts

@@ -2,7 +2,7 @@ import re
 import fnmatch
 import copy
 
-from typing import List, Union
+from typing import List, Union, Optional
 from .ssh_host import SSH_Host
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
@@ -19,12 +19,12 @@ class SSH_Config:
     """
     DEFAULT_GROUP_NAME: str = "default"
 
-    def __init__(self, file: str, config_lines: list = [], stdout: bool = False):
+    def __init__(self, file: str, config_lines: list[str] = [], stdout: bool = False):
         self.ssh_config_file: str = file
-        self.ssh_config_lines: list = config_lines
+        self.ssh_config_lines: list[str] = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: list = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
+        self.groups: list[SSH_Group] = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
 
         # options
         self.stdout: bool = stdout
@@ -32,7 +32,7 @@ class SSH_Config:
         # parsing "cache" info
         self.current_grindex: int = 0
         self.current_group: str = self.DEFAULT_GROUP_NAME
-        self.current_host: Union[None,SSH_Host] = None
+        self.current_host: Optional[SSH_Host] = None
         self.current_host_info: list = []
 
 
@@ -171,7 +171,7 @@ class SSH_Config:
         SSHCONFIG_META_SEPARATOR = ": "
 
         # First we lines before we flush them into file
-        lines = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
+        lines: list[str] = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
 
         for group in self.groups:
             # Ship default group as it does not have to be specified
@@ -227,7 +227,17 @@ class SSH_Config:
                 out.writelines(self.ssh_config_lines)
         
 
-    def find_group_by_name(self, name: str, throw_on_fail: bool = True):
+    def check_group_by_name(self, name: str) -> bool:
+        """
+        Check if specific group name is present in configuration
+        """
+        for group in self.groups:
+            if group.name == name:
+                return True
+        return False
+
+
+    def get_group_by_name(self, name: str) -> SSH_Group:
         """
         Find group in configuration that matches the name (strict match, one only!)
         On success returns matched group, on fail depending on 'throw_on_fail' flag
@@ -236,62 +246,70 @@ class SSH_Config:
         for group in self.groups:
             if group.name == name:
                 return group
-        if not throw_on_fail:
-            return None
+            
+        # if throw_on_fail:
         raise Exception(f"Requested group '{name}' not found in the SSH configuration")
+        # return None
 
 
-    def find_host_by_name(self, name: str, throw_on_fail: bool = True):
+    def check_host_by_name(self, name: str) -> bool:
+        """
+        Check if specific host name is present in configuration
+        """
+        for group in self.groups:
+            all_hosts = group.hosts + group.patterns
+            for host in all_hosts:
+                if host.name == name:
+                    return True
+        return False
+
+
+    def get_host_by_name(self, name: str) -> tuple[SSH_Host, SSH_Group]:
         """
         Find host in configuration that matches the name (strict match, one only!)
         On success returns host and his assigned group, on fail depending on 'throw_on_fail' flag
         function will either return ('None','None') or will throw exception
         """
-        found_host = None
-        found_group = None
-        
         for group in self.groups:
             all_hosts = group.hosts + group.patterns
             for host in all_hosts:
                 if host.name == name:
-                    found_host = host
-                    found_group = group
+                    return host, group
         
-        if not found_host and throw_on_fail:
-            raise Exception(f"Requested host '{name}' not found in the SSH configuration")
+        # if throw_on_fail:
+        raise Exception(f"Requested host '{name}' not found in the SSH configuration")
+        # return None,None
 
-        return found_host, found_group
 
-
-    def get_all_host_names(self) -> list:
+    def get_all_host_names(self) -> list[str]:
         """
         Return all host names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_hosts: list = []
+        all_hosts: list[str] = []
         for group in self.groups:
             for host in group.hosts + group.patterns:
                 all_hosts.append(host.name)
         return all_hosts
 
 
-    def get_all_group_names(self) -> list:
+    def get_all_group_names(self) -> list[str]:
         """
         Return all group names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_groups: list = []
+        all_groups: list[str] = []
         for group in self.groups:
             all_groups.append(group.name)
         return all_groups
 
 
-    def find_inherited_params(self, host_name: str) -> list:
+    def find_inherited_params(self, host_name: str) -> list[tuple[str,dict]]:
         """
         Returns array of 2-item tuples, where first item is name of pattern from
         which params are inherited, and second item is parameters dictionary from the pattern
         """
-        inherited: list = []
+        inherited: list[tuple[str,dict]] = []
         for group in self.groups:
             for pattern in group.patterns:
                 # Check if any one of pattern (from all groups) will match host name
