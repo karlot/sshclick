@@ -15,16 +15,16 @@ Host net-switch2
 Host net-switch3
     hostname 10.1.1.3
 
-#@host: Same user on all hosts matching this pattern
 Host net-*
     user admin
 
 
 #-------------------------------------------------------------------------------
-#@group jumphost
+#@group: jumphost
 #@desc: Edge-server / SSH bastion
 #@info: Used for jump-proxy from intnet to internal lab servers
 #-------------------------------------------------------------------------------
+#@host: This host can be used as proxyjump to reach LAB servers
 Host jumper1
     hostname 123.123.123.123
     user master
@@ -32,31 +32,31 @@ Host jumper1
 
 
 #-------------------------------------------------------------------------------
-# group: lab-servers
-# desc:  Testing/Support servers
-# info:  Some [red]important[/] detail here!
-# info:  We can have color markups in descriptions and info lines
+#@group: lab-servers
+#@desc: Testing/Support servers
+#@info: Some [red]important[/] detail here!
+#@info: We can have color markups in descriptions and info lines
 #-------------------------------------------------------------------------------
-
-# host: adding host info/comment line
+#@host: This server is [red]not[/] reachable directly, only via [green]jumper1[/]
 Host lab-serv1
     hostname 10.10.0.1
     user admin
 
+#@host: This server is [red]not[/] reachable directly, only via [green]jumper1[/]
 Host lab-serv2
-    hostname 10.10.0.1
+    hostname 10.10.0.2
 
-Host lab-serv3
-    hostname 10.10.0.1
-
-Host server-behind-lab-serv1
+#@host: This server is [red]not[/] reachable directly, only via [green]lab-serv1[/]
+#@host: SSHClick can represent how end-to-end tunels will be established
+Host server-behind-lab
     hostname 10.30.0.1
     user testuser
     port 1234
     proxyjump lab-serv1
-    localforward 8080 127.0.0.1:80
+    localforward 7630 127.0.0.1:7630
 
+#@host: This pattern applies to all hosts starting with 'lab-'
+#@host: setting 'user' and 'proxyjump' property
 Host lab-*
     user user123
     proxyjump jumper1
-

@@ -24,7 +24,8 @@ TIME_HELP  = "Timeout for SSH connection"
 def cmd(ctx, name, timeout, password):
     config: SSH_Config = ctx.obj
 
-    filtered_groups = config.filter_config(None, name)
+    # filter config only on host names, not on group level
+    filtered_groups = config.filter_config("", name)
     for group in filtered_groups:
         for host in group.hosts:
             hostname = host.name

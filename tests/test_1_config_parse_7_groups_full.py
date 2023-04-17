@@ -98,31 +98,37 @@ def test_parse_groups_with_hosts_full():
     groups = SSH_Config("none", lines).parse().groups
 
     assert groups == [
-        SSH_Group(name="default", desc="Default group", hosts=[
-            SSH_Host(name="defaulthost", group="default", info=["some-host-info"], params={
-                "hostname":"2.2.3.3",
-            }),
+        SSH_Group(name="default", desc="Default group",
+            hosts=[
+                SSH_Host(name="defaulthost", group="default", info=["some-host-info"], params={"hostname":"2.2.3.3"}),
+            ]
+        ),
+        SSH_Group(name="testgroup-1", desc="this is description 1", info=["info line 1-1", "info line 1-2"],
+            hosts=[
+                SSH_Host(name="test1-app", group="testgroup-1", info=["hostinfo1-application"],
+                    params={"hostname":"1.2.3.4"},
+                    inherited_params=[("test1-*", {"port": "1111", "user": "test1234"})]    # Added full support for inherited
+                ),
+                SSH_Host(name="test1-data", group="testgroup-1", info=["hostinfo1-database"],
+                    params={"hostname":"2.4.6.8"},
+                    inherited_params=[("test1-*", {"port": "1111", "user": "test1234"})]    # Added full support for inherited
+                ),
+            ],
+            patterns=[
+                SSH_Host(name="test1-*", type="pattern", group="testgroup-1", info=["common params for test-1"], params={
+                    "port":"1111",
+                    "user":"test1234",
+                }),
         ]),
-        SSH_Group(name="testgroup-1", desc="this is description 1", info=["info line 1-1", "info line 1-2"], hosts=[
-            SSH_Host(name="test1-app", group="testgroup-1", info=["hostinfo1-application"], params={
-                "hostname":"1.2.3.4",
-            }),
-            SSH_Host(name="test1-data", group="testgroup-1", info=["hostinfo1-database"], params={
-                "hostname":"2.4.6.8",
-            }),
-        ], patterns=[
-            SSH_Host(name="test1-*", type="pattern", group="testgroup-1", info=["common params for test-1"], params={
-                "port":"1111",
-                "user":"test1234",
-            }),
-        ]),
-        SSH_Group(name="testgroup-2", desc="this is description 2", info=["info line 2-1", "info line 2-2"], hosts=[
-            SSH_Host(name="test2", group="testgroup-2", info=["hostinfo2"], params={
-                "hostname":"4.3.2.1",
-                "port":"2222",
-                "user":"test4321",
-            }),
-        ]),
+        SSH_Group(name="testgroup-2", desc="this is description 2", info=["info line 2-1", "info line 2-2"],
+            hosts=[
+                SSH_Host(name="test2", group="testgroup-2", info=["hostinfo2"], params={
+                    "hostname":"4.3.2.1",
+                    "port":"2222",
+                    "user":"test4321",
+                }),
+            ]
+        ),
     ], "All groups metadata should be parsed correctly, and all hosts within groups with their parameters"
 
 

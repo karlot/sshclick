@@ -1,4 +1,5 @@
 import click
+from typing import List
 from sshclick.sshc import SSH_Config, SSH_Host
 
 from rich.console import Console
@@ -52,7 +53,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
 
     # If output is verbose, we need to find all parameters, and add them to params list
     if verbose:
-        flat_config: list[SSH_Host] = []
+        flat_config: List[SSH_Host] = []
         for group in filtered_groups:
             for h in group.hosts + group.patterns:
                 flat_config.append(h)
@@ -68,9 +69,6 @@ def cmd(ctx, group_filter, name_filter, verbose):
     for group in filtered_groups:
         # Iterate trough hosts and patters
         for host in group.hosts + group.patterns:
-            inherited: list[tuple[str, dict]] = []
-            if host.type == "normal":
-                inherited = config.find_inherited_params(host.name)
             host_params = []
             # Go trough list of all params we know are available across current host list
             for table_param in params:
@@ -82,8 +80,8 @@ def cmd(ctx, group_filter, name_filter, verbose):
                         host_params.append(host.params[table_param])
                 else:
                     # Handle inherited params (only valid for "normal" hosts)
-                    if inherited:
-                        for pattern, i_params in inherited:
+                    if host.inherited_params:
+                        for pattern, i_params in host.inherited_params:
                             if table_param in i_params:
                                 if isinstance(i_params[table_param], list):
                                     table_param = "\n".join([f"{val}  ({pattern})" for val in i_params[table_param]])

@@ -1,4 +1,6 @@
 import click
+from typing import List
+
 from sshclick.sshc import SSH_Config
 from sshclick.sshc import complete_ssh_group_names
 
@@ -31,7 +33,7 @@ def cmd(ctx, name):
         ctx.exit(1)
 
     found_group = config.get_group_by_name(name)
-    host_list: list[str] = []
+    host_list: List[str] = []
 
     for host in found_group.hosts:
         if "hostname" in host.params:
@@ -41,7 +43,7 @@ def cmd(ctx, name):
         else:
             host_list.append(host.name)
 
-    pattern_list: list[str] = []
+    pattern_list: List[str] = []
     for host in found_group.patterns:
         # hack to search via case insensitive info
         if "hostname" in host.params:

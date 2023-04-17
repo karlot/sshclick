@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, List
 from textwrap import dedent
 from ..ssh_host import SSH_Host
 
@@ -14,7 +14,7 @@ def render(host: SSH_Host):
     out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
-    grp_inputs: list[Union[Table,Panel]] = []
+    grp_inputs: List[Union[Table,Panel]] = []
 
     #// Add Host data panel to the group
     #// -----------------------------------------------------------------------

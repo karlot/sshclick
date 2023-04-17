@@ -1,0 +1,42 @@
+# SSH Click change-log
+
+## Version 0.5.0 (2023-04-17)
+
+- Refactor/extract config groups filtering from `host-list` to SSH_Config
+- Updated group mechanism to match host ones, more user-friendly
+- Small fixes for typing
+- Implement more free style in writing metadata
+- Group list added number of hosts and patterns
+- Host key install feature (can be used on multiple hosts from config using regex match)
+- Fixing poor design on exceptions when getting host/group from config
+- Added aliases for `hosts` and `groups` top level commands
+- Move inherited parameters processing from `trace_jumphosts`, now done during Config parsing
+- Add parsing/generation option to save SSHClick config trough SSH Config file notation (host-style)
+- Add command to allow setting/deleting configuration options in SSH config file (`sshc config set/get`)
+- Dependencies updated
+- Added Changelog and TODO
+- Removed `setup.cfg`
+
+
+## Version 0.4.4 (2022-08-8)
+
+- First release on PyPI
+- Removed `PyYAML` dependency
+- Updating documentation
+- Add feature to allow `host set` command to apply on multiple hosts
+- Refactoring for `Poetry` and `pyproject.toml`
+- Fixed testing
+
+
+## Version 0.4.1 (2022-08-2)
+
+- Fix broken type annotation
+- Fixes for compatibility of older python3 (`3.7` and newer are supported)
+
+
+## Version 0.4.0 (2022-08-1)
+
+- First tagged release
+- Integrated `rich` formatting
+- Added auto-completions for majority of commands and options
+- Added host-output style choices via command options and ENV setting

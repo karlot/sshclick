@@ -1,9 +1,10 @@
 import os.path
 import re
+from typing import List
 
-from .ssh_config import SSH_Config, SSH_Host
-from .ssh_host import ENABLED_STYLES
+from ..globals import ENABLED_HOST_STYLES
 from .ssh_parameters import ALL_PARAM_LC_NAMES
+from .ssh_config import SSH_Config, SSH_Host
 
 from rich.console import Console
 err = Console(stderr=True)
@@ -37,7 +38,7 @@ def build_context_config(ctx) -> None:
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_host_names(ctx, param, incomplete) -> list[str]:
+def complete_ssh_host_names(ctx, param, incomplete) -> List[str]:
     build_context_config(ctx)
     all_hosts = ctx.obj.get_all_host_names()
     return [k for k in all_hosts if k.startswith(incomplete)]
@@ -45,25 +46,25 @@ def complete_ssh_host_names(ctx, param, incomplete) -> list[str]:
 
 # For some reason I cant get context object initialized by main app when running autocomplete
 # BUG: https://github.com/pallets/click/issues/2303
-def complete_ssh_group_names(ctx, param, incomplete) -> list[str]:
+def complete_ssh_group_names(ctx, param, incomplete) -> List[str]:
     build_context_config(ctx)
     all_groups = ctx.obj.get_all_group_names()
     return [k for k in all_groups if k.startswith(incomplete)]
 
 
-def complete_params(ctx, param, incomplete) -> list[str]:
+def complete_params(ctx, param, incomplete) -> List[str]:
     return [k for k in ALL_PARAM_LC_NAMES if k.startswith(incomplete)]
 
 
-def complete_styles(ctx, param, incomplete) -> list[str]:
-    return [k for k in ENABLED_STYLES if k.startswith(incomplete)]
+def complete_styles(ctx, param, incomplete) -> List[str]:
+    return [k for k in ENABLED_HOST_STYLES if k.startswith(incomplete)]
 
 
 # We use this functions to give a tuple of group/host names as input, where some names
 # can be regexps (with "r:"" prefix), and we evaluate regex based on "all_names" list
 # which we use to create a set of expanded host names; direct ones, and expanded ones from
 # regex processing. Then return final list...
-def expand_names(names: tuple, all_names: list) -> list[str]:
+def expand_names(names: tuple, all_names: list) -> List[str]:
     selected = set()
 
     for name in names:
@@ -82,10 +83,10 @@ def expand_names(names: tuple, all_names: list) -> list[str]:
 # Function to trace connected hosts via "proxyjump" SSH parameter
 # For target host, return a list of hosts in order of connections to reach the target host
 # In case host is directly reachable (no "proxyjump" param), it will return list of single (target) host
-def trace_jumphosts(name: str, config: SSH_Config, ctx, style: str) -> list[SSH_Host]:
+def trace_jumphosts(name: str, config: SSH_Config, ctx, style: str) -> List[SSH_Host]:
 
     # Keep list of linked hosts via proxyjump option
-    traced_hosts: list[SSH_Host] = []
+    traced_hosts: List[SSH_Host] = []
 
     # we are first checking host that is asked, and then check if that host has a "proxy" defined
     # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
@@ -98,12 +99,6 @@ def trace_jumphosts(name: str, config: SSH_Config, ctx, style: str) -> list[SSH_
 
         found_host = config.get_host_by_name(name)[0]
 
-        #TODO: This should be moved outside this function, in config parse stage
-        inherited_params: list[tuple[str, dict]] = []
-        if found_host.type == "normal":
-            inherited_params = config.find_inherited_params(name)
-            found_host.inherited_params = inherited_params
-
         # Set SSH host print style from user input
         found_host.print_style = style
 
@@ -115,7 +110,7 @@ def trace_jumphosts(name: str, config: SSH_Config, ctx, style: str) -> list[SSH_
         if "proxyjump" in found_host.params:
             proxyjump = found_host.params["proxyjump"]
         else:
-            for _, params in inherited_params:
+            for _, params in found_host.inherited_params:
                 for key, value in params.items():
                     if key == "proxyjump":
                         proxyjump = value

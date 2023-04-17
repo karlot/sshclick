@@ -20,7 +20,7 @@
 # ------------------
 # Idea is to have key, for which we can provide auto-completion, and known values
 # which we potentially can autocomplete, or at least provide validation that value
-# one of the possible ones. SSH config is extremely verbose, 
+# one of the possible ones. SSH config is extremely verbose
 ALL_PARAMS = {
     "AddKeysToAgent": ["no", "yes", "confirm", "ask"],
     "AddressFamily": ["any", "inet", "inet6"],

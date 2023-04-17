@@ -1,6 +1,6 @@
 # SSH Click Config manager (sshclick)
 
-Check this page on [GitHub](https://github.com/karlot/sshclick)
+![splash_gif](tapes/splash.gif)
 
 ## Links
 
@@ -145,7 +145,7 @@ Host ...    <-- this hosts definitions are part of the defined group
     param1 value1
     param2 value2
 
-#@host: <HOST-INFO-LINES>  [OPTIONAL,MULTIPLE] <-- Adds info to following host
+#@host: <HOST-INFO-LINES>   [OPTIONAL,MULTIPLE] <-- Adds info to following host
 Host ...
 
 <ANOTHER GROUP HEADER>
@@ -163,7 +163,7 @@ For example to check version, type: `sshc --version`
 _Sample output:_
 ```console
 $ sshc --version
-SSHClick (sshc) - Version: 0.4.1
+SSHClick (sshc) - Version: 0.5.0
 ```
 
 If you run `sshc` command alone, or adding `-h` or `--help` option, it will show help what else must be added to the command...  
@@ -172,27 +172,27 @@ _Example:_
 $ sshc --help
 Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
-  SSHClick - SSH Config manager
+  SSHClick - SSH Config manager. version 0.5.0
 
-  Note: As this is early alpha, backup your SSH config files before this
+  NOTE: As this is early alpha, backup your SSH config files before this
   software, as you might accidentally lose some configuration
 
 Options:
-  --sshconfig PATH  Config file, default is ~/.ssh/config
-  --stdout          Send changed SSH config to STDOUT instead to original file
-  --version         Show current version
+  --sshconfig TEXT  Config file (default: ~/.ssh/config)
+  --stdout          Send changed SSH config to STDOUT instead to original
+                    file, can be enabled with setting ENV variable (export
+                    SSHC_STDOUT=1)
+  --version         Show the version and exit.
   -h, --help        Show this message and exit.
 
 Commands:
-  group  Manage groups
-  host   Manage hosts
+  config  Modify SSHClick configuration trough SSH Config
+  group   Command group for managing groups
+  groups  Lists all groups
+  host    Command group for managing hosts
+  hosts   List configured hosts
 ```
 
-Main sub-commands are for separate control of:  
-- Groups (via `sshc group` command)
-  - Allows operation of groups inside SSH config
-- Hosts (via `sshc host` command)
-  - Allows operation of hosts inside SSH config
 
 ### `group` commands and options
 
@@ -202,7 +202,7 @@ _example:_
 $ sshc group --help
 Usage: sshc group [OPTIONS] COMMAND [ARGS]...
 
-  Manage groups
+  Command group for managing groups
 
 Options:
   -h, --help  Show this message and exit.
@@ -211,6 +211,7 @@ Commands:
   create  Create new group
   delete  Delete group
   list    Lists all groups
+  rename  Rename existing group
   set     Change group parameters
   show    Shows group details
 ```
@@ -223,18 +224,20 @@ _example:_
 $ sshc host --help
 Usage: sshc host [OPTIONS] COMMAND [ARGS]...
 
-  Manage hosts
+  Command group for managing hosts
 
 Options:
   -h, --help  Show this message and exit.
 
 Commands:
-  create  Create new host configuration
-  delete  Delete host from configuration
-  list    List hosts
-  set     Changes/sets host configuration parameters
-  show    Display info for host
-  test    Test SSH host connection
+  create   Create new host
+  delete   Delete host(s)
+  install  Install SSH key to hosts (experimental)
+  list     List configured hosts
+  rename   Rename existing host
+  set      Set/Change host configuration
+  show     Show current host configuration
+  test     Test SSH host connection  (experimental)
 ```
 
 ### Output styling and user ENV variables
@@ -290,6 +293,7 @@ Host net-*
 #@desc: Edge-server / SSH bastion
 #@info: Used for jump-proxy from intnet to internal lab servers
 #-------------------------------------------------------------------------------
+#@host: This host can be used as proxyjump to reach LAB servers
 Host jumper1
     hostname 123.123.123.123
     user master
@@ -302,22 +306,29 @@ Host jumper1
 #@info: Some [red]important[/] detail here!
 #@info: We can have color markups in descriptions and info lines
 #-------------------------------------------------------------------------------
+#@host: This server is [red]not[/] reachable directly, only via [green]jumper1[/]
 Host lab-serv1
     hostname 10.10.0.1
     user admin
 
+#@host: This server is [red]not[/] reachable directly, only via [green]jumper1[/]
 Host lab-serv2
-    hostname 10.16.141
+    hostname 10.10.0.2
 
-Host lab-*
-    user user123
-    proxyjump jumper1
-
+#@host: This server is [red]not[/] reachable directly, only via [green]lab-serv1[/]
+#@host: SSHClick can represent how end-to-end tunels will be established
 Host server-behind-lab
     hostname 10.30.0.1
     user testuser
     port 1234
     proxyjump lab-serv1
+    localforward 7630 127.0.0.1:7630
+
+#@host: This pattern applies to all hosts starting with 'lab-'
+#@host: setting 'user' and 'proxyjump' property
+Host lab-*
+    user user123
+    proxyjump jumper1
 
 ```
 <!-- 

@@ -1,4 +1,4 @@
-__version__ = "0.5.0a0"
+__version__ = "0.5.0"
 
 import click
 import os.path
@@ -33,12 +33,13 @@ def cli(ctx: click.core.Context, sshconfig: str, stdout: bool):
     ctx.obj = SSH_Config(file=sshconfig, stdout=stdout).read().parse()
 
 
-# Top full commands
-from .cmds import cmd_group, cmd_host
+# Top commands
+from .cmds import cmd_group, cmd_host, cmd_config
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
+cli.add_command(cmd_config.ssh_config)
 
-#// Top level aliases
+# Top level aliases (groups --> group list, hosts --> host list, etc..)
 from .cmds.cmd_group import group_list
 cli.add_command(group_list.cmd, "groups")
 

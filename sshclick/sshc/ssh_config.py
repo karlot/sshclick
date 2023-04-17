@@ -1,14 +1,12 @@
-import re
-import fnmatch
-import copy
-
-from typing import List, Union, Optional
-from .ssh_host import SSH_Host
-from .ssh_group import SSH_Group
-from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
+import re, fnmatch, copy
+from typing import List, Optional, Tuple
 
 import logging
 logging.basicConfig(level=logging.INFO)
+
+from .ssh_host import SSH_Host
+from .ssh_group import SSH_Group
+from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
 class SSH_Config:
     """
@@ -19,15 +17,16 @@ class SSH_Config:
     """
     DEFAULT_GROUP_NAME: str = "default"
 
-    def __init__(self, file: str, config_lines: list[str] = [], stdout: bool = False):
+    def __init__(self, file: str, config_lines: List[str] = [], stdout: bool = False):
         self.ssh_config_file: str = file
-        self.ssh_config_lines: list[str] = config_lines
+        self.ssh_config_lines: List[str] = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: list[SSH_Group] = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
+        self.groups: List[SSH_Group] = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
 
         # options
         self.stdout: bool = stdout
+        self.opts: dict = {}
 
         # parsing "cache" info
         self.current_grindex: int = 0
@@ -57,6 +56,7 @@ class SSH_Config:
             # Reset "cache" since we flushed host info
             self.current_host = None
 
+
     # TODO: Add ability to separate host parameters with optional "=" sign
     def parse(self):
         """
@@ -74,7 +74,7 @@ class SSH_Config:
             # so its much more "freely" in reading from config file writing is still in legacy style
             # in future, output config write styles could be changed... 
             if line.startswith("#"):
-                match = re.search(r"^#[\s@]*(group|desc|info|host)[\s:]+(.+)$", line)
+                match = re.search(r"^#[\s@]*(group|desc|info|host|config)[\s:]+(.+)$", line)
 
                 # In case special comment is unreadable
                 if not match:
@@ -82,7 +82,15 @@ class SSH_Config:
                     continue
                 
                 metadata, value = match.groups()
-                if metadata == "group":
+
+                if metadata == "config":
+                    # Config options are configured as key=value within config line...
+                    logging.debug(f"META: Config line found '{value}' Caching for next host definition...'")
+                    conf_key, conf_val = value.split("=")
+                    self.opts[conf_key] = conf_val
+                    continue
+
+                elif metadata == "group":
                     # New group found... flush any previous data and create new baseline
                     self._config_flush_host()
 
@@ -110,7 +118,7 @@ class SSH_Config:
                     continue
 
                 else:
-                    logging.warning(f"META: Unhandled metadata metadata '{metadata}' on SSH-config line number: {config_line_index}")
+                    logging.warning(f"META: Unhandled metadata '{metadata}' on SSH-config line number: {config_line_index}")
                     continue
 
             # Here we expect only normal ssh config lines "Host" is usually the keyword that begins definition
@@ -155,6 +163,17 @@ class SSH_Config:
         
         # Last entries must be flushed manually as there are no new "hosts" to trigger storing parsed data into config struct
         self._config_flush_host()
+
+        # Second stage, check any inheritances and fill them
+        # start = time.time()
+        for group in self.groups:
+            for host in group.hosts:
+                inherited_params: List[Tuple[str, dict]] = []
+                if host.type == "normal":
+                    inherited_params = self.find_inherited_params(host.name)
+                    host.inherited_params = inherited_params
+        # end = time.time() - start
+        # print(f"Inheritance check elapsed: {end:0.3f}s")
         return self
 
 
@@ -171,7 +190,11 @@ class SSH_Config:
         SSHCONFIG_META_SEPARATOR = ": "
 
         # First we lines before we flush them into file
-        lines: list[str] = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
+        lines: List[str] = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
+
+        # Dump any saved configuration
+        for option in self.opts:
+            lines.append(f"#{SSHCONFIG_META_PREFIX}config{SSHCONFIG_META_SEPARATOR}{option}={self.opts[option]}\n")
 
         for group in self.groups:
             # Ship default group as it does not have to be specified
@@ -214,9 +237,9 @@ class SSH_Config:
         # Store output lines
         self.ssh_config_lines = lines
         return self
-        
 
-    def write_out(self):
+
+    def write_out(self) -> None:
         """
         Write generated SSH config to target file
         """
@@ -225,7 +248,7 @@ class SSH_Config:
         else:
             with open(self.ssh_config_file, "w") as out:
                 out.writelines(self.ssh_config_lines)
-        
+
 
     def check_group_by_name(self, name: str) -> bool:
         """
@@ -246,10 +269,7 @@ class SSH_Config:
         for group in self.groups:
             if group.name == name:
                 return group
-            
-        # if throw_on_fail:
         raise Exception(f"Requested group '{name}' not found in the SSH configuration")
-        # return None
 
 
     def check_host_by_name(self, name: str) -> bool:
@@ -264,7 +284,7 @@ class SSH_Config:
         return False
 
 
-    def get_host_by_name(self, name: str) -> tuple[SSH_Host, SSH_Group]:
+    def get_host_by_name(self, name: str) -> Tuple[SSH_Host, SSH_Group]:
         """
         Find host in configuration that matches the name (strict match, one only!)
         On success returns host and his assigned group, on fail depending on 'throw_on_fail' flag
@@ -275,51 +295,48 @@ class SSH_Config:
             for host in all_hosts:
                 if host.name == name:
                     return host, group
-        
-        # if throw_on_fail:
         raise Exception(f"Requested host '{name}' not found in the SSH configuration")
-        # return None,None
 
 
-    def get_all_host_names(self) -> list[str]:
+    def get_all_host_names(self) -> List[str]:
         """
         Return all host names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_hosts: list[str] = []
+        all_hosts: List[str] = []
         for group in self.groups:
             for host in group.hosts + group.patterns:
                 all_hosts.append(host.name)
         return all_hosts
 
 
-    def get_all_group_names(self) -> list[str]:
+    def get_all_group_names(self) -> List[str]:
         """
         Return all group names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_groups: list[str] = []
+        all_groups: List[str] = []
         for group in self.groups:
             all_groups.append(group.name)
         return all_groups
 
 
-    def find_inherited_params(self, host_name: str) -> list[tuple[str,dict]]:
+    def find_inherited_params(self, host_name: str) -> List[Tuple[str,dict]]:
         """
-        Returns array of 2-item tuples, where first item is name of pattern from
+        Given a host name, finds and returns list of 2-item tuples, where first item is name of pattern from
         which params are inherited, and second item is parameters dictionary from the pattern
         """
-        inherited: list[tuple[str,dict]] = []
+        inherited: List[Tuple[str,dict]] = []
         for group in self.groups:
             for pattern in group.patterns:
                 # Check if any one of pattern (from all groups) will match host name
                 if fnmatch.fnmatch(host_name, pattern.name):
                     inherited.append((pattern.name, pattern.params))
-
+        
         return inherited
 
 
-    def filter_config(self, group_filter: str, name_filter: str) -> list:
+    def filter_config(self, group_filter: str, name_filter: str) -> List[SSH_Group]:
         """
         Function takes optional group and name regex, and if they are not None or empty,
         function creates a new list of SSH groups and their SSH hosts, but with all

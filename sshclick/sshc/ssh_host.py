@@ -1,3 +1,5 @@
+from ..globals import DEFAULT_HOST_STYLE
+from typing import List
 from dataclasses import dataclass, field
 import importlib
 
@@ -5,7 +7,6 @@ from rich.console import Console
 console = Console()
 
 DEBUG_STYLES = False
-ENABLED_STYLES = ["panels", "card", "simple", "table", "table2", "json"]
 
 @dataclass
 class SSH_Host:
@@ -13,11 +14,11 @@ class SSH_Host:
     name: str
     group: str
     type: str = "normal"
-    info: list = field(default_factory=list)
+    info: List[str] = field(default_factory=list)
     params: dict = field(default_factory=dict)
 
     inherited_params: list = field(default_factory=list)
-    print_style: str = "panels"
+    print_style: str = DEFAULT_HOST_STYLE
 
 
     # Method for interaction with printing the object via Rich library
@@ -25,7 +26,7 @@ class SSH_Host:
     # Each module must have "render" function, and return "rich renderable" object
     def __rich__(self):
         try:
-            # If current host "print_style" for is set to "panels", we will try
+            # If current host "print_style" is set to "panels", we will try
             # to import module from "./host_styles/panels.py"
             style = importlib.import_module(f'sshclick.sshc.host_styles.{self.print_style}')
             return style.render(self)
