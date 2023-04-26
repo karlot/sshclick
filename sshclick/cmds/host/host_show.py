@@ -65,4 +65,4 @@ def cmd(ctx: click.core.Context, name: str, style:str, graph: bool):
 
     #TODO: Make better graph output
     if graph:
-        console.print("\n", generate_graph(traced_hosts), "\n")
+        console.print(generate_graph(traced_hosts), "")

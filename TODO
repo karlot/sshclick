@@ -1,4 +1,4 @@
 TODOs:
-- [ ] Rework "generate_graph" to work with rich components, so we can remove prettytable as dependency
+- [x] Rework "generate_graph" to work with rich components, so we can remove prettytable as dependency
 - [ ] Implement that HOST TEST uses paramiko to perform native SSH testing, not relying on SSH command
 - [ ] Implement HOST TEST to verify and print graph of linked connection trace-ing, and passed test for all connected hosts
