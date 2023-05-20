@@ -9,6 +9,7 @@ config1_modified_lines=[
     "#<<<<< SSH Config file managed by sshclick >>>>>\n",
     "#@config: host-style=simple\n",
     "#@config: something=nice\n",
+    "\n",
 ]
 
 def test_add_new_group():

@@ -15,10 +15,11 @@
 - [Example usage and features](https://github.com/karlot/sshclick#example-usage-and-features)
   - [Group commands and options](https://github.com/karlot/sshclick#group-commands-and-options)
   - [Host commands and options](https://github.com/karlot/sshclick#host-commands-and-options)
+  - [Config commands and options](https://github.com/karlot/sshclick#config-commands-and-sshclick-configuration-options)
   - [Output styling and user ENV variables](https://github.com/karlot/sshclick#output-styling-and-user-env-variables)
-- [Recorded demos](https://github.com/karlot/sshclick#recorded-demos)
+<!-- - [Recorded demos](https://github.com/karlot/sshclick#recorded-demos)
   - [sshc group operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-group-operations)
-  - [sshc host operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-host-operations)
+  - [sshc host operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-host-operations) -->
 - [Author](https://github.com/karlot/sshclick#author)
 - [License](https://github.com/karlot/sshclick#license)
 
@@ -27,31 +28,32 @@
 Terminal based assisted management of your SSH config files.  
 Built out of boredom with managing messy and huge ssh_config files.  
 
-EARLY VERSION, backup your SSH config files before using!  
-SSHClick can be used with "show" and "list" commands for hosts, without modifying your SSH Config!  
+Backup your SSH config files before using!  
+SSHClick can be used with "show" and "list" commands for hosts, without modifying your SSH Config in any way!  
 
 **Only commands that modify configuration will edit and rewrite/restructure your SSH Config file. In that case, any added comment or infos that are not in form that SSHClick understand will be discarded, and configuration will be re-formatted to match SSHClick style. See below details to understand how SSH Click would keep your config organized**
 
+**NEW!** *Now comes with additional TUI that can be accessed via `sshc tui` or `ssht`.*  
+
+![splash_gif](tapes/sshc_tui_example.svg)
+
+
 ## Why?
 
-What am I trying to solve with this tool?
 * I need something that works fast and great in terminal, and does not require complex setup.
-* Managing some other configuration files that renders to SSH config is extra step that I don't like.
-* SSH config is already feature-full with all options SSH client support, why inventing extra layer?
 * SSH config is the only config I need to backup.
+* SSH config is very feature-full with all options SSH client support, why inventing extra layer?
 * I need quick way to search, group and visualize all hosts inside SSH configuration (especially since it can grow huge)
 
 
 ## What does it do?
 
 SSHClick (sshc) is just a tool designed to work with existing SSH configuration files on your Linux/Windows/WSL terminal environment.  
-It basically parses your SSH config, and can provide easy commands to list, filter, modify or view specific Host entries.
-Trough additional "magic" comments it can add abstractions such as "groups" and various information that is both readable in the configuration file, and can be parsed and printed while using the tool.
+It parses your SSH config, and can provide easy commands to list, filter, modify or view specific Host entries.
+Trough additional "metadata" comments it can add abstractions such as "groups" and various information that is both readable in the configuration file, and can be parsed and printed while using the tool.
 
 
 ### Installation procedure
-
-Should be straight forward...  
 
 1. **Check preconditions:**
     - Currently only tested on Linux (Debian 10,11, Ubuntu 20.04,22.04), but should work on other systems as well
@@ -163,7 +165,7 @@ For example to check version, type: `sshc --version`
 _Sample output:_
 ```console
 $ sshc --version
-SSHClick (sshc) - Version: 0.5.0
+SSHClick (sshc) - Version: 0.6.0
 ```
 
 If you run `sshc` command alone, or adding `-h` or `--help` option, it will show help what else must be added to the command...  
@@ -172,10 +174,10 @@ _Example:_
 $ sshc --help
 Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
-  SSHClick - SSH Config manager. version 0.5.0
+  SSHClick - SSH Config manager. version 0.6.0
 
-  NOTE: As this is early alpha, backup your SSH config files before this
-  software, as you might accidentally lose some configuration
+  NOTE: As this will change your SSH config files, make backups before using
+  this software, as you might accidentally lose some configuration.
 
 Options:
   --sshconfig TEXT  Config file (default: ~/.ssh/config)
@@ -191,13 +193,13 @@ Commands:
   groups  Lists all groups
   host    Command group for managing hosts
   hosts   List configured hosts
+  tui     TUI Interface (experimental)
 ```
-
 
 ### `group` commands and options
 
 To manage "groups" type `sshc group --help` to see options.  
-_example:_
+_Example:_
 ```console
 $ sshc group --help
 Usage: sshc group [OPTIONS] COMMAND [ARGS]...
@@ -219,7 +221,7 @@ Commands:
 ### `host` commands and options
 
 To manage "groups" type `sshc host --help` to see options.  
-_example:_
+_Example:_
 ```console
 $ sshc host --help
 Usage: sshc host [OPTIONS] COMMAND [ARGS]...
@@ -240,6 +242,59 @@ Commands:
   test     Test SSH host connection  (experimental)
 ```
 
+### `config` commands and SSHClick configuration options
+
+SSHClick does not to have its own configuration files, so most of configuration that it tries to understand, come from commands arguments/options, environment variables, and SSH Config file itself.
+
+Sometimes when you want to persist some config options, not to repeat it via command, you can use ENV variables, that can be set trough user shell profile.
+
+Now there is also option to store such config in SSH Config file itself (as metadata comment), so it can be portable and backed up together with SSH Config file.
+
+Command `config` takes `set` or `del` commands that add or remove specific configuration.
+
+_Example:_
+```console
+$ sshc config --help
+Usage: sshc config [OPTIONS] COMMAND [ARGS]...
+
+  Modify SSHClick configuration trough SSH Config
+
+Options:
+  -h, --help  Show this message and exit.
+
+Commands:
+  del  Delete config option
+  set  Set config option
+```
+
+
+_Example: "Set host output style to 'card'"_
+```console
+$ sshc config set --help
+Usage: sshc config set [OPTIONS]
+
+  Set config option
+
+Options:
+  --host-style TEXT  Set how to display hosts in 'show' command.
+                     Available:(panels,card,simple,table,table2,json)
+                     (default: panels)
+  -h, --help         Show this message and exit.
+
+$ sshc config set --host-style card
+```
+
+This will now store config in "currently used" SSH config file as following:
+```
+#<<<<< SSH Config file managed by sshclick >>>>>
+#@config: host-style=card
+```
+
+To delete this config, either remove the line from file manually, or use `sshc` command:
+```console
+$ sshc config del --host-style
+```
+
 ### Output styling and user ENV variables
 
 `sshc host show` can display host output is several formats, you can specify it with `sshc host show <host> --style <style>`  
@@ -252,9 +307,10 @@ Available styles are:
 | `simple`           | Simple output with minimal decorations            |
 | `table`            | Flat table with 3 columns                         |
 | `table2`           | Nested table with separated host SSH params       |
-| `json`             | JSON output, useful for binding with other tools |
+| `json`             | JSON output, useful for binding with other tools  |
 
-If you want to have some style statically set for your shell, you can export ENV variable with `export SSHC_HOST_STYLE=table`, and add it to `.profile` or `.bashrc` or `.zshrc`, so its set when shell session is starting, to set "default" style to that one.
+If you want to have some style statically set for your shell, you can export ENV variable with `export SSHC_HOST_STYLE=table`, and add it to `.profile` or `.bashrc` or `.zshrc`, so its set when shell session is starting, to set "default" style to that one.  
+Alternatively, you can use SSHClick internal "config" mechanism to store some config data into your SSH Config file (as commented metadata) so it can be backed up with your SSH config. To do so, you can use following command as example: `sshc config set --host-style table`.
 
 In case user do not line "fancy" colors in output, you can set ENV variable to disable all color outputs with `export NO_COLOR=1`. If you want it permanently you can add it to startup "rc" files as well.
 
@@ -353,6 +409,24 @@ github: https://github.com/karlot
 
 ## License
 
-[MIT License](LICENSE)
+MIT License
 
+Copyright (c) 2023 Karlo Tisaj
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

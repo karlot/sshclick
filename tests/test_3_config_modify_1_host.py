@@ -7,6 +7,7 @@ from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
 config1=""
 config1_modified_lines=[
     "#<<<<< SSH Config file managed by sshclick >>>>>\n",
+    "\n",
     "#@host: some-host-info\n",
     "Host testnew\n",
     "    hostname 2.2.3.3\n",
@@ -53,6 +54,7 @@ Host test-old
 
 config2_modified_lines=[
     "#<<<<< SSH Config file managed by sshclick >>>>>\n",
+    "\n",
     "#@host: some-default-info\n",
     "Host defaulthost\n",
     "    hostname 2.2.3.3\n",

@@ -33,13 +33,14 @@ class SSH_Config:
         self.current_group: str = self.DEFAULT_GROUP_NAME
         self.current_host: Optional[SSH_Host] = None
         self.current_host_info: list = []
+        self.current_host_pass: str = ""
 
 
     def read(self):
         """
         Read content of SSH config file
         """
-        with open(self.ssh_config_file) as fh:
+        with open(self.ssh_config_file, "r") as fh:
             self.ssh_config_lines = fh.readlines()
         return self
 
@@ -117,6 +118,11 @@ class SSH_Config:
                     self.current_host_info.append(value)
                     continue
 
+                elif metadata == "password":
+                    logging.debug(f"META: Host password found '{value}' Caching for next host definition...'")
+                    self.current_host_pass = value
+                    continue
+
                 else:
                     logging.warning(f"META: Unhandled metadata '{metadata}' on SSH-config line number: {config_line_index}")
                     continue
@@ -138,10 +144,11 @@ class SSH_Config:
                 host_type = "pattern" if "*" in value else "normal"
                 logging.debug(f"Host '{value}' is '{host_type}' type!")
 
-                self.current_host = SSH_Host(name=value, group=self.current_group, type=host_type, info=self.current_host_info)
+                self.current_host = SSH_Host(name=value, password=self.current_host_pass, group=self.current_group, type=host_type, info=self.current_host_info)
 
                 # Reset global host info cache when we find new host (from this line, any host comments will apply to next host)
                 self.current_host_info = []
+                self.current_host_pass = ""
                 continue
             else:
                 # any other normal line we just use as it is, wrong or not... :)
@@ -196,6 +203,10 @@ class SSH_Config:
         for option in self.opts:
             lines.append(f"#{SSHCONFIG_META_PREFIX}config{SSHCONFIG_META_SEPARATOR}{option}={self.opts[option]}\n")
 
+        # Add separation from header/config and rest of ssh-config
+        lines.append("\n")
+
+        # Render all groups
         for group in self.groups:
             # Ship default group as it does not have to be specified
             render_header = False if group.name == self.DEFAULT_GROUP_NAME else True

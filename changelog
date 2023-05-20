@@ -1,5 +1,17 @@
 # SSH Click change-log
 
+## Version 0.6.0 (??)
+
+- Rework `generate_graph` to work with rich components, so we can remove `prettytable` as dependency
+- `prettytable` deprecated and removed as project dependency
+- Host testing reworked, implemented host-resolution for non-IP hostnames
+- NEW FEATURE - Implemented new Experimental TUI interactive mode
+  - can be launched with `sshc tui` or directly with `ssht` command
+  - Offers TUI for browsing SSH configuration
+  - Currently only shows configurations, editing features on roadmap
+  - Allows opening SSH or SFTP session with selected node directly from APP
+
+
 ## Version 0.5.0 (2023-04-17)
 
 - Refactor/extract config groups filtering from `host-list` to SSH_Config

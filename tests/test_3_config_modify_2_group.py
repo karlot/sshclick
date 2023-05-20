@@ -8,6 +8,7 @@ config1=""
 config1_modified_lines=[
     "#<<<<< SSH Config file managed by sshclick >>>>>\n",
     "\n",
+    "\n",
     "#-------------------------------------------------------------------------------\n",
     "#@group: testgroup\n",
     "#-------------------------------------------------------------------------------\n",
@@ -39,6 +40,7 @@ Host defaulthost
 """
 config2_modified_lines=[
     "#<<<<< SSH Config file managed by sshclick >>>>>\n",
+    "\n",
     "#@host: some-host-info\n",
     "Host defaulthost\n",
     "    hostname 2.2.3.3\n",

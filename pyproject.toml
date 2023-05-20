@@ -4,7 +4,7 @@
 [tool.poetry]
 name = "sshclick"
 homepage = "https://github.com/karlot/sshclick"
-version = "0.5.0"
+version = "0.6.0"
 description = "SSH Config manager"
 authors = ["Karlo Tisaj <karlot@gmail.com>"]
 license = "MIT"
@@ -26,6 +26,7 @@ classifiers = [
 python = "^3.7"
 click = "^8.1"
 rich = "^13.3"
+textual = "^0.26"
 
 
 [tool.poetry.dev-dependencies]
@@ -34,6 +35,7 @@ pytest = "^7.3"
 
 [tool.poetry.scripts]
 sshc = "sshclick.main:cli"
+ssht = "sshclick.main_tui:tui"
 
 
 [build-system]
