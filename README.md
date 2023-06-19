@@ -1,6 +1,6 @@
 # SSH Click Config manager (sshclick)
 
-![splash_gif](tapes/splash.gif)
+![splash_gif](https://github.com/karlot/tapes/splash.gif)
 
 ## Links
 
@@ -35,7 +35,7 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 
 **NEW!** *Now comes with additional TUI that can be accessed via `sshc tui` or `ssht`.*  
 
-![splash_gif](tapes/sshc_tui_example.svg)
+![splash_gif](https://github.com/karlot/tapes/sshc_tui_example.svg)
 
 
 ## Why?

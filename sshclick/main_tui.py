@@ -161,7 +161,7 @@ class SSHTui(App):
         if isinstance(sshconf, SSH_Config):
             self.sshconf = sshconf
         else:
-            USER_SSH_CONFIG = USER_DEMO_CONFIG
+            # USER_SSH_CONFIG = USER_DEMO_CONFIG
             self.sshconf = SSH_Config(file=os.path.expanduser(USER_SSH_CONFIG)).read().parse()
         super().__init__()
 
@@ -217,3 +217,7 @@ class SSHTui(App):
             finally:
                 self.refresh()
                 driver.start_application_mode()
+
+## Entry for "ssht" command
+def tui():
+    SSHTui().run()

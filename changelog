@@ -1,6 +1,12 @@
 # SSH Click change-log
 
-## Version 0.6.0 (??)
+## Version 0.6.1 (2023-06-19)
+
+- FIXED: Creating new group failed because of false check if group already exists
+- FIXED: "ssht" command is now properly linked and functional after installation
+
+
+## Version 0.6.0 (2023-05-20)
 
 - Rework `generate_graph` to work with rich components, so we can remove `prettytable` as dependency
 - `prettytable` deprecated and removed as project dependency

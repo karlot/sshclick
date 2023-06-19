@@ -47,6 +47,8 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
         print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
         print("Create group first, or use '--force' option to create it automatically!")
         ctx.exit(1)
+        # unreachable, but avoids issues with static checks
+        exit(1)
     elif not target_group_exists:
         target_group = SSH_Group(name=target_group_name)
         config.groups.append(target_group)
@@ -59,7 +61,8 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
 
     # Add all passed parameters to config
     for param, value in parameter:
-        param = param.lower()           # parametar keyword will be lowercased as they are case insensitive
+        # parametar keyword will be lowercased as they are case insensitive
+        param = param.lower()
         if not value or value.isspace():
             print(f"Cannot define empty value for parameter during host creation!")
             ctx.exit(1)
