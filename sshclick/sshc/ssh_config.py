@@ -40,8 +40,12 @@ class SSH_Config:
         """
         Read content of SSH config file
         """
-        with open(self.ssh_config_file, "r") as fh:
-            self.ssh_config_lines = fh.readlines()
+        try:
+            with open(self.ssh_config_file, "r") as fh:
+                self.ssh_config_lines = fh.readlines()
+        except FileNotFoundError:
+                logging.debug(f"{self.ssh_config_file} not found")
+                self.ssh_config_lines = ""
         return self
 
 
