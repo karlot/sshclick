@@ -4,7 +4,7 @@
 [tool.poetry]
 name = "sshclick"
 homepage = "https://github.com/karlot/sshclick"
-version = "0.8.0"
+version = "0.8.0a"
 description = "SSH terminal config manager"
 authors = ["Karlo Tisaj <karlot@gmail.com>"]
 license = "MIT"
