@@ -9,11 +9,12 @@ from rich import box
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
     out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
+    alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
     #// Add Host data information
     #// -----------------------------------------------------------------------
     layout_table = Table("", box=box.ROUNDED, style="grey35" ,show_edge=True, show_header=False)
-    layout_table.add_row(f"[bright_white]Name [/]:  {host.name}")
+    layout_table.add_row(f"[bright_white]Name [/]:  {host.name}{alt_names}")
     layout_table.add_row(f"[bright_white]Group[/]:  {host.group}")
     layout_table.add_row(f"[bright_white]Type [/]:  {out_type}")
 

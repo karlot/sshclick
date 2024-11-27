@@ -98,7 +98,6 @@ class SSH_Config:
             self.current_host = None
 
 
-    # TODO: Add ability to separate host parameters with optional "=" sign
     def parse(self):
         """
         Parse config lines one by one and generate configuration structure
@@ -160,14 +159,17 @@ class SSH_Config:
                     continue
 
                 else:
-                    logging.warning(f"META: Unhandled metadata '{metadata}' on SSH-config line number: {config_line_index}")
+                    logging.warning(f"META: Unhandled metadata '{metadata}' on SSH-config line number: {config_line_index + 1}")
                     continue
 
             # Here we expect only normal ssh config lines "Host" is usually the keyword that begins definition
             # if we find any other keyword before first host keyword is defined, configuration is wrong probably
-            match = re.search(r"^(\w+)\s+(.+)$", line)
+            # This NEW regex should fix this spec from ssh_config definition:
+            #     "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ ""
+            # ... although I have tested clients like ssh or sftp, and they dont complain, and allow multiple "=" symbols. :D
+            match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", line)
             if not match:
-                logging.warning(f"KEYWORD: Incorrect configuration line '{line}' on SSH-config line number {config_line_index}")
+                logging.warning(f"KEYWORD: Incorrect configuration line '{line}' on SSH-config line number {config_line_index + 1}")
                 continue
 
             keyword, value = match.groups()
@@ -178,7 +180,14 @@ class SSH_Config:
                 self._config_flush_host()
 
                 host_type = HostType.PATTERN if "*" in value else HostType.NORMAL
-                self.current_host = SSH_Host(name=value, password=self.current_host_pass, group=self.current_group, type=host_type, info=self.current_host_info)
+                
+                # We need to check if multiple host keyword patterns are present, and store them separately from "main" name
+                if " " in value or "\t" in value:
+                    name, *names = value.split()
+                else:
+                    name = value
+                    names=[]
+                self.current_host = SSH_Host(name=name, alt_names=names, password=self.current_host_pass, group=self.current_group, type=host_type, info=self.current_host_info)
 
                 # Reset global host info cache when we find new host (from this line, any host comments will apply to next host)
                 self.current_host_info = []
@@ -188,7 +197,7 @@ class SSH_Config:
                 # any other normal line we just use as it is, wrong or not... :)
                 # Currently there is no support for keyword validation
                 if not self.current_host:
-                    logging.warning(f"Config info without Host definition on SSH-config line number {config_line_index}")
+                    logging.warning(f"Config info without Host definition on SSH-config line number {config_line_index + 1}")
                     exit(1)
                 else:
                     logging.debug(f"Config keyword for host '{self.current_host}': {keyword} -> {value}")
@@ -266,7 +275,8 @@ class SSH_Config:
                     lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.HINFO.value}{SSHCONFIG_META_SEPARATOR} {host_info}\n")
 
                 # Add "host" line definition
-                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}\n")
+                alt_names = " " + " ".join(host.alt_names) if host.alt_names else ""
+                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}{alt_names}\n")
 
                 # Add all assigned host params
                 for token, value in host.params.items():

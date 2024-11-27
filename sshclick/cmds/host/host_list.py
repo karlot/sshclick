@@ -48,7 +48,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
         ctx.exit(1)
     
     # This lists define host properties and which parameters will be displayed
-    host_props = ["name", "group", "type"]
+    host_props = ["group", "type"]
     params     = ["hostname", "user"]
 
     # If output is verbose, we need to find all parameters, and add them to params list
@@ -62,7 +62,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
                 if (not i_params in params):
                     params.append(i_params)
     
-    header = host_props + ([f"param:{p}" for p in params])
+    header = ["name"] + host_props + [f"param:{p}" for p in params]
     table = Table(*header, box=box.SQUARE, style="gray35")
 
     # Start adding rows    
@@ -92,7 +92,8 @@ def cmd(ctx, group_filter, name_filter, verbose):
                                 host_params.append("")
                     else:
                         host_params.append("")
-            row = [host.__dict__[prop] for prop in host_props] + host_params
+            alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
+            row = [host.name + alt_names] + [host.__dict__[prop] for prop in host_props] + host_params
             table.add_row(*row) if host.type == HostType.NORMAL else table.add_row(*row, style="cyan")
 
     console.print(table)

@@ -23,6 +23,7 @@ class SSH_Host:
     group: str
     password: str = ""
     type: HostType = HostType.NORMAL
+    alt_names: list = field(default_factory=list)
     info: list = field(default_factory=list)
     params: dict = field(default_factory=dict)
 

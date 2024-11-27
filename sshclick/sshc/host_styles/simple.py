@@ -10,11 +10,12 @@ from rich import box
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
     out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
+    alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
     #// Add Host data information
     #// -----------------------------------------------------------------------
     panel_data = [
-        f"[bright_white]Name [/]:  {host.name}",
+        f"[bright_white]Name [/]:  {host.name}{alt_names}",
         f"[bright_white]Group[/]:  {host.group}",
         f"[bright_white]Type [/]:  {out_type}",
     ]

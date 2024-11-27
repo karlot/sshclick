@@ -9,13 +9,14 @@ from rich import box
 def render(host: SSH_Host):
     out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
+    alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
     table = Table(box=box.SQUARE, style="grey39")
     table.add_column("Parameter")
     table.add_column("Value")
     table.add_column("Inherited-from")
     
-    table.add_row("Name",  host.name)
+    table.add_row("Name",  host.name + alt_names)
     table.add_row("Group", host.group)
     table.add_row("Type",  str(out_type))
     table.add_row("Info",  out_info, style="grey50")

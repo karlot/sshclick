@@ -40,8 +40,9 @@ class SSHHostInfo(Static):
         params: Static = self.query_one("#hst_parameters") # type: ignore
         
         det.update(Panel(
-            f"[b]Group[/b]: {host.group}\n"
-            f"[b]Type[/b]:  {host.type}",
+            (f"[b]AltHost[/b]: " + ", ".join(host.alt_names) + "\n" if host.alt_names else "") +
+            f"[b]Group[/b]:   {host.group}\n"
+            f"[b]Type[/b]:    {host.type}",
             border_style=DEF_PANEL_COLOR
         ))
         info.update(Panel("\n".join(host.info), border_style=DEF_PANEL_COLOR) if host.info else Panel("...empty...", style=DEF_PANEL_COLOR))

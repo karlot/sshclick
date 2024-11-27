@@ -13,13 +13,14 @@ from rich import box
 def render(host: SSH_Host):
     out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
+    alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
     grp_inputs: List[Union[Table,Panel]] = []
 
     #// Add Host data panel to the group
     #// -----------------------------------------------------------------------
     host_panel_data = f"""\
-    [bright_white]Name [/]:  {host.name}
+    [bright_white]Name [/]:  {host.name}{alt_names}
     [bright_white]Group[/]:  {host.group}
     [bright_white]Type [/]:  {out_type}\
     """
