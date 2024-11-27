@@ -1,5 +1,6 @@
 from typing import List, Tuple, Dict
 from dataclasses import dataclass, field
+from enum import Enum
 import importlib
 import socket
 
@@ -8,7 +9,12 @@ from ..globals import DEFAULT_HOST_STYLE
 from rich.console import Console
 console = Console()
 
+class HostType(str, Enum):
+    NORMAL = "normal"
+    PATTERN = "pattern"
+
 DEBUG_STYLES = False
+
 
 @dataclass
 class SSH_Host:
@@ -16,7 +22,7 @@ class SSH_Host:
     name: str
     group: str
     password: str = ""
-    type: str = "normal"
+    type: HostType = HostType.NORMAL
     info: list = field(default_factory=list)
     params: dict = field(default_factory=dict)
 
@@ -55,6 +61,10 @@ class SSH_Host:
             return (target_ip, False)
         except socket.error:
             return ("", True)
+    
+    
+    def __repr__(self) -> str:
+        return f"SSH_Host(name={self.name}, group={self.group}, type={self.type.name})"
 
 
     # Method for interaction with printing the object via Rich library

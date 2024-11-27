@@ -1,4 +1,4 @@
-from ..ssh_host import SSH_Host
+from ..ssh_host import SSH_Host, HostType
 
 from rich.table import Table
 from rich.panel import Panel
@@ -8,7 +8,7 @@ from rich import box
 # Render host data in panel with single-card look
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
+    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
 
     #// Add Host data information
     #// -----------------------------------------------------------------------

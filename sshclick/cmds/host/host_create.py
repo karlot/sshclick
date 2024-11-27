@@ -1,5 +1,5 @@
 import click
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 from sshclick.sshc import complete_ssh_group_names, complete_params
 from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
@@ -34,7 +34,7 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
     config: SSH_Config = ctx.obj
 
     if not target_group_name:
-        target_group_name = SSH_Config.DEFAULT_GROUP_NAME
+        target_group_name = SSH_Config.DEF_GROUP_NAME
 
     if config.check_host_by_name(name):
         print(f"Cannot create host '{name}' as it already exists in configuration!")
@@ -56,7 +56,7 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
         target_group = config.get_group_by_name(target_group_name)
 
     # This is patter host
-    target_type = "pattern" if "*" in name else "normal"
+    target_type = HostType.PATTERN if "*" in name else HostType.NORMAL
     new_host = SSH_Host(name=name, group=target_group_name, type=target_type, info=list(info))
 
     # Add all passed parameters to config
@@ -77,7 +77,7 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
             new_host.params[param] = value
 
     # Append new host to the group
-    if new_host.type == "normal":
+    if new_host.type == HostType.NORMAL:
         target_group.hosts.append(new_host)
     else:
         target_group.patterns.append(new_host)

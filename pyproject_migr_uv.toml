@@ -1,5 +1,25 @@
-# !!! Remember to update version here and in the code !!! 
-# (ಠ_ಠ)  -- I wish poetry could just read version from the package
+[project]
+name = "sshclick"
+authors = [
+    {name = "Karlo Tisaj", email = "karlot@gmail.com"}
+]
+description = "SSH terminal config manager"
+readme = "README.md"
+dynamic = ["version"]
+requires-python = ">=3.8,<4.0"
+dependencies = [
+    "click^8.1",
+    "rich^13.8",
+    "textual>=0.50,<0.80"
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+sshc = "sshclick.main_cli:cli"
+ssht = "sshclick.main_tui:tui"
+
 
 [tool.poetry]
 name = "sshclick"

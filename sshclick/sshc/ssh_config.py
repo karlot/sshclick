@@ -1,12 +1,28 @@
 import re, fnmatch, copy
 from typing import List, Optional, Tuple
+from enum import Enum
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from .ssh_host import SSH_Host
+from .ssh_host import SSH_Host, HostType
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
+
+from sshclick.globals import *
+HOST_KEYWORD = "host"
+
+DEFAULT_GROUP_NAME = "default"
+DEFAULT_GROUP_DESC = "Default group"
+
+class MetaTAG(str, Enum):
+    CONFIG = "config"
+    GNAME = "group"
+    GDESC = "desc"
+    GINFO = "info"
+    HINFO = "host"
+    HPASS = "pass"
+
 
 class SSH_Config:
     """
@@ -15,14 +31,14 @@ class SSH_Config:
     Main class for handling SSH configuration, reading from file, parsing and
     generating and writing contents back to SSH configuration file
     """
-    DEFAULT_GROUP_NAME: str = "default"
+    DEF_GROUP_NAME: str = DEFAULT_GROUP_NAME
 
     def __init__(self, file: str, config_lines: List[str] = [], stdout: bool = False):
         self.ssh_config_file: str = file
         self.ssh_config_lines: List[str] = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: List[SSH_Group] = [SSH_Group(name=self.DEFAULT_GROUP_NAME, desc="Default group")]
+        self.groups: List[SSH_Group] = [SSH_Group(name=self.DEF_GROUP_NAME, desc=DEFAULT_GROUP_DESC)]
 
         # options
         self.stdout: bool = stdout
@@ -30,7 +46,7 @@ class SSH_Config:
 
         # parsing "cache" info
         self.current_grindex: int = 0
-        self.current_group: str = self.DEFAULT_GROUP_NAME
+        self.current_group: str = self.DEF_GROUP_NAME
         self.current_host: Optional[SSH_Host] = None
         self.current_host_info: list = []
         self.current_host_pass: str = ""
@@ -50,7 +66,7 @@ class SSH_Config:
         Internal function used to flush host configuration while parsing config file
         """
         if self.current_host:
-            if self.current_host.type == "normal":
+            if self.current_host.type == HostType.NORMAL:
                 self.groups[self.current_grindex].hosts.append(self.current_host)
             else:
                 self.groups[self.current_grindex].patterns.append(self.current_host)
@@ -75,23 +91,24 @@ class SSH_Config:
             # so its much more "freely" in reading from config file writing is still in legacy style
             # in future, output config write styles could be changed... 
             if line.startswith("#"):
-                match = re.search(r"^#[\s@]*(group|desc|info|host|config)[\s:]+(.+)$", line)
+                match = re.search(r"^#[\s@]*(\w+)[\s:]+(.+)$", line)
 
                 # In case special comment is unreadable
                 if not match:
-                    logging.debug(f"DROP COMMENT: '{line}'")
+                    logging.debug(f"DROPING COMMENT: '{line}'")
                     continue
                 
+                # extract two items expected in matching group
                 metadata, value = match.groups()
 
-                if metadata == "config":
+                if metadata == MetaTAG.CONFIG:
                     # Config options are configured as key=value within config line...
-                    logging.debug(f"META: Config line found '{value}' Caching for next host definition...'")
+                    logging.debug(f"META: Config line found '{value}'")
                     conf_key, conf_val = value.split("=")
                     self.opts[conf_key] = conf_val
                     continue
 
-                elif metadata == "group":
+                elif metadata == MetaTAG.GNAME:
                     # New group found... flush any previous data and create new baseline
                     self._config_flush_host()
 
@@ -103,24 +120,19 @@ class SSH_Config:
                     logging.debug(f"META: Group index set to: {self.current_grindex}")
                     continue
 
-                elif metadata == "desc":
-                    logging.debug(f"META: Setting 'desc' param to '{value}' for group '{self.groups[self.current_grindex].name}'")
+                elif metadata == MetaTAG.GDESC:
+                    logging.debug(f"META: Setting group description to '{value}' for group '{self.groups[self.current_grindex].name}'")
                     self.groups[self.current_grindex].desc = value
                     continue
 
-                elif metadata == "info":
-                    logging.debug(f"META: Setting 'info' param to '{value}' for group '{self.groups[self.current_grindex].name}'")
+                elif metadata == MetaTAG.GINFO:
+                    logging.debug(f"META: Adding group info '{value}' for group '{self.groups[self.current_grindex].name}'")
                     self.groups[self.current_grindex].info.append(value)
                     continue
 
-                elif metadata == "host":
-                    logging.debug(f"META: Host comment found '{value}' Caching for next host definition...'")
+                elif metadata == MetaTAG.HINFO:
+                    logging.debug(f"META: Host info found '{value}' Caching for next host definition...'")
                     self.current_host_info.append(value)
-                    continue
-
-                elif metadata == "password":
-                    logging.debug(f"META: Host password found '{value}' Caching for next host definition...'")
-                    self.current_host_pass = value
                     continue
 
                 else:
@@ -138,12 +150,10 @@ class SSH_Config:
             keyword = keyword.lower()         # keywords are case insensitive, so we lowercase them
 
             # --- Found "host" keyword, that defines new block, usually followed with name
-            if keyword == "host":
+            if keyword == HOST_KEYWORD:
                 self._config_flush_host()
 
-                host_type = "pattern" if "*" in value else "normal"
-                logging.debug(f"Host '{value}' is '{host_type}' type!")
-
+                host_type = HostType.PATTERN if "*" in value else HostType.NORMAL
                 self.current_host = SSH_Host(name=value, password=self.current_host_pass, group=self.current_group, type=host_type, info=self.current_host_info)
 
                 # Reset global host info cache when we find new host (from this line, any host comments will apply to next host)
@@ -176,7 +186,7 @@ class SSH_Config:
         for group in self.groups:
             for host in group.hosts:
                 inherited_params: List[Tuple[str, dict]] = []
-                if host.type == "normal":
+                if host.type == HostType.NORMAL:
                     inherited_params = self.find_inherited_params(host.name)
                     host.inherited_params = inherited_params
         # end = time.time() - start
@@ -192,16 +202,13 @@ class SSH_Config:
         Then generates SSH config compatible file with all data, compatible with
         internal object model.
         """
-        SSHCONFIG_INDENT = "    "
-        SSHCONFIG_META_PREFIX = "@"
-        SSHCONFIG_META_SEPARATOR = ": "
 
         # First we lines before we flush them into file
-        lines: List[str] = ["#<<<<< SSH Config file managed by sshclick >>>>>\n"]
+        lines: List[str] = [SSHCONFIG_SIGNATURE_LINE]
 
         # Dump any saved configuration
         for option in self.opts:
-            lines.append(f"#{SSHCONFIG_META_PREFIX}config{SSHCONFIG_META_SEPARATOR}{option}={self.opts[option]}\n")
+            lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.CONFIG.value}{SSHCONFIG_META_SEPARATOR} {option}={self.opts[option]}\n")
 
         # Add separation from header/config and rest of ssh-config
         lines.append("\n")
@@ -209,36 +216,42 @@ class SSH_Config:
         # Render all groups
         for group in self.groups:
             # Ship default group as it does not have to be specified
-            render_header = False if group.name == self.DEFAULT_GROUP_NAME else True
+            render_header = False if group.name == self.DEF_GROUP_NAME else True
             
             if render_header:
                 # Add extra blank line when outputting new group header
                 lines.append("\n")
+                comment_hline = f"#{'-' * 79}\n"
+
                 # Start header line for the group with known metadata
-                lines.append(f"#{'-'*79}\n")        # add horizontal decoration line
-                lines.append(f"#{SSHCONFIG_META_PREFIX}group{SSHCONFIG_META_SEPARATOR}{group.name}\n")
+                lines.append(comment_hline)
+                lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GNAME.value}{SSHCONFIG_META_SEPARATOR} {group.name}\n")
+
                 if group.desc:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}desc{SSHCONFIG_META_SEPARATOR}{group.desc}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GDESC.value}{SSHCONFIG_META_SEPARATOR} {group.desc}\n")
+
                 for info in group.info:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}info{SSHCONFIG_META_SEPARATOR}{info}\n")
-                lines.append(f"#{'-'*79}\n")        # add horizontal decoration line
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GINFO.value}{SSHCONFIG_META_SEPARATOR} {info}\n")
+
+                lines.append(comment_hline)
 
             # Append hosts and patterns items from group
             for host in group.hosts + group.patterns:
                 # If there is host-info assigned to host, add it before adding "host" definition
                 for host_info in host.info:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}host{SSHCONFIG_META_SEPARATOR}{host_info}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.HINFO.value}{SSHCONFIG_META_SEPARATOR} {host_info}\n")
 
                 # Add "host" line definition
-                lines.append(f"Host {host.name}\n")
+                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}\n")
 
                 # Add all assigned host params
                 for token, value in host.params.items():
+                    SSHCONFIG_INDENT_STR = ' ' * SSHCONFIG_INDENT
                     if type(value) is str:
-                        lines.append(f"{SSHCONFIG_INDENT}{token} {value}\n")
+                        lines.append(f"{SSHCONFIG_INDENT_STR}{token} {value}\n")
                     elif type(value) is list:
                         for v in value:
-                            lines.append(f"{SSHCONFIG_INDENT}{token} {v}\n")
+                            lines.append(f"{SSHCONFIG_INDENT_STR}{token} {v}\n")
                     else:
                         raise Exception("Host parameter is not 'str' or 'list'!!!")
                 
@@ -373,7 +386,7 @@ class SSH_Config:
                     match = re.search(name_filter, host.name)
                     if match:
                         include_group = True
-                        if host.type == "normal":
+                        if host.type == HostType.NORMAL:
                             group_copy.hosts.append(host)
                         else:
                             group_copy.patterns.append(host)
@@ -388,7 +401,7 @@ class SSH_Config:
         """
         Function that moves host from one group to other group
         """
-        if found_host.type == "normal":
+        if found_host.type == HostType.NORMAL:
             target_group.hosts.append(found_host)
             found_group.hosts.remove(found_host)
         else:

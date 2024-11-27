@@ -1,15 +1,18 @@
-TODOs:
+TODOs
+=====
+
 - [x] Fix: Command `ssht` is broken, since entry-point is changed
 - [x] Fix: Linked assets are not displayed properly on PyPI Readme, provide full links to github page
-- [ ] Implement that HOST TEST uses paramiko to perform native SSH testing, not relying on SSH command
-  - Might be problematic... paramiko offers great UN/PW auth, but lacks some SSH native features, such as jumphosts
-  - Testing of hosts via jumphosts might not be possible, or might require much more extensive developement on top of paramiko
+for all connected hosts
+- [ ] Fix: Rename `tapes` to `assets` and relink all stuff from README
+- [ ] Fix: VHS Tape for generating GIF file for TUI mode is breaking the layout... ?!
+- [ ] Feature: (TUI) Implement view graph
+- [ ] Feature: (TUI) Implement create/delete group/host mechanism
+- [ ] Feature: (TUI) Implement reordering of groups/hosts
+- [ ] Feature: (SSHC) Implement mechanism to clean ssh-fingerprints for host/group
+- [ ] Feature: (SSHC) Implement that HOST TEST uses paramiko to perform native SSH testing, not relying on SSH command
+  - Paramiko offers great UN/PW auth, but lacks openssh native features, such as jumphosts
+  - Testing via jumphosts might not be possible, but require more developement on top of paramiko
   - Some libs, such as "fabric" implement some of the features, including some "ssh config" parsing, but limited
   - Only way to really provide full scope of testing via paramiko, is to implement our own support for manually building jumphost chains of connections, and applying each SSH Config options.
-- [ ] Implement HOST TEST to verify and print graph of linked connection trace-ing, and passed test for all connected hosts
-- [ ] Implement feature to clean ssh-fingerprints for host/group
-- [ ] TUI - Implement view graph
-- [ ] TUI - Implement create/delete group/host mechanism
-- [ ] TUI - Implement reordering of groups/hosts
-- [ ] Low: Rename `tapes` to `assets` and relink all stuff from README
-- [ ] Low: VHS Tape for generating GIF file for TUI mode is breaking the layout... ?!
+- [ ] Feature: (SSHC) Implement HOST TEST to verify and print graph of linked connection trace-ing, and passed test

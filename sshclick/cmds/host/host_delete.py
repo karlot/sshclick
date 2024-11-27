@@ -1,5 +1,5 @@
 import click
-from sshclick.sshc import SSH_Config
+from sshclick.sshc import SSH_Config, HostType
 from sshclick.sshc import complete_ssh_host_names, expand_names
 
 #------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ def cmd(ctx, names, yes):
 
         found_host, found_group = config.get_host_by_name(name)
         
-        if found_host.type == "normal":
+        if found_host.type == HostType.NORMAL:
             found_group.hosts.remove(found_host)
         else:
             found_group.patterns.remove(found_host)

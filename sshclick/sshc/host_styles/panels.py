@@ -1,6 +1,6 @@
 from typing import Union, List
 from textwrap import dedent
-from ..ssh_host import SSH_Host
+from ..ssh_host import SSH_Host, HostType
 
 from rich.table import Table
 from rich.panel import Panel
@@ -11,7 +11,7 @@ from rich import box
 # Render host data in panels with separate sections
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
+    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
     grp_inputs: List[Union[Table,Panel]] = []

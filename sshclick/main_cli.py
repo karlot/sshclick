@@ -1,10 +1,11 @@
-from .version import VERSION
 import click
 import os.path
-from .sshc import SSH_Config
+
+from sshclick.version import VERSION
+from sshclick.sshc import SSH_Config
+from sshclick.globals import USER_SSH_CONFIG
 
 # Setup click to use both short and long help option
-USER_SSH_CONFIG   = "~/.ssh/config"
 CONTEXT_SETTINGS  = dict(help_option_names=['-h', '--help'])
 
 #------------------------------------------------------------------------------
@@ -33,16 +34,6 @@ def cli(ctx: click.core.Context, sshconfig: str, stdout: bool):
     ctx.obj = SSH_Config(file=os.path.expanduser(sshconfig), stdout=stdout).read().parse()
 
 
-# Add experimental TUI
-from .main_tui import SSHTui
-TUI_SHORT_HELP = "TUI Interface (experimental)"
-TUI_HELP       = "Experimental TUI interface for interacting with SSH Configuration"
-@click.command(name="tui", short_help=TUI_SHORT_HELP, help=TUI_HELP)
-@click.pass_context
-def tui_cmd(ctx: click.core.Context):
-    SSHTui(ctx.obj).run()
-
-
 # Link all commands to root command
 #------------------------------------------------------------------------------
 # Top commands
@@ -50,7 +41,6 @@ from .cmds import cmd_group, cmd_host, cmd_config
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
 cli.add_command(cmd_config.ssh_config)
-cli.add_command(tui_cmd)
 
 # Top level aliases (groups --> group list, hosts --> host list, etc..)
 from .cmds.cmd_group import group_list

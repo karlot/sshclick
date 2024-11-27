@@ -1,4 +1,4 @@
-from ..ssh_host import SSH_Host
+from ..ssh_host import SSH_Host, HostType
 
 from rich.table import Table
 from rich.panel import Panel
@@ -8,7 +8,7 @@ from rich import box
 # Render host data in nested table with separate SSH parameters
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
+    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
     outer_table = Table(box=box.SQUARE, style="grey35", show_header=False)
@@ -17,7 +17,7 @@ def render(host: SSH_Host):
 
     outer_table.add_row("Name",  host.name)
     outer_table.add_row("Group", host.group)
-    outer_table.add_row("Type",  out_type)
+    outer_table.add_row("Type",  str(out_type))
     outer_table.add_row("Info",  Panel(out_info, border_style="grey35", style="grey50"))
 
     param_table = Table(box=box.SQUARE, style="grey35", show_header=True, show_edge=True, expand=True)

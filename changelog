@@ -1,10 +1,13 @@
 # SSH Click change-log
 
+## Version 0.7.0 (2024-04-)
+
+- Updated developement (pytest) and dependency packages (click, textual...) to latest releases
+
 ## Version 0.6.1 (2023-06-19)
 
 - FIXED: Creating new group failed because of false check if group already exists
 - FIXED: "ssht" command is now properly linked and functional after installation
-
 
 ## Version 0.6.0 (2023-05-20)
 
@@ -16,7 +19,6 @@
   - Offers TUI for browsing SSH configuration
   - Currently only shows configurations, editing features on roadmap
   - Allows opening SSH or SFTP session with selected node directly from APP
-
 
 ## Version 0.5.0 (2023-04-17)
 
@@ -35,7 +37,6 @@
 - Added Changelog and TODO
 - Removed `setup.cfg`
 
-
 ## Version 0.4.4 (2022-08-8)
 
 - First release on PyPI
@@ -45,12 +46,10 @@
 - Refactoring for `Poetry` and `pyproject.toml`
 - Fixed testing
 
-
 ## Version 0.4.1 (2022-08-2)
 
 - Fix broken type annotation
 - Fixes for compatibility of older python3 (`3.7` and newer are supported)
-
 
 ## Version 0.4.0 (2022-08-1)
 

@@ -1,6 +1,6 @@
 import click
 from typing import List
-from sshclick.sshc import SSH_Config, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Host, HostType
 
 from rich.console import Console
 from rich.table import Table
@@ -79,7 +79,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
                     else:
                         host_params.append(host.params[table_param])
                 else:
-                    # Handle inherited params (only valid for "normal" hosts)
+                    # Handle inherited params (only valid for NORMAL host type)
                     if host.inherited_params:
                         for pattern, i_params in host.inherited_params:
                             if table_param in i_params:
@@ -93,6 +93,6 @@ def cmd(ctx, group_filter, name_filter, verbose):
                     else:
                         host_params.append("")
             row = [host.__dict__[prop] for prop in host_props] + host_params
-            table.add_row(*row) if host.type == "normal" else table.add_row(*row, style="cyan")
+            table.add_row(*row) if host.type == HostType.NORMAL else table.add_row(*row, style="cyan")
 
     console.print(table)

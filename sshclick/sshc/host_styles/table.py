@@ -1,4 +1,4 @@
-from ..ssh_host import SSH_Host
+from ..ssh_host import SSH_Host, HostType
 
 from rich.table import Table
 from rich import box
@@ -7,7 +7,7 @@ from rich import box
 # Render host data in single flat 3-column table
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == "normal" else f"[cyan]{host.type}[/]"
+    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
 
     table = Table(box=box.SQUARE, style="grey39")
@@ -17,7 +17,7 @@ def render(host: SSH_Host):
     
     table.add_row("Name",  host.name)
     table.add_row("Group", host.group)
-    table.add_row("Type",  out_type)
+    table.add_row("Type",  str(out_type))
     table.add_row("Info",  out_info, style="grey50")
     
     # Add rows for SSH Config parameters
