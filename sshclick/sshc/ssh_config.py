@@ -1,3 +1,4 @@
+import os
 import re, fnmatch, copy
 from typing import List, Optional, Tuple
 from enum import Enum
@@ -56,8 +57,31 @@ class SSH_Config:
         """
         Read content of SSH config file
         """
-        with open(self.ssh_config_file, "r") as fh:
-            self.ssh_config_lines = fh.readlines()
+        config_path = self.ssh_config_file
+        try:
+            with open(config_path, "r") as fh:
+                self.ssh_config_lines = fh.readlines()
+        except FileNotFoundError:
+            print(f"SSH config file not found ({config_path})!")
+            answer = input("Would you like to create it (y/n)? :")
+            if answer.lower() in ["y", "yes"]:
+                try:
+                    # Make sure full path is available
+                    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                    # Write initial config file
+                    with open(config_path, "w") as file:
+                        file.write(SSHCONFIG_SIGNATURE_LINE)
+                    # SSH config must be user read only
+                    os.chmod(config_path, 0o600)
+                    
+                    # Assume we start with empty lines
+                    self.ssh_config_lines = []
+                except:
+                    print(f"Failed to create ssh config file in ({config_path})!")
+                    exit(1)
+            else:
+                print("Cannot proceed without config file!")
+                exit(1)
         return self
 
 
