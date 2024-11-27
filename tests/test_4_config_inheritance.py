@@ -1,4 +1,4 @@
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 
 
 #------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ def test_host_pattern_matching_parsed():
             ),
         ],
         patterns=[
-            SSH_Host(name='test-a*', group='group1', type='pattern', params={'port': '2222'}),
-            SSH_Host(name='test-*', group='group1', type='pattern', params={'port': '1111', 'user': 'test1234'}),
+            SSH_Host(name='test-a*', group='group1', type=HostType.PATTERN, params={'port': '2222'}),
+            SSH_Host(name='test-*', group='group1', type=HostType.PATTERN, params={'port': '1111', 'user': 'test1234'}),
         ]
     )

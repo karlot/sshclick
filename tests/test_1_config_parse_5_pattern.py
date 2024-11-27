@@ -1,4 +1,4 @@
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 
 #------------------------------------------------------------------------------
 # Parsing global pattern
@@ -13,7 +13,7 @@ def test_parse_glob_pattern():
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", patterns=[
-            SSH_Host(name="*", type="pattern", group="default")
+            SSH_Host(name="*", type=HostType.PATTERN, group="default")
         ])
     ]
 
@@ -37,10 +37,10 @@ def test_parse_multiple_patterns():
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", patterns=[
-            SSH_Host(name="test1-*", type="pattern", group="default", info=["pattern for test1 hosts"], params={
+            SSH_Host(name="test1-*", type=HostType.PATTERN, group="default", info=["pattern for test1 hosts"], params={
                 "user":"test123",
             }),
-            SSH_Host(name="test2-*", type="pattern", group="default", info=["pattern for test2 hosts"], params={
+            SSH_Host(name="test2-*", type=HostType.PATTERN, group="default", info=["pattern for test2 hosts"], params={
                 "user":"test321",
             }),
         ])

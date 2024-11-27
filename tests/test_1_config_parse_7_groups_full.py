@@ -1,4 +1,4 @@
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 
 #------------------------------------------------------------------------------
 # Test parsing groups with group metadata (desc and multi-info)
@@ -115,7 +115,7 @@ def test_parse_groups_with_hosts_full():
                 ),
             ],
             patterns=[
-                SSH_Host(name="test1-*", type="pattern", group="testgroup-1", info=["common params for test-1"], params={
+                SSH_Host(name="test1-*", type=HostType.PATTERN, group="testgroup-1", info=["common params for test-1"], params={
                     "port":"1111",
                     "user":"test1234",
                 }),
