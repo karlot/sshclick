@@ -87,7 +87,13 @@ class SSHTui(App):
 
     def on_tree_node_highlighted(self, event):
         self.current_node = event.node.data
-        self.query_one(SSHDataView).update(self.current_node)
+        # For some reason if there was no keyboard interaction, and only mouse is used
+        # to expand group and select host, then NoMatch error is generated in self.query_one()
+        # TODO: Recheck event orders and see if there is better way of solving it
+        try:
+            self.query_one(SSHDataView).update(self.current_node)
+        except:
+            pass
 
     # ---------------------------------
     # Actions
