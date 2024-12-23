@@ -1,20 +1,25 @@
-import os
-import re, fnmatch, copy
+import os, re, fnmatch, copy, time
 from typing import List, Optional, Tuple
 from enum import Enum
-
-import logging
-logging.basicConfig(level=logging.INFO)
 
 from .ssh_host import SSH_Host, HostType
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
 from sshclick.globals import *
-HOST_KEYWORD = "host"
+from rich import inspect
 
+
+# I dont really need full logging import, just output some info if currently debugging
+DEBUG = True if 'SSHC_DEBUG' in os.environ and os.environ['SSHC_DEBUG'] == "1" else False
+def debug(msg):
+    if DEBUG: print("D:", msg)
+
+
+HOST_KEYWORD = "host"
 DEFAULT_GROUP_NAME = "default"
 DEFAULT_GROUP_DESC = "Default group"
+
 
 class MetaTAG(str, Enum):
     CONFIG = "config"
@@ -51,6 +56,9 @@ class SSH_Config:
         self.current_host: Optional[SSH_Host] = None
         self.current_host_info: list = []
         self.current_host_pass: str = ""
+
+        # Support for global keywords
+        self.global_params: dict = {}
 
 
     def read(self):
@@ -114,19 +122,17 @@ class SSH_Config:
             # so its much more "freely" in reading from config file writing is still in legacy style
             # in future, output config write styles could be changed... 
             if line.startswith("#"):
-                match = re.search(r"^#[\s@]*(\w+)[\s:]+(.+)$", line)
+                match = re.search(r"^#[ @]{1}(\w+):\s+(.+)$", line)
 
-                # In case special comment is unreadable
-                if not match:
-                    logging.debug(f"DROPING COMMENT: '{line}'")
-                    continue
+                # If we didn't find metadata, 
+                if not match: continue
                 
                 # extract two items expected in matching group
                 metadata, value = match.groups()
 
                 if metadata == MetaTAG.CONFIG:
                     # Config options are configured as key=value within config line...
-                    logging.debug(f"META: Config line found '{value}'")
+                    debug(f"META config: '{value}'")
                     conf_key, conf_val = value.split("=")
                     self.opts[conf_key] = conf_val
                     continue
@@ -135,41 +141,39 @@ class SSH_Config:
                     # New group found... flush any previous data and create new baseline
                     self._config_flush_host()
 
-                    logging.debug(f"META: Starting new group: {value}")
+                    debug(f"META group: {value}")
                     self.groups.append(SSH_Group(name=value))
 
                     self.current_grindex = len(self.groups) - 1
                     self.current_group = value
-                    logging.debug(f"META: Group index set to: {self.current_grindex}")
+                    debug(f"META Group index: {self.current_grindex}")
                     continue
 
                 elif metadata == MetaTAG.GDESC:
-                    logging.debug(f"META: Setting group description to '{value}' for group '{self.groups[self.current_grindex].name}'")
+                    debug(f"META Group description: {value}")
                     self.groups[self.current_grindex].desc = value
                     continue
 
                 elif metadata == MetaTAG.GINFO:
-                    logging.debug(f"META: Adding group info '{value}' for group '{self.groups[self.current_grindex].name}'")
+                    debug(f"META Group info: {value}")
                     self.groups[self.current_grindex].info.append(value)
                     continue
 
                 elif metadata == MetaTAG.HINFO:
-                    logging.debug(f"META: Host info found '{value}' Caching for next host definition...'")
+                    debug(f"META Host info cached: {value}")
                     self.current_host_info.append(value)
                     continue
 
                 else:
-                    logging.warning(f"META: Unhandled metadata '{metadata}' on SSH-config line number: {config_line_index + 1}")
+                    print(f"Unhandled metadata: '{metadata}' on SSH-config line number: {config_line_index + 1}")
                     continue
 
-            # Here we expect only normal ssh config lines "Host" is usually the keyword that begins definition
-            # if we find any other keyword before first host keyword is defined, configuration is wrong probably
             # This NEW regex should fix this spec from ssh_config definition:
-            #     "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ ""
-            # ... although I have tested clients like ssh or sftp, and they dont complain, and allow multiple "=" symbols. :D
+            # "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ ""
+            # although I have tested clients like ssh or sftp, they dont complain, and allow multiple "=" symbols. :D
             match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", line)
             if not match:
-                logging.warning(f"KEYWORD: Incorrect configuration line '{line}' on SSH-config line number {config_line_index + 1}")
+                print(f"KEYWORD: Ignoring incorrect configuration line '{line}' on SSH-config line number {config_line_index + 1}")
                 continue
 
             keyword, value = match.groups()
@@ -187,21 +191,37 @@ class SSH_Config:
                 else:
                     name = value
                     names=[]
-                self.current_host = SSH_Host(name=name, alt_names=names, password=self.current_host_pass, group=self.current_group, type=host_type, info=self.current_host_info)
+
+                new_host = SSH_Host(
+                    name=name,
+                    alt_names=names,
+                    password=self.current_host_pass,
+                    group=self.current_group,
+                    type=host_type,
+                    info=self.current_host_info,
+                    global_params=self.global_params,   # Inherit any global params at this point
+                )
+                debug(f"SSH Host definition created: {new_host}")
+                self.current_host = new_host
 
                 # Reset global host info cache when we find new host (from this line, any host comments will apply to next host)
                 self.current_host_info = []
                 self.current_host_pass = ""
-                continue
             else:
                 # any other normal line we just use as it is, wrong or not... :)
                 # Currently there is no support for keyword validation
                 if not self.current_host:
-                    logging.warning(f"Config info without Host definition on SSH-config line number {config_line_index + 1}")
-                    exit(1)
+                    # Added support for top/global level keywords, this will be filled only from start of the file
+                    debug(f"SSH Config global keyword defined: {keyword} -> {value}")
+                    if keyword in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
+                        if not keyword in self.global_params:
+                            self.global_params[keyword] = [value]
+                        else:
+                            self.global_params[keyword].append(value)
+                    else:
+                        self.global_params[keyword] = value
                 else:
-                    logging.debug(f"Config keyword for host '{self.current_host}': {keyword} -> {value}")
-                    # Save any specific info...
+                    debug(f"SSH Config keyword for host '{self.current_host.name}': {keyword} -> {value}")
                     if keyword in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
                         if not keyword in self.current_host.params:
                             self.current_host.params[keyword] = [value]
@@ -209,22 +229,52 @@ class SSH_Config:
                             self.current_host.params[keyword].append(value)
                     else:
                         self.current_host.params[keyword] = value
-                        continue
         
         # Last entries must be flushed manually as there are no new "hosts" to trigger storing parsed data into config struct
         self._config_flush_host()
 
         # Second stage, check any inheritances and fill them
-        # start = time.time()
+        start = time.time()
+        self._check_inheritance()
+        if DEBUG:
+            end = time.time() - start
+            print(f"Inheritance check elapsed: {end:0.6f}s")
+            inspect(self, all=True)
+
+        return self
+
+
+    # TODO: Fix following inheritance check, as it is not working as expected
+    #       problem is that we are not checking correctly how SSH config deals with value inheritance and propagation
+    #       SSH uses first occurrence of the value, and does not override it with later occurrences, so we need to
+    #       implement this behavior in our parsing and inheritance check
+    def _check_inheritance(self):
+        """
+        Function that checks inheritance for each host in configuration
+        """
         for group in self.groups:
             for host in group.hosts:
-                inherited_params: List[Tuple[str, dict]] = []
                 if host.type == HostType.NORMAL:
-                    inherited_params = self.find_inherited_params(host.name)
-                    host.inherited_params = inherited_params
-        # end = time.time() - start
-        # print(f"Inheritance check elapsed: {end:0.3f}s")
-        return self
+                    host.inherited_params = self._find_inherited_params(host.name)
+                    for source, params in host.inherited_params:
+                        for k,v in params.items():
+                            host.pattern_params
+
+
+    def _find_inherited_params(self, host_name: str) -> List[Tuple[str,dict]]:
+        """
+        Given a host name, finds and returns list of 2-item tuples, where first item is name of pattern from
+        which params are inherited, and second item is parameters dictionary from the pattern
+        """
+        inherited: List[Tuple[str,dict]] = []
+        # inherited: dict[str, str] = {}
+        for group in self.groups:
+            for pattern in group.patterns:
+                # Check if any one of pattern (from all groups) will match host name
+                if fnmatch.fnmatch(host_name, pattern.name):
+                    inherited.append((pattern.name, pattern.params))
+        
+        return inherited
 
 
     def generate_ssh_config(self):
@@ -245,6 +295,12 @@ class SSH_Config:
 
         # Add separation from header/config and rest of ssh-config
         lines.append("\n")
+
+        if self.global_params:
+            lines.append(SSHCONFIG_GLOBAL_KEYWORDS_LINE)
+            for token, value in self.global_params.items():
+                lines.append(f"{token} {value}\n")
+                lines.append("\n")
 
         # Render all groups
         for group in self.groups:
@@ -377,21 +433,6 @@ class SSH_Config:
         for group in self.groups:
             all_groups.append(group.name)
         return all_groups
-
-
-    def find_inherited_params(self, host_name: str) -> List[Tuple[str,dict]]:
-        """
-        Given a host name, finds and returns list of 2-item tuples, where first item is name of pattern from
-        which params are inherited, and second item is parameters dictionary from the pattern
-        """
-        inherited: List[Tuple[str,dict]] = []
-        for group in self.groups:
-            for pattern in group.patterns:
-                # Check if any one of pattern (from all groups) will match host name
-                if fnmatch.fnmatch(host_name, pattern.name):
-                    inherited.append((pattern.name, pattern.params))
-        
-        return inherited
 
 
     def filter_config(self, group_filter: str, name_filter: str) -> List[SSH_Group]:

@@ -53,6 +53,7 @@ def cmd(ctx, group_filter, name_filter, verbose):
 
     # If output is verbose, we need to find all parameters, and add them to params list
     if verbose:
+        params += [k for k in config.global_params if k not in params]  # Add support for global parameters
         flat_config: List[SSH_Host] = []
         for group in filtered_groups:
             for h in group.hosts + group.patterns:
@@ -72,26 +73,35 @@ def cmd(ctx, group_filter, name_filter, verbose):
             host_params = []
             # Go trough list of all params we know are available across current host list
             for table_param in params:
+
+                # Handle direct params, and handle if its a list or string
                 if table_param in host.params:
-                    # Handle direct params, and handle if its a list or string
                     if isinstance(host.params[table_param], list):
                         host_params.append("\n".join(host.params[table_param]))
                     else:
                         host_params.append(host.params[table_param])
-                else:
-                    # Handle inherited params (only valid for NORMAL host type)
-                    if host.inherited_params:
-                        for pattern, i_params in host.inherited_params:
-                            if table_param in i_params:
-                                if isinstance(i_params[table_param], list):
-                                    table_param = "\n".join([f"{val}  ({pattern})" for val in i_params[table_param]])
-                                    host_params.append(table_param)
-                                else:
-                                    host_params.append(f"[yellow]{i_params[table_param]}  ({pattern})[/]")
+
+                # Inherited params... (TODO: parse config in different way so this is accessible directly from host)
+                # elif table_param in [ k for t in host.inherited_params for k, _ in t[1].items()]:
+                elif table_param in host.pattern_params:
+                    for pattern, i_params in host.inherited_params:
+                        if table_param in i_params:
+                            if isinstance(i_params[table_param], list):
+                                table_param = "\n".join([f"{val}  ({pattern})" for val in i_params[table_param]])
+                                host_params.append(table_param)
                             else:
-                                host_params.append("")
-                    else:
-                        host_params.append("")
+                                host_params.append(f"[yellow]{i_params[table_param]}  ({pattern})[/]")
+                        else:
+                            host_params.append("")
+
+                # If parameter is not filled yet, then it might come from global params
+                elif table_param in host.global_params:
+                    host_params.append(f"[cyan]{config.global_params[table_param]}  (glob)[/]")
+
+                # Else this host does not have this parameter (or its outside configuration)
+                else:
+                    host_params.append("")
+                    
             alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
             row = [host.name + alt_names] + [host.__dict__[prop] for prop in host_props] + host_params
             table.add_row(*row) if host.type == HostType.NORMAL else table.add_row(*row, style="cyan")

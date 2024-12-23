@@ -12,12 +12,11 @@ from sshclick.ssht.modal_delete import ModalDelete
 
 # Load linked utils
 from sshclick.ssht.utils import run_connect
-
+from sshclick.globals import *
 
 class ModalAction(ModalScreen[None]):
     BINDINGS = [
         ("escape", "app.pop_screen"),
-        # ("enter",  "execute")
     ]
 
     DEFAULT_CSS = """
@@ -34,19 +33,19 @@ class ModalAction(ModalScreen[None]):
         if self.node == None:
             # No object is selected in tree
             yield OptionList(
-                Option("Create new host", id="opt_new_hst"),
-                Option("Create new group", id="opt_new_grp"),
+                Option("Create new host", id="opt_new_hst", disabled=ACTIONS_EDIT_DISABLED),
+                Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
                 Separator(),
                 Option("Cancel (ESC)", id="opt_cancel"),
             )
         elif isinstance(self.node, SSH_Group):
             # Group is selected
             yield OptionList(
-                Option("Edit current group", id="opt_ed_cur"),
-                Option("Delete current group", id="opt_del_cur"),
+                Option("Edit current group", id="opt_ed_cur", disabled=ACTIONS_EDIT_DISABLED),
+                Option("Delete current group", id="opt_del_cur", disabled=ACTIONS_DELETE_DISABLED),
                 Separator(),
-                Option("Create new host", id="opt_new_hst"),
-                Option("Create new group", id="opt_new_grp"),
+                Option("Create new host", id="opt_new_hst", disabled=ACTIONS_CREATE_HOST_DISABLED),
+                Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
                 Separator(),
                 Option("Cancel (ESC)", id="opt_cancel"),
             )
@@ -55,15 +54,16 @@ class ModalAction(ModalScreen[None]):
             yield OptionList(
                 Option("SSH to current host", id="opt_ssh_cur"),
                 Option("SFTP to current host", id="opt_sftp_cur"),
-                Option("Upload file to current host", id="opt_up_file", disabled=True), # not implemented 
-                Option("Test host connectivity", id="opt_test", disabled=True),         # not implemented 
-                Option("Clear host fingerpting", id="opt_clear_finger", disabled=True), # not implemented 
+                # Option("Upload file to current host", id="opt_up_file", disabled=True),
+                # Option("Test host connectivity", id="opt_test", disabled=True),
+                # Option("Clear host fingerprint", id="opt_clear_finger", disabled=True),
+                # Option("Inject SSH Key", id="opt_inject_key", disabled=True),
                 Separator(),
-                Option("Edit current host", id="opt_ed_cur"),
-                Option("Delete current host", id="opt_del_cur"),
+                Option("Edit current host", id="opt_ed_cur", disabled=ACTIONS_EDIT_DISABLED),
+                Option("Delete current host", id="opt_del_cur", disabled=ACTIONS_DELETE_DISABLED),
                 Separator(),
-                Option("Create new host", id="opt_new_hst"),
-                Option("Create new group", id="opt_new_grp"),
+                Option("Create new host", id="opt_new_hst", disabled=ACTIONS_CREATE_HOST_DISABLED),
+                Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
                 Separator(),
                 Option("Cancel (ESC)", id="opt_cancel"),
             )

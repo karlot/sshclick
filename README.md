@@ -33,7 +33,7 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 
 **Only commands that modify configuration will edit and rewrite/restructure your SSH Config file. In that case, any added comment or infos that are not in form that SSHClick understand will be discarded, and configuration will be re-formatted to match SSHClick style. See below details to understand how SSH Click would keep your config organized**!
 
-**NEW!** *Now comes with additional TUI that can be accessed via `sshc tui` or `ssht`.*  
+**NEW!** *Now comes with additional TUI that can be accessed via `ssht` command.*  
 
 ![splash_gif](https://raw.githubusercontent.com/karlot/sshclick/master/tapes/sshc_tui_example.svg)
 
@@ -56,7 +56,7 @@ Trough additional "metadata" comments it can add abstractions such as "groups" a
     - Currently only tested on Linux (Debian 10,11, Ubuntu 20.04,22.04), but should work on other systems as well
     - Minimum python3.7 (tested up to 3.11 beta) & pip installed
         - it is preferable to not use system python version, to install "custom" user python on linux, you can try using pyenv (<https://github.com/pyenv/pyenv>
-    - git installed
+    - git installed (for installing from source)
 
 2. **Install package:**
     - from PyPI using pip
@@ -127,7 +127,7 @@ SSHClick when editing and writing to SSH config file must use specific style, an
 
 ### Comment blocks and metadata in SSH Config
 
-SSHClick uses comments to add extra information which it can use to add concept of grouping and extra information to hosts. Special metadata lines start with `#@<tag>` or `# <tag>` followed by some of meta-tags like `group`, `desc`, `info`. This are all considered group meta-tags, as they apply on the group level. Note that line separations above and below group header are added only for visual aid, they are ignored at parsing, but are included when modifying/generating SSH config file.  
+SSHClick uses comments to add extra information which it can use to add concept of grouping and extra information to hosts. Special metadata lines start with `#@<tag>:` or `# <tag>:` followed by some of meta-tags like `group`, `desc`, `info`. This are all considered group meta-tags, as they apply on the group level. Note that line separations above and below group header are added only for visual aid, they are ignored at parsing, but are included when modifying/generating SSH config file.  
 
 This metadata headers can be added manually also in SSH config, or sshclick can add them and move hosts under specific group, using `sshc` cli tool
 

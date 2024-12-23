@@ -27,12 +27,12 @@ def test_host_pattern_matching_manual():
     config = SSH_Config("none", config1.splitlines())
     config.parse()
 
-    inherited1 = config.find_inherited_params("test-data")
+    inherited1 = config._find_inherited_params("test-data")
     assert inherited1 == [
         ("test-*", {"port": "1111", "user": "test1234"}),
     ]
 
-    inherited2 = config.find_inherited_params("test-app")
+    inherited2 = config._find_inherited_params("test-app")
     assert inherited2 == [
         ("test-a*", {"port": "2222"}),
         ("test-*", {"port": "1111", "user": "test1234"}),

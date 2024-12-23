@@ -38,9 +38,8 @@ STYLE_HELP  = f"Select output rendering style for host details: ({styles_str}), 
 #------------------------------------------------------------------------------
 
 @click.command(name="show", short_help=SHORT_HELP, help=LONG_HELP)
-@click.option("--style", default="", envvar='SSHC_HOST_STYLE',  help=STYLE_HELP, shell_complete=complete_styles)
-# @click.option("--follow", is_flag=True,    envvar='SSHC_HOST_FOLLOW', help=FOLLOW_HELP)
-@click.option("--graph",  is_flag=True,    envvar='SSHC_HOST_GRAPH',  help=GRAPH_HELP)
+@click.option("--style", default="", envvar='SSHC_HOST_STYLE', help=STYLE_HELP, shell_complete=complete_styles)
+@click.option("--graph", is_flag=True, envvar='SSHC_HOST_GRAPH', help=GRAPH_HELP)
 @click.argument("name", shell_complete=complete_ssh_host_names)
 @click.pass_context
 def cmd(ctx: click.core.Context, name: str, style:str, graph: bool):

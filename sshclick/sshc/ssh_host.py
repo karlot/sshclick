@@ -25,10 +25,18 @@ class SSH_Host:
     type: HostType = HostType.NORMAL
     alt_names: list = field(default_factory=list)
     info: list = field(default_factory=list)
-    params: dict = field(default_factory=dict)
-
-    inherited_params: list = field(default_factory=list)
     print_style: str = DEFAULT_HOST_STYLE
+
+    # Parameters separation, from directly configured under host definition, global
+    # patterns that apply to every host defined after it (unless explicitly overridden)
+    # and ones matched by pattern definition
+    params: dict = field(default_factory=dict)
+    pattern_params: dict = field(default_factory=dict) 
+    global_params: dict = field(default_factory=dict)
+
+    # Map indicating source of the parameter
+    inherited_params: list[tuple[str, dict]] = field(default_factory=list)
+    # inherited_params: dict[str, str] = field(default_factory=dict)
 
 
     def get_all_params(self) -> Dict[str, str]:
@@ -37,8 +45,10 @@ class SSH_Host:
         host inherited parameters, and returns them as dictionary
         """
         return {
+            **self.global_params,
+            **self.pattern_params,
             **self.params,
-            **{ k: v for d in self.inherited_params for k, v in d[1].items()}
+            # **{ k: v for d in self.inherited_params for k, v in d[1].items()}
         }
     
 

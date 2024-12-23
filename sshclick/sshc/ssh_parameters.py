@@ -122,6 +122,9 @@ ALL_PARAM_LC_NAMES = [x.lower() for x in ALL_PARAMS.keys()]
 
 # Update this as needed
 PARAMS_WITH_ALLOWED_MULTIPLE_VALUES = [
+    "certificatefile",
+    "identityfile",
+    "include",
     "localforward",
     "remoteforward",
     "dynamicforward",

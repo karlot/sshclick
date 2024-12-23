@@ -4,7 +4,8 @@ from typing import List
 
 from ..globals import ENABLED_HOST_STYLES
 from .ssh_parameters import ALL_PARAM_LC_NAMES
-from .ssh_config import SSH_Config, SSH_Host
+from .ssh_config import SSH_Config
+from .ssh_host import SSH_Host
 
 from rich.console import Console
 err = Console(stderr=True)
