@@ -8,14 +8,14 @@ from sshclick.sshc import complete_ssh_group_names
 # COMMAND: group set
 #------------------------------------------------------------------------------
 SHORT_HELP = "Change group parameters"
-LONG_HELP  = """
+LONG_HELP  = r"""
 Change/modify group parameters
 
 Command allows to modify current information on the group, like info lines
 and description. To rename group, use command "sshc group rename" command.
 To move hosts between group, use "sshc host set" command.
 
-When modifying group, work can be done on single group only. I didnt find
+When modifying group, work can be done on single group only. I didn't find
 any use-case where I would set same description or info lines on multiple
 groups at the same time... ¯\_(ツ)_/¯
 """
@@ -59,7 +59,7 @@ def cmd(ctx, name, desc, info):
     else:
         found_group.info = []
 
-    config.generate_ssh_config().write_out()
+    if config.generate_ssh_config(): config.write_out()
 
-    if not config.stdout:
+    if not config.stdout and not config.diff:
         print(f"Modified group: {name}")

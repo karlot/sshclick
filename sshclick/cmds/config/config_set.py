@@ -28,7 +28,7 @@ def cmd(ctx, host_style):
             config.opts["host-style"] = host_style
 
         # Write out modified config
-        config.generate_ssh_config().write_out()
+        if config.generate_ssh_config(): config.write_out()
         return
     
     print("No option was provided to set into SSH config options!")

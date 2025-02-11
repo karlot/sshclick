@@ -6,12 +6,12 @@ from sshclick.sshc import SSH_Config, SSH_Group
 #------------------------------------------------------------------------------
 config1=""
 config1_modified_lines=[
-    "#<<<<< SSH Config file managed by sshclick >>>>>\n",
-    "\n",
-    "\n",
-    "#-------------------------------------------------------------------------------\n",
-    "#@group: testgroup\n",
-    "#-------------------------------------------------------------------------------\n",
+    "#<<<<< SSH Config file managed by sshclick >>>>>",
+    "",
+    "",
+    "#-------------------------------------------------------------------------------",
+    "#@group: testgroup",
+    "#-------------------------------------------------------------------------------",
 ]
 
 def test_add_new_group():
@@ -39,17 +39,17 @@ Host defaulthost
     hostname 2.2.3.3
 """
 config2_modified_lines=[
-    "#<<<<< SSH Config file managed by sshclick >>>>>\n",
-    "\n",
-    "#@host: some-host-info\n",
-    "Host defaulthost\n",
-    "    hostname 2.2.3.3\n",
-    "\n",
-    "\n",
-    "#-------------------------------------------------------------------------------\n",
-    "#@group: testgroup\n",
-    "#@desc: description123\n",
-    "#-------------------------------------------------------------------------------\n",
+    "#<<<<< SSH Config file managed by sshclick >>>>>",
+    "",
+    "#@host: some-host-info",
+    "Host defaulthost",
+    "    hostname 2.2.3.3",
+    "",
+    "",
+    "#-------------------------------------------------------------------------------",
+    "#@group: testgroup",
+    "#@desc: description123",
+    "#-------------------------------------------------------------------------------",
 ]
 
 def test_add_new_group_complex():

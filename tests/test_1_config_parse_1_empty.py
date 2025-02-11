@@ -21,10 +21,12 @@ result_empty = [SSH_Group(name='default', desc="Default group")]
 #-----------------------------------
 def test_parse_empty():
     lines = config1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
-    assert groups == result_empty
+    cfg = SSH_Config("none", lines).parse()
+    assert cfg.groups == result_empty
+    assert cfg.all_hosts == []
 
 def test_parse_only_comments():
     lines = config2.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
-    assert groups == result_empty
+    cfg = SSH_Config("none", lines).parse()
+    assert cfg.groups == result_empty
+    assert cfg.all_hosts == []

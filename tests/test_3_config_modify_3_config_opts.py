@@ -6,10 +6,10 @@ from sshclick.sshc import SSH_Config, SSH_Group
 #------------------------------------------------------------------------------
 config1=""
 config1_modified_lines=[
-    "#<<<<< SSH Config file managed by sshclick >>>>>\n",
-    "#@config: host-style=simple\n",
-    "#@config: something=nice\n",
-    "\n",
+    "#<<<<< SSH Config file managed by sshclick >>>>>",
+    "#@config: host-style=simple",
+    "#@config: something=nice",
+    "",
 ]
 
 def test_add_new_group():

@@ -20,18 +20,20 @@ using this software, as you might accidentally lose some configuration.
 
 # Parameters help:
 SSHCONFIG_HELP = f"Config file (default: {USER_SSH_CONFIG})"
-STDOUT_HELP    =  "Send changed SSH config to STDOUT instead to original file, can be enabled with setting ENV variable (export SSHC_STDOUT=1)"
+STDOUT_HELP    =  "Send changed SSH config to STDOUT instead to original file. Can be enabled with setting ENV variable (export SSHC_STDOUT=1)"
+DIFF_HELP      =  "Show only difference is config changes, instead of applying them. Can be enabled with setting ENV variable (export SSHC_STDOUT=1)"
 #------------------------------------------------------------------------------
 
 # In cases we want to have some execution without any sub-commands, instead of displaying help
 # we can add "invoke_without_command=True" in a group decorator, to make function runnable directly
 @click.group(context_settings=CONTEXT_SETTINGS, help=MAIN_HELP)
 @click.option("--sshconfig", default=USER_SSH_CONFIG, envvar="SSHC_SSHCONFIG", help=SSHCONFIG_HELP)
-@click.option("--stdout",    is_flag=True,            envvar="SSHC_STDOUT",    help=STDOUT_HELP)
+@click.option("--stdout", is_flag=True, envvar="SSHC_STDOUT", help=STDOUT_HELP)
+@click.option("--diff", is_flag=True, envvar="SSHC_DIFF", help=DIFF_HELP)
 @click.version_option(VERSION, message="SSHClick (sshc) - Version: %(version)s")
 @click.pass_context
-def cli(ctx: click.core.Context, sshconfig: str, stdout: bool):
-    ctx.obj = SSH_Config(file=os.path.expanduser(sshconfig), stdout=stdout).read().parse()
+def cli(ctx: click.core.Context, sshconfig: str, stdout: bool, diff: bool):
+    ctx.obj = SSH_Config(file=os.path.expanduser(sshconfig), stdout=stdout, diff=diff).read().parse()
 
 
 # Link all commands to root command

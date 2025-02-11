@@ -1,4 +1,3 @@
-from typing import List
 from dataclasses import dataclass, field
 from .ssh_host import SSH_Host
 
@@ -8,8 +7,8 @@ class SSH_Group:
     name: str
     desc: str = ""
     info: list = field(default_factory=list)
-    hosts: List[SSH_Host] = field(default_factory=list)
-    patterns: List[SSH_Host] = field(default_factory=list)
+    hosts: list[SSH_Host] = field(default_factory=list)
+    patterns: list[SSH_Host] = field(default_factory=list)
 
     print_style: str = ""
 

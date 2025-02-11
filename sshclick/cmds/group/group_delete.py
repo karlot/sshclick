@@ -32,8 +32,8 @@ def cmd(ctx, names, yes):
     selected_group_list = expand_names(names, config.get_all_group_names())
     selected_group_list.sort()
 
-    # Deleting requires confirmation
-    if not yes:
+    # Deleting requires confirmation if not in "diff" mode
+    if not yes and not config.diff:
         print(f"Following groups will be deleted: [{','.join(selected_group_list)}]")
         if not click.confirm('Are you sure?'):
             ctx.exit(1)
@@ -50,9 +50,9 @@ def cmd(ctx, names, yes):
         config.groups.remove(config.get_group_by_name(name))
         config_updated = True
 
-        if not config.stdout:
+        if not config.stdout and not config.diff:
             print(f"Deleted group: {name}")
 
     # ReWrite config only when config was actually changed
     if config_updated:
-        config.generate_ssh_config().write_out()
+        if config.generate_ssh_config(): config.write_out()

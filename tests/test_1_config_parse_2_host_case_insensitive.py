@@ -47,15 +47,15 @@ results = [
 #-----------------------------------
 def test_parse_lowercase():
     lines = config1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
-    assert groups == results
+    cfg = SSH_Config("none", lines).parse()
+    assert cfg.groups == results
 
 def test_parse_camelcase():
     lines = config2.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
-    assert groups == results
+    cfg = SSH_Config("none", lines).parse()
+    assert cfg.groups == results
 
 def test_parse_altstyle1():
     lines = config_s1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
-    assert groups == results
+    cfg = SSH_Config("none", lines).parse()
+    assert cfg.groups == results

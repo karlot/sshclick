@@ -56,16 +56,18 @@ def test_get_host_ok():
     config = SSH_Config("none", config2.splitlines())
     config.parse()
 
-    host, group = config.get_host_by_name("test")
+    host = config.get_host_by_name("test")
+    group = config.get_group_by_name(host.group)
     
     expected_host = SSH_Host(name='test', group="default", info=["testinfo"], params={
         "hostname": "1.2.3.4",
         "port": "2222",
         "user": "testUSER",
     })
+    expected_group = SSH_Group(name='default', desc="Default group", info=[], hosts=[expected_host], patterns=[])
 
     assert host == expected_host
-    assert group == SSH_Group(name='default', desc="Default group", info=[], hosts=[expected_host], patterns=[])
+    assert group == expected_group
 
 
 def test_get_all_host_names():

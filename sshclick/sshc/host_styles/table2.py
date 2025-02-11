@@ -8,7 +8,7 @@ from rich import box
 # Render host data in nested table with separate SSH parameters
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
+    out_type = host.type.value if host.type == HostType.NORMAL else f"[cyan]{host.type.value}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
     alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
@@ -27,16 +27,15 @@ def render(host: SSH_Host):
     param_table.add_column("Inherited-from")
 
     # Add rows for SSH Config parameters
-    for key, value in host.params.items():
+    for param in host.get_all_params():
+        value, source = host.get_applied_param(param)
         output_value = value if not isinstance(value, list) else "\n".join(value)
-        param_table.add_row(key, output_value)
-
-    # Add rows for inherited SSH Config parameters
-    for pattern, pattern_params in host.inherited_params:
-        for param, value in pattern_params.items():
-            if not param in host.params:
-                output_value = value if not isinstance(value, list) else "\n".join(value)
-                param_table.add_row(param, output_value, pattern, style="yellow")
+        if source == "local":
+            param_table.add_row(param, output_value)
+        elif source == "global":
+            param_table.add_row(param, output_value, "global", style="green")
+        else:
+            param_table.add_row(param, output_value, source, style="yellow")
 
     outer_table.add_row("SSH Params", param_table)
     return outer_table

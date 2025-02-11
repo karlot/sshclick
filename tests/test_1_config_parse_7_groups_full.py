@@ -107,11 +107,11 @@ def test_parse_groups_with_hosts_full():
             hosts=[
                 SSH_Host(name="test1-app", group="testgroup-1", info=["hostinfo1-application"],
                     params={"hostname":"1.2.3.4"},
-                    inherited_params=[("test1-*", {"port": "1111", "user": "test1234"})]    # Added full support for inherited
+                    matched_params={"port": ("1111", "test1-*"), "user": ("test1234", "test1-*")}
                 ),
                 SSH_Host(name="test1-data", group="testgroup-1", info=["hostinfo1-database"],
                     params={"hostname":"2.4.6.8"},
-                    inherited_params=[("test1-*", {"port": "1111", "user": "test1234"})]    # Added full support for inherited
+                    matched_params={"port": ("1111", "test1-*"), "user": ("test1234", "test1-*")}
                 ),
             ],
             patterns=[

@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union
 from textwrap import dedent
 from ..ssh_host import SSH_Host, HostType
 
@@ -11,11 +11,11 @@ from rich import box
 # Render host data in panels with separate sections
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
+    out_type = host.type.value if host.type == HostType.NORMAL else f"[cyan]{host.type.value}[/]"
     out_info = "\n".join(host.info) if host.info else "- No info defined - "
     alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
-    grp_inputs: List[Union[Table,Panel]] = []
+    grp_inputs: list[Union[Table,Panel]] = []
 
     #// Add Host data panel to the group
     #// -----------------------------------------------------------------------
@@ -38,17 +38,16 @@ def render(host: SSH_Host):
     param_table.add_column("Value")
     param_table.add_column("Inherited-from")
 
-    # Add rows for SSH Config parameter table
-    for key, value in host.params.items():
+    # Add rows for SSH Config parameters
+    for param in host.get_all_params():
+        value, source = host.get_applied_param(param)
         output_value = value if not isinstance(value, list) else "\n".join(value)
-        param_table.add_row(key, output_value)
-
-    # Add rows for inherited SSH Config parameters
-    for pattern, pattern_params in host.inherited_params:
-        for param, value in pattern_params.items():
-            if not param in host.params:
-                output_value = value if not isinstance(value, list) else "\n".join(value)
-                param_table.add_row(param, output_value, pattern, style="yellow")
+        if source == "local":
+            param_table.add_row(param, output_value)
+        elif source == "global":
+            param_table.add_row(param, output_value, "global", style="green")
+        else:
+            param_table.add_row(param, output_value, source, style="yellow")
 
     grp_inputs.append(param_table)
 

@@ -40,10 +40,10 @@ def run_connect(tui: App, prog, target, opts=DEFAULT_CONNECT_OPTS):
                 str(result.stderr),
                 title=f"{target.name}: code {result.returncode}",
                 severity="warning")
-        else:
-            tui.notify(
-                f"Connection to '{target.name}' interrupted!",
-                severity="error")
+        # else:
+        #     tui.notify(
+        #         f"Connection to '{target.name}' interrupted!",
+        #         severity="error")
         
         # Restore default sig-int handling
         signal.signal(signal.SIGINT, original_handler)

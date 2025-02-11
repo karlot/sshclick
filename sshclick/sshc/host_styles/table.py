@@ -7,8 +7,8 @@ from rich import box
 # Render host data in single flat 3-column table
 #------------------------------------------------------------------------------
 def render(host: SSH_Host):
-    out_type = host.type if host.type == HostType.NORMAL else f"[cyan]{host.type}[/]"
-    out_info = "\n".join(host.info) if host.info else "- No info defined - "
+    out_type = host.type.value if host.type == HostType.NORMAL else f"[cyan]{host.type.value}[/]"
+    out_info = "\n".join(host.info) if host.info else ""
     alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
 
     table = Table(box=box.SQUARE, style="grey39")
@@ -22,16 +22,15 @@ def render(host: SSH_Host):
     table.add_row("Info",  out_info, style="grey50")
     
     # Add rows for SSH Config parameters
-    for key, value in host.params.items():
+    for param in host.get_all_params():
+        value, source = host.get_applied_param(param)
         output_value = value if not isinstance(value, list) else "\n".join(value)
-        table.add_row(f"Param:{key}", output_value)
+        if source == "local":
+            table.add_row(f"Param:{param}", output_value)
+        elif source == "global":
+            table.add_row(f"Param:{param}", output_value, "global", style="green")
+        else:
+            table.add_row(f"Param:{param}", output_value, source, style="yellow")
 
-    # Add rows for inherited SSH Config parameters
-    for pattern, pattern_params in host.inherited_params:
-        for param, value in pattern_params.items():
-            if not param in host.params:
-                output_value = value if not isinstance(value, list) else "\n".join(value)
-                table.add_row(f"param:{param}", output_value, pattern, style="yellow")
-    
     return table
 

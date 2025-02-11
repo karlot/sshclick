@@ -1,7 +1,7 @@
 from sshclick.globals import DEFAULT_HOST_STYLE, ENABLED_HOST_STYLES
 import click
 from sshclick.sshc import SSH_Config
-from sshclick.sshc import complete_ssh_host_names, complete_styles, generate_graph, trace_jumphosts
+from sshclick.sshc import complete_ssh_host_names, complete_styles, generate_graph
 
 from rich.console import Console
 console = Console()
@@ -46,22 +46,24 @@ def cmd(ctx: click.core.Context, name: str, style:str, graph: bool):
     config: SSH_Config = ctx.obj
 
     # Define host print style from CLI or config or default
-    if not style:
-        if "host-style" in config.opts:
-            style = config.opts["host-style"]
-        else:
-            style = DEFAULT_HOST_STYLE
+    if style == "":
+        style = config.opts["host-style"] if "host-style" in config.opts else DEFAULT_HOST_STYLE
 
     if not config.check_host_by_name(name):
-        print(f"Cannot get info for host '{name}' as it is not defined in configuration!")
+        print(f"Unknown host '{name}'!")
         ctx.exit(1)
 
-    # Get info about linked hosts (required for graph and follow)
-    traced_hosts = trace_jumphosts(name, config, ctx, style)
-
     # Normal show, no linked graphs needed
-    console.print(traced_hosts[0])
+    host = config.get_host_by_name(name)
+    host.print_style = style
+    console.print(host)
 
     #TODO: Make better graph output
     if graph:
+        # Get info about linked hosts (required for graph and follow)
+        traced_hosts = config.trace_proxyjump(name)
+        if not traced_hosts:
+            # Tracing config was broken somewhere in proxy chain
+            ctx.exit(1)
+
         console.print(generate_graph(traced_hosts), "")

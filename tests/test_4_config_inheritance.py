@@ -1,6 +1,5 @@
 from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 
-
 #------------------------------------------------------------------------------
 # Test parsing configuration and add new group then verify rendering output is
 # modified as expected - on empty config
@@ -27,16 +26,15 @@ def test_host_pattern_matching_manual():
     config = SSH_Config("none", config1.splitlines())
     config.parse()
 
-    inherited1 = config._find_inherited_params("test-data")
-    assert inherited1 == [
-        ("test-*", {"port": "1111", "user": "test1234"}),
-    ]
+    assert config.get_host_by_name("test-data").matched_params == {
+        "port": ("1111", "test-*"),
+        "user": ("test1234", "test-*"),
+    }
 
-    inherited2 = config._find_inherited_params("test-app")
-    assert inherited2 == [
-        ("test-a*", {"port": "2222"}),
-        ("test-*", {"port": "1111", "user": "test1234"}),
-    ]
+    assert config.get_host_by_name("test-app").matched_params == {
+        "port": ("2222", "test-a*"),        # Taken from first matched pattern
+        "user": ("test1234", "test-*"),     # Taken from later pattern
+    }
 
 
 def test_host_pattern_matching_parsed():
@@ -51,16 +49,17 @@ def test_host_pattern_matching_parsed():
         hosts=[
             SSH_Host(name="test-app", group="group1",
                 params={"hostname":"10.1.1.20"},
-                inherited_params=[
-                    ("test-a*", {"port": "2222"}),
-                    ("test-*", {"port": "1111", "user": "test1234"})
-                ]
+                matched_params={
+                    "port": ("2222", "test-a*"),
+                    "user": ("test1234", "test-*"),
+                }
             ),
             SSH_Host(name="test-data", group="group1",
                 params={"hostname":"10.1.1.30"},
-                inherited_params=[
-                    ("test-*", {"port": "1111", "user": "test1234"})
-                ]
+                matched_params={
+                    "port": ("1111", "test-*"),
+                    "user": ("test1234", "test-*"),
+                }
             ),
         ],
         patterns=[

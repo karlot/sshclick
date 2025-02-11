@@ -1,6 +1,5 @@
 import click
-from typing import List
-from sshclick.sshc import SSH_Config, SSH_Host, HostType
+from sshclick.sshc import SSH_Config, HostType
 
 from rich.console import Console
 from rich.table import Table
@@ -40,70 +39,54 @@ VERBOSE_HELP = "Show verbose info (all parameters)"
 def cmd(ctx, group_filter, name_filter, verbose):
     config: SSH_Config = ctx.obj
 
-    # Filter out groups and hosts if filters are defined via CLI
-    filtered_groups = config.filter_config(group_filter, name_filter)
+    # Filter out hosts if filters are defined via CLI
+    filtered_hosts = config.filter_hosts(group_filter, name_filter)
 
-    if not filtered_groups:
+    if not filtered_hosts:
         print("No host is matching any given filter!")
         ctx.exit(1)
     
-    # This lists define host properties and which parameters will be displayed
-    host_props = ["group", "type"]
-    params     = ["hostname", "user"]
+    # This lists define host properties and which parameters will be displayed by default
+    host_props   = ["group", "type"]
+    table_params = ["hostname", "user"]
 
-    # If output is verbose, we need to find all parameters, and add them to params list
+    # If output is verbose, we need to find all used parameters, and add them to params list
     if verbose:
-        params += [k for k in config.global_params if k not in params]  # Add support for global parameters
-        flat_config: List[SSH_Host] = []
-        for group in filtered_groups:
-            for h in group.hosts + group.patterns:
-                flat_config.append(h)
-        for host in flat_config:
-            for i_params in host.params:
-                if (not i_params in params):
-                    params.append(i_params)
+        for host in filtered_hosts:
+            for param in host.get_all_params():
+                if param not in table_params: table_params.append(param)
     
-    header = ["name"] + host_props + [f"param:{p}" for p in params]
+    header = ["name"] + host_props + [f"param:{p}" for p in table_params]
     table = Table(*header, box=box.SQUARE, style="gray35")
 
     # Start adding rows    
-    for group in filtered_groups:
+    for host in filtered_hosts:
         # Iterate trough hosts and patters
-        for host in group.hosts + group.patterns:
-            host_params = []
-            # Go trough list of all params we know are available across current host list
-            for table_param in params:
+        host_params = []
 
-                # Handle direct params, and handle if its a list or string
-                if table_param in host.params:
-                    if isinstance(host.params[table_param], list):
-                        host_params.append("\n".join(host.params[table_param]))
-                    else:
-                        host_params.append(host.params[table_param])
-
-                # Inherited params... (TODO: parse config in different way so this is accessible directly from host)
-                # elif table_param in [ k for t in host.inherited_params for k, _ in t[1].items()]:
-                elif table_param in host.pattern_params:
-                    for pattern, i_params in host.inherited_params:
-                        if table_param in i_params:
-                            if isinstance(i_params[table_param], list):
-                                table_param = "\n".join([f"{val}  ({pattern})" for val in i_params[table_param]])
-                                host_params.append(table_param)
-                            else:
-                                host_params.append(f"[yellow]{i_params[table_param]}  ({pattern})[/]")
-                        else:
-                            host_params.append("")
-
-                # If parameter is not filled yet, then it might come from global params
-                elif table_param in host.global_params:
-                    host_params.append(f"[cyan]{config.global_params[table_param]}  (glob)[/]")
-
-                # Else this host does not have this parameter (or its outside configuration)
-                else:
-                    host_params.append("")
-                    
-            alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
-            row = [host.name + alt_names] + [host.__dict__[prop] for prop in host_props] + host_params
-            table.add_row(*row) if host.type == HostType.NORMAL else table.add_row(*row, style="cyan")
+        # Go trough list of all params we need to fill in table, and get value for each host
+        for tp in table_params:
+            value, source = host.get_applied_param(tp)
+            host_params.append(merge_with_color(value, source))
+                
+        alt_names = " (" + ",".join(host.alt_names) + ")" if host.alt_names else ""
+        row = [host.name + alt_names] + [getattr(host, prop, "") for prop in host_props] + host_params
+        table.add_row(*row) if host.type == HostType.NORMAL else table.add_row(*row, style="cyan")
 
     console.print(table)
+
+
+# Helper function for list particular style
+# - adds color based on "source" of parameter (local, global, or from pattern)
+# - if value is based on non-local source, it adds reference to the source
+# - if value is list, it merges line into multiline output, keeping color and source references
+def merge_with_color(v, s="local"):
+    if v == "": return ""
+    if s == "local":
+        if isinstance(v, list): return "\n".join(v)
+        return v
+
+    c = "green" if s == "global" else "yellow"
+    if isinstance(v, list): return "\n".join([f"[{c}]{val}  ({s})[/]" for val in v])
+    return f"[{c}]{v}  ({s})[/]"    
+

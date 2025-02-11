@@ -1,4 +1,3 @@
-from typing import List, Tuple, Dict
 from dataclasses import dataclass, field
 from enum import Enum
 import importlib
@@ -31,51 +30,35 @@ class SSH_Host:
     # patterns that apply to every host defined after it (unless explicitly overridden)
     # and ones matched by pattern definition
     params: dict = field(default_factory=dict)
-    pattern_params: dict = field(default_factory=dict) 
-    global_params: dict = field(default_factory=dict)
 
     # Map indicating source of the parameter
-    inherited_params: list[tuple[str, dict]] = field(default_factory=list)
-    # inherited_params: dict[str, str] = field(default_factory=dict)
+    # inherited_params: list[tuple[str, dict]] = field(default_factory=list)
+
+    # {"user": ("testUSER", "testhost*")}
+    matched_params: dict[str, tuple[str, str]] = field(default_factory=dict)
 
 
-    def get_all_params(self) -> Dict[str, str]:
+    def get_all_params(self) -> list[str]:
         """
-        Method combines configured host parameters with all
-        host inherited parameters, and returns them as dictionary
+        Method returns all parameters that will be used for given host, both directly configured and inherited
         """
-        return {
-            **self.global_params,
-            **self.pattern_params,
-            **self.params,
-            # **{ k: v for d in self.inherited_params for k, v in d[1].items()}
-        }
+        return list({ **self.params, **self.matched_params}.keys())
     
 
-    def get_target(self) -> str:
+    def get_applied_param(self, param) -> tuple[str, str]:
         """
-        Method returns whatever host has defined as target for connection.
-        If name is just alias, and host has defined "hostname" then hostname will be returned
-        When there is no hostname, only host name is returned
+        Function that checks for specific host, about requested parameter, and
+        returns value and source from where its pulled. If its not found, returns empty value
         """
-        return self.name if not "hostname" in self.params else self.params["hostname"]
-
-
-    def resolve_target(self) -> Tuple[str, bool]:
-        """
-        Method returns tuple of resolved IP address for this host, and error as bool value,
-        that is set to true if host cannot be resolved
-        """
-        target = self.get_target()
-        try:
-            target_ip = socket.gethostbyname(target)
-            return (target_ip, False)
-        except socket.error:
-            return ("", True)
-    
-    
-    def __repr__(self) -> str:
-        return f"SSH_Host(name={self.name}, group={self.group}, type={self.type.name})"
+        if param in self.matched_params:
+            # Requested parameter for the host comes from outside host definition
+            return self.matched_params[param]
+        elif param in self.params:
+            # Requested parameter for the host is defined only locally for the 
+            value = self.params[param]
+            return (value, "local")
+        # There is no requested parameter for this host
+        return ("", "")
 
 
     # Method for interaction with printing the object via Rich library

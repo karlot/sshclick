@@ -1,5 +1,5 @@
 import click
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host
+from sshclick.sshc import SSH_Config, SSH_Group
 from sshclick.sshc import complete_ssh_host_names, complete_ssh_group_names, complete_params, expand_names
 from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
@@ -72,59 +72,67 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
                 ctx.exit(1)
 
     # When setting stuff on multiple hosts, iterate over them
-    for name in selected_hosts_list:
-        if not config.check_host_by_name(name):
-            print(f"Cannot set anything on host '{name}' as it is not defined in configuration!")
+    for host_name in selected_hosts_list:
+        if not config.check_host_by_name(host_name):
+            print(f"Unknown host '{host_name}'!")
             ctx.exit(1)
 
-        found_host, found_group = config.get_host_by_name(name)
+        current_host = config.get_host_by_name(host_name)
+        current_group = config.get_group_by_name(current_host.group)
         
-        # Move host to different group
+        # Defined "target" group provided, we have to check if we can move host to different group
         if target_group_name:
-            # Find target group
-            target_group_exists = config.check_group_by_name(target_group_name)    
-            if not target_group_exists and not force:
-                print(f"Cannot move host '{name}' to group '{target_group_name}' which does not exist!")
-                print("Consider using --force to automatically create target group, or create it manually first.")
-                ctx.exit(1)
-            elif not target_group_exists:
-                target_group = SSH_Group(name=target_group_name)
-                config.groups.append(target_group)
-            else:
-                target_group = config.get_group_by_name(target_group_name)
+            # Check if current and target group names are the same
+            if target_group_name == current_host.group:
+                print(f"Host '{host_name}' already in group '{target_group_name}', group unchanged!")
 
-            # Move host to target group
-            config.move_host_to_group(found_host, found_group, target_group)
+            else:
+                # Find target group
+                if config.check_group_by_name(target_group_name):
+                    # Move host to target group
+                    target_group = config.get_group_by_name(target_group_name)
+                    config.move_host_to_group(current_host, current_group, target_group)
+                else:
+                    if force:
+                        target_group = SSH_Group(name=target_group_name)
+                        config.groups.append(target_group)
+                        # Move host to target group
+                        config.move_host_to_group(current_host, current_group, target_group)
+                    else:
+                        print(f"Cannot move host '{host_name}' to group '{target_group_name}' which does not exist!")
+                        print("Consider using --force to automatically create target group, or create it manually first.")
+                        ctx.exit(1)
+                        exit(1) # unreachable, but avoids issues with static checks
             
         # Update info (appending if value is passed, clearing the list if value is empty)
         if info:
             if len(info[0]) > 0:
-                found_host.info = found_host.info + list(info)
+                current_host.info = current_host.info + list(info)
             else:
-                found_host.info = []
+                current_host.info = []
 
         # Sets parameters for host
         for param, value in parameter:
             param = param.lower()            # lowercase keyword/param as they are case insensitive
             if value:
                 if param in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
-                    if not param in found_host.params:
-                        found_host.params[param] = [value]
+                    if not param in current_host.params:
+                        current_host.params[param] = [value]
                     else:
-                        if value in found_host.params[param]:
+                        if value in current_host.params[param]:
                             print(f"Cannot add existing value '{value}' to host parameter '{param}' multiple times!")
                         else:
-                            found_host.params[param].append(value)
+                            current_host.params[param].append(value)
                 else:
-                    found_host.params[param] = value
+                    current_host.params[param] = value
             else:
-                if param in found_host.params:
-                    found_host.params.pop(param)
+                if param in current_host.params:
+                    current_host.params.pop(param)
                 else:
                     print(f"Cannot unset parameter that is not defined!")
 
-        if not config.stdout:
-            print(f"Modified host: {name}")
+        if not config.stdout and not config.diff:
+            print(f"Modified host: {host_name}")
 
     # Write out modified config
-    config.generate_ssh_config().write_out()
+    if config.generate_ssh_config(): config.write_out()

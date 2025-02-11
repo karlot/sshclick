@@ -24,7 +24,7 @@ def cmd(ctx, host_style):
             del config.opts["host-style"]
 
         # Write out modified config
-        config.generate_ssh_config().write_out()
+        if config.generate_ssh_config(): config.write_out()
         return
     
     print("No option was provided to delete from SSH config options!")

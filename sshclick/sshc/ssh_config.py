@@ -1,13 +1,14 @@
-import os, re, fnmatch, copy, time
-from typing import List, Optional, Tuple
+import os, re, fnmatch, time
+from typing import Optional
 from enum import Enum
 
 from .ssh_host import SSH_Host, HostType
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
+from .ssh_diff import generate_diff
 
 from sshclick.globals import *
-from rich import inspect
+# from rich import print
 
 
 # I dont really need full logging import, just output some info if currently debugging
@@ -17,9 +18,6 @@ def debug(msg):
 
 
 HOST_KEYWORD = "host"
-DEFAULT_GROUP_NAME = "default"
-DEFAULT_GROUP_DESC = "Default group"
-
 
 class MetaTAG(str, Enum):
     CONFIG = "config"
@@ -37,22 +35,22 @@ class SSH_Config:
     Main class for handling SSH configuration, reading from file, parsing and
     generating and writing contents back to SSH configuration file
     """
-    DEF_GROUP_NAME: str = DEFAULT_GROUP_NAME
-
-    def __init__(self, file: str, config_lines: List[str] = [], stdout: bool = False):
+    def __init__(self, file: str, config_lines: list[str] = [], stdout: bool = False, diff: bool = False):
         self.ssh_config_file: str = file
-        self.ssh_config_lines: List[str] = config_lines
+        self.ssh_config_lines: list[str] = config_lines
 
         # configuration representation (array of SSH groups?)
-        self.groups: List[SSH_Group] = [SSH_Group(name=self.DEF_GROUP_NAME, desc=DEFAULT_GROUP_DESC)]
+        self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME, desc=DEFAULT_GROUP_DESC)]
+        self.all_hosts: list[SSH_Host] = []
 
         # options
-        self.stdout: bool = stdout
+        self.stdout: bool = stdout      # Redirect configuration change/write to stdout instead of input file
+        self.diff: bool = diff          # Option to only show differences that would be applied to configuration
         self.opts: dict = {}
 
         # parsing "cache" info
         self.current_grindex: int = 0
-        self.current_group: str = self.DEF_GROUP_NAME
+        self.current_group: str = DEFAULT_GROUP_NAME
         self.current_host: Optional[SSH_Host] = None
         self.current_host_info: list = []
         self.current_host_pass: str = ""
@@ -68,7 +66,8 @@ class SSH_Config:
         config_path = self.ssh_config_file
         try:
             with open(config_path, "r") as fh:
-                self.ssh_config_lines = fh.readlines()
+                content = fh.read()
+                self.ssh_config_lines = content.split("\n")
         except FileNotFoundError:
             print(f"SSH config file not found ({config_path})!")
             answer = input("Would you like to create it (y/n)? :")
@@ -102,6 +101,8 @@ class SSH_Config:
                 self.groups[self.current_grindex].hosts.append(self.current_host)
             else:
                 self.groups[self.current_grindex].patterns.append(self.current_host)
+
+            self.all_hosts.append(self.current_host)
             # Reset "cache" since we flushed host info
             self.current_host = None
 
@@ -199,8 +200,8 @@ class SSH_Config:
                     group=self.current_group,
                     type=host_type,
                     info=self.current_host_info,
-                    global_params=self.global_params,   # Inherit any global params at this point
                 )
+
                 debug(f"SSH Host definition created: {new_host}")
                 self.current_host = new_host
 
@@ -233,48 +234,57 @@ class SSH_Config:
         # Last entries must be flushed manually as there are no new "hosts" to trigger storing parsed data into config struct
         self._config_flush_host()
 
-        # Second stage, check any inheritances and fill them
-        start = time.time()
+        # Second stage, check any inheritances and fill it in
         self._check_inheritance()
-        if DEBUG:
-            end = time.time() - start
-            print(f"Inheritance check elapsed: {end:0.6f}s")
-            inspect(self, all=True)
 
         return self
 
 
-    # TODO: Fix following inheritance check, as it is not working as expected
-    #       problem is that we are not checking correctly how SSH config deals with value inheritance and propagation
-    #       SSH uses first occurrence of the value, and does not override it with later occurrences, so we need to
-    #       implement this behavior in our parsing and inheritance check
     def _check_inheritance(self):
         """
         Function that checks inheritance for each host in configuration
         """
-        for group in self.groups:
-            for host in group.hosts:
-                if host.type == HostType.NORMAL:
-                    host.inherited_params = self._find_inherited_params(host.name)
-                    for source, params in host.inherited_params:
-                        for k,v in params.items():
-                            host.pattern_params
+        if DEBUG:
+            start = time.time()
 
+        for host in self.all_hosts:
+            # We only check what "normal" hosts inherits
+            if host.type == HostType.PATTERN: continue
 
-    def _find_inherited_params(self, host_name: str) -> List[Tuple[str,dict]]:
-        """
-        Given a host name, finds and returns list of 2-item tuples, where first item is name of pattern from
-        which params are inherited, and second item is parameters dictionary from the pattern
-        """
-        inherited: List[Tuple[str,dict]] = []
-        # inherited: dict[str, str] = {}
-        for group in self.groups:
-            for pattern in group.patterns:
-                # Check if any one of pattern (from all groups) will match host name
-                if fnmatch.fnmatch(host_name, pattern.name):
-                    inherited.append((pattern.name, pattern.params))
-        
-        return inherited
+            # Add global parameters to host, if they are not already defined
+            # They normally override any other parameters, but only if they are not defined already as used
+            for param, value in self.global_params.items():
+                if param not in host.matched_params:
+                    host.matched_params[param] = (value, "global")
+
+            # NOTE: This has added almost O^2 complexity with the number of hosts
+            #       We need to find a way to optimize this, if it becomes a problem
+            before = True
+            for other_host in self.all_hosts:
+                # Skip current host, and mark that we have passed it
+                if other_host == host:
+                    before = False
+                    continue
+                
+                # We test only pattern hosts, and if they match the name of current host
+                if other_host.type == HostType.PATTERN and fnmatch.fnmatch(host.name, other_host.name):
+                    for param, value in other_host.params.items():
+                        if before:
+                            # If parameter is seen before in used params, first instance is then already
+                            # seen, and we dont care about this value anymore
+                            if param not in host.matched_params:
+                                host.matched_params[param] = (value, other_host.name)
+                        else:
+                            # If matching host is after current host, store parameter only if it is not
+                            # already defined in current host parameters or used parameters that are inherited
+                            if param in host.params: continue
+                            if param in host.matched_params: continue
+                            # if param not in host.params or param not in host.matched_params:
+                            host.matched_params[param] = (value, other_host.name)
+        if DEBUG:
+            end = time.time() - start
+            print(f"Inheritance check elapsed: {end:0.6f}s")
+            # inspect(self, all=True)
 
 
     def generate_ssh_config(self):
@@ -286,41 +296,41 @@ class SSH_Config:
         internal object model.
         """
 
-        # First we lines before we flush them into file
-        lines: List[str] = [SSHCONFIG_SIGNATURE_LINE]
+        # Prepare all lines for configuration
+        lines: list[str] = [SSHCONFIG_SIGNATURE_LINE]
 
         # Dump any saved configuration
         for option in self.opts:
-            lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.CONFIG.value}{SSHCONFIG_META_SEPARATOR} {option}={self.opts[option]}\n")
+            lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.CONFIG.value}{SSHCONFIG_META_SEPARATOR} {option}={self.opts[option]}")
 
         # Add separation from header/config and rest of ssh-config
-        lines.append("\n")
+        lines.append("")
 
         if self.global_params:
             lines.append(SSHCONFIG_GLOBAL_KEYWORDS_LINE)
             for token, value in self.global_params.items():
-                lines.append(f"{token} {value}\n")
-                lines.append("\n")
+                lines.append(f"{token} {value}")
+                lines.append("")
 
         # Render all groups
         for group in self.groups:
             # Ship default group as it does not have to be specified
-            render_header = False if group.name == self.DEF_GROUP_NAME else True
+            render_header = False if group.name == DEFAULT_GROUP_NAME else True
             
             if render_header:
                 # Add extra blank line when outputting new group header
-                lines.append("\n")
-                comment_hline = f"#{'-' * 79}\n"
+                lines.append("")
+                comment_hline = f"#{'-' * 79}"
 
                 # Start header line for the group with known metadata
                 lines.append(comment_hline)
-                lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GNAME.value}{SSHCONFIG_META_SEPARATOR} {group.name}\n")
+                lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GNAME.value}{SSHCONFIG_META_SEPARATOR} {group.name}")
 
                 if group.desc:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GDESC.value}{SSHCONFIG_META_SEPARATOR} {group.desc}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GDESC.value}{SSHCONFIG_META_SEPARATOR} {group.desc}")
 
                 for info in group.info:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GINFO.value}{SSHCONFIG_META_SEPARATOR} {info}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.GINFO.value}{SSHCONFIG_META_SEPARATOR} {info}")
 
                 lines.append(comment_hline)
 
@@ -328,27 +338,32 @@ class SSH_Config:
             for host in group.hosts + group.patterns:
                 # If there is host-info assigned to host, add it before adding "host" definition
                 for host_info in host.info:
-                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.HINFO.value}{SSHCONFIG_META_SEPARATOR} {host_info}\n")
+                    lines.append(f"#{SSHCONFIG_META_PREFIX}{MetaTAG.HINFO.value}{SSHCONFIG_META_SEPARATOR} {host_info}")
 
                 # Add "host" line definition
                 alt_names = " " + " ".join(host.alt_names) if host.alt_names else ""
-                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}{alt_names}\n")
+                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}{alt_names}")
 
                 # Add all assigned host params
                 for token, value in host.params.items():
                     SSHCONFIG_INDENT_STR = ' ' * SSHCONFIG_INDENT
                     if type(value) is str:
-                        lines.append(f"{SSHCONFIG_INDENT_STR}{token} {value}\n")
+                        lines.append(f"{SSHCONFIG_INDENT_STR}{token} {value}")
                     elif type(value) is list:
                         for v in value:
-                            lines.append(f"{SSHCONFIG_INDENT_STR}{token} {v}\n")
+                            lines.append(f"{SSHCONFIG_INDENT_STR}{token} {v}")
                     else:
                         raise Exception("Host parameter is not 'str' or 'list'!!!")
                 
                 # Add newline after host definition
-                lines.append("\n")
-            
-        # Store output lines
+                lines.append("")
+
+        # If we are running in diff mode, only show the changes, and return without storing new configuration!
+        if self.diff:
+            generate_diff(self.ssh_config_lines, lines)
+            return
+
+        # Store new config lines as actual
         self.ssh_config_lines = lines
         return self
 
@@ -357,21 +372,27 @@ class SSH_Config:
         """
         Write generated SSH config to target file
         """
+        # When we are running in "diff" mode, dont write out anything!
+        if self.diff: return
+
+        # Prepare multiline content string for output configuration
+        config_content = "\n".join(self.ssh_config_lines)
+
         if self.stdout:
-            print("".join(self.ssh_config_lines))
+            # When output is changed to write config to STDOUT, just print all lines
+            print(config_content)
         else:
+            # Write content to target config file
+            # TODO: This is prone to errors, and we should check it target file is writable, and catch exceptions!
             with open(self.ssh_config_file, "w") as out:
-                out.writelines(self.ssh_config_lines)
+                out.write(config_content)
 
 
     def check_group_by_name(self, name: str) -> bool:
         """
         Check if specific group name is present in configuration
         """
-        for group in self.groups:
-            if group.name == name:
-                return True
-        return False
+        return any(group.name == name for group in self.groups)
 
 
     def get_group_by_name(self, name: str) -> SSH_Group:
@@ -381,8 +402,7 @@ class SSH_Config:
         function will either return 'None' or will throw exception
         """
         for group in self.groups:
-            if group.name == name:
-                return group
+            if group.name == name: return group
         raise Exception(f"Requested group '{name}' not found in the SSH configuration")
 
 
@@ -390,95 +410,121 @@ class SSH_Config:
         """
         Check if specific host name is present in configuration
         """
-        for group in self.groups:
-            all_hosts = group.hosts + group.patterns
-            for host in all_hosts:
-                if host.name == name:
-                    return True
-        return False
+        return any(host.name == name for host in self.all_hosts)
 
 
-    def get_host_by_name(self, name: str) -> Tuple[SSH_Host, SSH_Group]:
+    def get_host_by_name(self, name: str) -> SSH_Host:
         """
         Find host in configuration that matches the name (strict match, one only!)
         On success returns host and his assigned group, on fail depending on 'throw_on_fail' flag
         function will either return ('None','None') or will throw exception
         """
-        for group in self.groups:
-            all_hosts = group.hosts + group.patterns
-            for host in all_hosts:
-                if host.name == name:
-                    return host, group
+        for host in self.all_hosts:
+            if host.name == name: return host
         raise Exception(f"Requested host '{name}' not found in the SSH configuration")
 
 
-    def get_all_host_names(self) -> List[str]:
+    def get_all_host_names(self) -> list[str]:
         """
         Return all host names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_hosts: List[str] = []
-        for group in self.groups:
-            for host in group.hosts + group.patterns:
-                all_hosts.append(host.name)
-        return all_hosts
+        return [host.name for host in self.all_hosts]
 
 
-    def get_all_group_names(self) -> List[str]:
+    def get_all_group_names(self) -> list[str]:
         """
         Return all group names from current configuration
         Useful for auto-completion, or for quick checking if name already exists
         """
-        all_groups: List[str] = []
-        for group in self.groups:
-            all_groups.append(group.name)
-        return all_groups
+        return [group.name for group in self.groups]
 
 
-    def filter_config(self, group_filter: str, name_filter: str) -> List[SSH_Group]:
+    def filter_hosts(self, group_filter: str, name_filter: str) -> list[SSH_Host]:
         """
         Function takes optional group and name regex, and if they are not None or empty,
-        function creates a new list of SSH groups and their SSH hosts, but with all
-        non-matching items removed.
+        function creates a new filtered list of SSH hosts
         """
-        filtered_groups: List[SSH_Group] = []
-        for group in self.groups:
-            # If group filter is defined, check if current group matches the name to progress
-            if group_filter:
-                group_match = re.search(group_filter, group.name)
-                if not group_match:
-                    continue
+        filtered_hosts = []
+
+        for host in self.all_hosts:
+            # If group filter is defined, check if current host matches the group name to progress
+            if group_filter and not re.search(group_filter, host.group): continue
             
-            # When group is not skipped, check if name filter is used, and filter out groups
-            if name_filter:
-                # Make a new copy of group, so we dont mess original config
-                group_copy = copy.copy(group)
-                group_copy.hosts = []
-                group_copy.patterns = []
-                include_group = False
+            # When host is not skipped, check if name filter is used, and filter out hosts
+            if name_filter and not re.search(name_filter, host.name): continue
 
-                for host in group.hosts + group.patterns:
-                    match = re.search(name_filter, host.name)
-                    if match:
-                        include_group = True
-                        if host.type == HostType.NORMAL:
-                            group_copy.hosts.append(host)
-                        else:
-                            group_copy.patterns.append(host)
-                if include_group:
-                    filtered_groups.append(group_copy)
-            else:
-                filtered_groups.append(group)
-        return filtered_groups
+            # If host is not skipped, add it to filtered list
+            filtered_hosts.append(host)
+
+        return filtered_hosts
 
 
-    def move_host_to_group(self, found_host: SSH_Host, found_group: SSH_Group, target_group: SSH_Group) -> None:
+    def add_host(self, host: SSH_Host):
+        """
+        Function that will add host to a configuration based on its group definition
+        """
+        if not host.group:
+            raise Exception("Internal ERROR, host group missing, or empty, please report issue!")
+        
+        try:
+            found_group = self.get_group_by_name(host.group)
+        except:
+            # When group does not exist, we return false
+            return False
+
+        # Add host to configuration
+        if host.type == HostType.NORMAL:
+            found_group.hosts.append(host)
+        else:
+            found_group.patterns.append(host)
+        self.all_hosts.append(host)
+        return True
+
+
+    def move_host_to_group(self, host: SSH_Host, source_group: SSH_Group, target_group: SSH_Group) -> None:
         """
         Function that moves host from one group to other group
         """
-        if found_host.type == HostType.NORMAL:
-            target_group.hosts.append(found_host)
-            found_group.hosts.remove(found_host)
+        # Change group name inside host
+        host.group = target_group.name
+
+        # Move hosts within groups based on type
+        if host.type == HostType.NORMAL:
+            target_group.hosts.append(host)
+            source_group.hosts.remove(host)
         else:
-            target_group.patterns.append(found_host)
-            found_group.patterns.remove(found_host)
+            target_group.patterns.append(host)
+            source_group.patterns.remove(host)
+
+
+    def trace_proxyjump(self, name: str) -> list[SSH_Host] | None:
+        """
+        Function to trace connected hosts via "proxyjump" SSH parameter
+        For target host, return a list of hosts in order of connections to reach the target host
+        In case host is directly reachable (no "proxyjump" param), it will return list of single (target) host
+        """
+        # Keep list of linked hosts via proxyjump option
+        traced_hosts = []
+
+        # we are first checking host that is asked, and then check if that host has a "proxy" defined
+        # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
+        # can trace full connection path for later graph processing
+        while True:
+            # Search for host in current configuration
+            if (not self.check_host_by_name(name)):
+                print(f"Cannot get info for used host '{name}' as next proxyjump, as it is not defined in configuration!")
+                return None
+
+            found_host = self.get_host_by_name(name)
+
+            # Add current host, and its table to traced lists
+            traced_hosts.append(found_host)
+
+            # Find proxy info if it exists, if not, break the loop
+            proxy_val, _ = found_host.get_applied_param("proxyjump")
+
+            if not proxy_val: break
+            name = proxy_val
+
+        return traced_hosts

@@ -48,14 +48,19 @@ def cmd(ctx, names, yes):
             print(f"Cannot delete host '{name}' as it is not defined in configuration!")
             continue
 
-        found_host, found_group = config.get_host_by_name(name)
+        found_host = config.get_host_by_name(name)
+        host_group = config.get_group_by_name(found_host.group)
         
+        # Remove host from specific group
         if found_host.type == HostType.NORMAL:
-            found_group.hosts.remove(found_host)
+            host_group.hosts.remove(found_host)
         else:
-            found_group.patterns.remove(found_host)
+            host_group.patterns.remove(found_host)
 
-        if not config.stdout:
+        # Remove host from list of all hosts
+        config.all_hosts.remove(found_host)
+
+        if not config.stdout and not config.diff:
             print(f"Deleted host: {name}")
 
-    config.generate_ssh_config().write_out()
+    if config.generate_ssh_config(): config.write_out()

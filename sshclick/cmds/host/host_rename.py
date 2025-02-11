@@ -23,8 +23,9 @@ def cmd(ctx, name, new_name):
         print(f"Cannot rename host '{name}' to '{new_name}' as new name is already used!")
         ctx.exit(1)
 
-    config.get_host_by_name(name)[0].name = new_name
-    config.generate_ssh_config().write_out()
-
-    if not config.stdout:
+    config.get_host_by_name(name).name = new_name
+    
+    if not config.stdout and not config.diff:
         print(f"Renamed host: {name} -> {new_name}")
+
+    if config.generate_ssh_config(): config.write_out()

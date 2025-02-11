@@ -2,6 +2,7 @@ import click
 from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 from sshclick.sshc import complete_ssh_group_names, complete_params
 from sshclick.sshc import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
+from sshclick.globals import DEFAULT_GROUP_NAME
 
 #------------------------------------------------------------------------------
 # COMMAND: host create
@@ -34,26 +35,24 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
     config: SSH_Config = ctx.obj
 
     if not target_group_name:
-        target_group_name = SSH_Config.DEF_GROUP_NAME
+        target_group_name = DEFAULT_GROUP_NAME
 
     if config.check_host_by_name(name):
         print(f"Cannot create host '{name}' as it already exists in configuration!")
         ctx.exit(1)
         
     # Find group by name where to store config
-    target_group_exists = config.check_group_by_name(target_group_name)
-
-    if not target_group_exists and not force:
-        print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
-        print("Create group first, or use '--force' option to create it automatically!")
-        ctx.exit(1)
-        # unreachable, but avoids issues with static checks
-        exit(1)
-    elif not target_group_exists:
-        target_group = SSH_Group(name=target_group_name)
-        config.groups.append(target_group)
-    else:
+    if config.check_group_by_name(target_group_name):
         target_group = config.get_group_by_name(target_group_name)
+    else:
+        if force:
+            target_group = SSH_Group(name=target_group_name)
+            config.groups.append(target_group)
+        else:
+            print(f"Cannot create host '{name}' in group '{target_group_name}' since the group does not exist")
+            print("Create group first, or use '--force' option to create it automatically!")
+            ctx.exit(1)
+            exit(1) # unreachable, but avoids issues with static checks
 
     # This is patter host
     target_type = HostType.PATTERN if "*" in name else HostType.NORMAL
@@ -61,7 +60,7 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
 
     # Add all passed parameters to config
     for param, value in parameter:
-        # parametar keyword will be lowercased as they are case insensitive
+        # parameter keyword will be lowercased as they are case insensitive
         param = param.lower()
         if not value or value.isspace():
             print(f"Cannot define empty value for parameter during host creation!")
@@ -77,13 +76,13 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
             new_host.params[param] = value
 
     # Append new host to the group
-    if new_host.type == HostType.NORMAL:
+    if target_type == HostType.NORMAL:
         target_group.hosts.append(new_host)
     else:
         target_group.patterns.append(new_host)
 
-    # Generate new config
-    config.generate_ssh_config().write_out()
-
-    if not config.stdout:
+    if not config.stdout and not config.diff:
         print(f"Created host: {name}")
+
+    # Generate new config
+    if config.generate_ssh_config(): config.write_out()

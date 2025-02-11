@@ -33,15 +33,17 @@ def cmd(ctx, name):
         ctx.exit(1)
 
     found_group = config.get_group_by_name(name)
-    host_list: List[str] = []
 
+    host_list = Table(box=box.ROUNDED, style="white", show_header=False, expand=True)
+    host_list.add_column("name", ratio=1)
+    host_list.add_column("address", ratio=1)
     for host in found_group.hosts:
         if "hostname" in host.params:
             h_name = host.params["hostname"]
             h_port = (":" + host.params["port"]) if "port" in host.params else ""
-            host_list.append(f"{host.name} ({h_name}{h_port})")
+            host_list.add_row(host.name, f"{h_name}{h_port}")
         else:
-            host_list.append(host.name)
+            host_list.add_row(host.name, "")
 
     pattern_list: List[str] = []
     for host in found_group.patterns:
@@ -61,7 +63,8 @@ def cmd(ctx, name):
     table.add_row("name",        found_group.name,                   style="white")
     table.add_row("description", found_group.desc,                   style="grey50")
     table.add_row("info",        Panel("\n".join(found_group.info)), style="grey50")
-    table.add_row("hosts",       Panel("\n".join(host_list)),         style="white")
+    # table.add_row("hosts",       Panel("\n".join(host_list)),         style="white")
+    table.add_row("hosts",       host_list,         style="white")
     table.add_row("patterns",    Panel("\n".join(pattern_list)),      style="cyan")
 
     console = Console()

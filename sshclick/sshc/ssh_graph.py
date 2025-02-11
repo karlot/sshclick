@@ -1,11 +1,10 @@
-from typing import List
 from rich.table import Table
 from rich.text import Text
 from rich.padding import Padding
 
 from sshclick.sshc import SSH_Host
 
-from rich import print
+# from rich import print
 # from rich import inspect
 
 # Fixed width for jump-proxy cell in graph table (Keep value as multiple of 2!)
@@ -30,7 +29,7 @@ LINK_LR_EXT = "─"
 # -----------------------------------------------------------------------------
 # Graph generation function...
 # -----------------------------------------------------------------------------
-def generate_graph(traced_hosts: List[SSH_Host], print_tunnels=True):
+def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True):
     """
     Function that generates nice "graph" view of connected hosts
     """
