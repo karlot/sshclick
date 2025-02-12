@@ -42,26 +42,27 @@ class SSHHostInfo(Static):
         det.update(Panel(
             (f"[b]AltHost[/b]: " + ", ".join(host.alt_names) + "\n" if host.alt_names else "") +
             f"[b]Group[/b]:   {host.group}\n"
-            f"[b]Type[/b]:    {host.type}",
+            f"[b]Type[/b]:    {host.type.value}",
             border_style=DEF_PANEL_COLOR
         ))
         info.update(Panel("\n".join(host.info), border_style=DEF_PANEL_COLOR) if host.info else Panel("...empty...", style=DEF_PANEL_COLOR))
 
+        #// Prepare table with params and append it to the group
+        #// -----------------------------------------------------------------------
         param_table = Table(box=box.ROUNDED, style=DEF_PANEL_COLOR, show_header=True, show_edge=True, expand=True)
-        param_table.add_column("Param")
-        param_table.add_column("Value")
-        param_table.add_column("Inherited-from")
+        param_table.add_column("Param", ratio=1)
+        param_table.add_column("Value", ratio=1)
+        param_table.add_column("Inherited-from", ratio=1)
 
-        # Add rows for SSH Config parameter table
-        for key, value in host.params.items():
+        # Add rows for SSH Config parameters
+        for param in host.get_all_params():
+            value, source = host.get_applied_param(param)
             output_value = value if not isinstance(value, list) else "\n".join(value)
-            param_table.add_row(key, output_value)
-
-        # Add rows for inherited SSH Config parameters
-        for pattern, pattern_params in host.inherited_params:
-            for param, value in pattern_params.items():
-                if not param in host.params:
-                    output_value = value if not isinstance(value, list) else "\n".join(value)
-                    param_table.add_row(param, output_value, pattern, style=DEF_IPARAM_COLOR)
+            if source == "local":
+                param_table.add_row(param, output_value)
+            elif source == "global":
+                param_table.add_row(param, output_value, "global", style="green")
+            else:
+                param_table.add_row(param, output_value, source, style="yellow")
 
         params.update(param_table) # type: ignore

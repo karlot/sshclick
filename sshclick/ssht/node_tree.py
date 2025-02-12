@@ -22,6 +22,7 @@ class SSHTree(Static):
 
         # Add each group and its hosts in order as in SSH-config
         for group in self.sshconf.groups:
+            # g = ssh_tree.root.add(f":file_folder: {group.name} ([green]{len(group.hosts)}[/]) ", data=group, expand=False)
             g = ssh_tree.root.add(f":file_folder: {group.name}", data=group, expand=False)
             for host in group.hosts + group.patterns:
                 g.add_leaf(host.name, data=host)
