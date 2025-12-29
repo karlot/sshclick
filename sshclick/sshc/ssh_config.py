@@ -5,19 +5,10 @@ from enum import Enum
 from .ssh_host import SSH_Host, HostType
 from .ssh_group import SSH_Group
 from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
-from .ssh_diff import generate_diff
+from .ssh_diff import output_diff
 
 from sshclick.globals import *
-# from rich import print
-
-
-# I dont really need full logging import, just output some info if currently debugging
-DEBUG = True if 'SSHC_DEBUG' in os.environ and os.environ['SSHC_DEBUG'] == "1" else False
-def debug(msg):
-    if DEBUG: print("D:", msg)
-
-
-HOST_KEYWORD = "host"
+from sshclick.logging import *
 
 class MetaTAG(str, Enum):
     CONFIG = "config"
@@ -44,8 +35,9 @@ class SSH_Config:
         self.all_hosts: list[SSH_Host] = []
 
         # options
-        self.stdout: bool = stdout      # Redirect configuration change/write to stdout instead of input file
-        self.diff: bool = diff          # Option to only show differences that would be applied to configuration
+        self.write_locked: bool = False     # Internal "safety" for not allowing to change original file when writing is unsafe
+        self.stdout: bool = stdout          # Redirect configuration change/write to stdout instead of input file
+        self.diff: bool = diff              # Option to only show differences that would be applied to configuration
         self.opts: dict = {}
 
         # parsing "cache" info
@@ -69,7 +61,7 @@ class SSH_Config:
                 content = fh.read()
                 self.ssh_config_lines = content.split("\n")
         except FileNotFoundError:
-            print(f"SSH config file not found ({config_path})!")
+            warn(f"SSH config file not found ({config_path})")
             answer = input("Would you like to create it (y/n)? :")
             if answer.lower() in ["y", "yes"]:
                 try:
@@ -78,16 +70,16 @@ class SSH_Config:
                     # Write initial config file
                     with open(config_path, "w") as file:
                         file.write(SSHCONFIG_SIGNATURE_LINE)
-                    # SSH config must be user read only
+                    # SSH config must be owner read only
                     os.chmod(config_path, 0o600)
                     
                     # Assume we start with empty lines
                     self.ssh_config_lines = []
                 except:
-                    print(f"Failed to create ssh config file in ({config_path})!")
+                    error(f"Failed to create ssh config file in ({config_path})")
                     exit(1)
             else:
-                print("Cannot proceed without config file!")
+                error("Cannot proceed without config file")
                 exit(1)
         return self
 
@@ -114,18 +106,19 @@ class SSH_Config:
         # Parse each line of the configuration, line by line
         for config_line_index, line in enumerate(self.ssh_config_lines):
             line = line.strip()     # remove start and end whitespace
-
-            # Skip empty lines, go to next...
-            if not line:
-                continue
+            if not line: continue   # Skip empty lines, go to next...
             
-            # Reworked parsing method... special "meta" keys not needed, regex now parses words
-            # so its much more "freely" in reading from config file writing is still in legacy style
-            # in future, output config write styles could be changed... 
             if line.startswith("#"):
+                # Reworked parsing method... special "meta" keys not needed, regex now parses words
+                # so its much more "freely" in reading from config file writing is still in legacy style
+                # in future, output config write styles could be changed... 
+                #
+                # Meta regex should match following meta definition styles:
+                #>  "#@{meta-key}: {meta-value}
+                #>  "# {meta-key}: {meta-value}
                 match = re.search(r"^#[ @]{1}(\w+):\s+(.+)$", line)
 
-                # If we didn't find metadata, 
+                # If we didn't find metadata, its just comment or something we dont care about
                 if not match: continue
                 
                 # extract two items expected in matching group
@@ -142,7 +135,7 @@ class SSH_Config:
                     # New group found... flush any previous data and create new baseline
                     self._config_flush_host()
 
-                    debug(f"META group: {value}")
+                    debug(f"META group: '{value}'")
                     self.groups.append(SSH_Group(name=value))
 
                     self.current_grindex = len(self.groups) - 1
@@ -151,37 +144,47 @@ class SSH_Config:
                     continue
 
                 elif metadata == MetaTAG.GDESC:
-                    debug(f"META Group description: {value}")
+                    debug(f"META Group description: '{value}'")
                     self.groups[self.current_grindex].desc = value
                     continue
 
                 elif metadata == MetaTAG.GINFO:
-                    debug(f"META Group info: {value}")
+                    debug(f"META Group info: '{value}'")
                     self.groups[self.current_grindex].info.append(value)
                     continue
 
                 elif metadata == MetaTAG.HINFO:
-                    debug(f"META Host info cached: {value}")
+                    debug(f"META Host info cached: '{value}'")
                     self.current_host_info.append(value)
                     continue
 
                 else:
-                    print(f"Unhandled metadata: '{metadata}' on SSH-config line number: {config_line_index + 1}")
+                    warn(f"Unhandled metadata: '{metadata}' on SSH-config line number: {config_line_index + 1}")
                     continue
 
             # This NEW regex should fix this spec from ssh_config definition:
-            # "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ ""
-            # although I have tested clients like ssh or sftp, they dont complain, and allow multiple "=" symbols. :D
+            # > "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ "
+            # NOTE: I have tested clients like ssh or sftp, they dont complain, and allow multiple "=" symbols. :)
             match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", line)
             if not match:
-                print(f"KEYWORD: Ignoring incorrect configuration line '{line}' on SSH-config line number {config_line_index + 1}")
+                warn(f"Ignoring unmatched keyword in configuration line '{line}' on SSH-config ({config_line_index + 1})")
                 continue
 
             keyword, value = match.groups()
             keyword = keyword.lower()         # keywords are case insensitive, so we lowercase them
+            
+            # First we need to handle "top-level" keywords that defines host blocks or special behavior
+            # ----- INCLUDE -----
+            if keyword == "include":
+                self.write_locked = True
+                self.write_locked_reason = "Keyword 'Include' found, configuration currently read-only, when this keyword is used!"
 
-            # --- Found "host" keyword, that defines new block, usually followed with name
-            if keyword == HOST_KEYWORD:
+            # ----- MATCH -----
+            elif keyword == "match":
+                warn(f"Unsupported keyword 'Match' found, ignoring...")
+
+            # ----- HOST -----
+            elif keyword == "host":
                 self._config_flush_host()
 
                 host_type = HostType.PATTERN if "*" in value else HostType.NORMAL
@@ -202,12 +205,13 @@ class SSH_Config:
                     info=self.current_host_info,
                 )
 
-                debug(f"SSH Host definition created: {new_host}")
+                # debug(f"SSH Host definition created: {new_host}")
                 self.current_host = new_host
 
                 # Reset global host info cache when we find new host (from this line, any host comments will apply to next host)
                 self.current_host_info = []
                 self.current_host_pass = ""
+
             else:
                 # any other normal line we just use as it is, wrong or not... :)
                 # Currently there is no support for keyword validation
@@ -283,18 +287,23 @@ class SSH_Config:
                             host.matched_params[param] = (value, other_host.name)
         if DEBUG:
             end = time.time() - start
-            print(f"Inheritance check elapsed: {end:0.6f}s")
+            debug(f"Inheritance check elapsed: {end:0.6f}s")
             # inspect(self, all=True)
 
 
-    def generate_ssh_config(self):
+    def generate_ssh_config(self) -> bool:
         """
         SSH config generation function
 
-        Function takes config data structure, and target file information.
-        Then generates SSH config compatible file with all data, compatible with
-        internal object model.
+        Function takes config data structure, generates clean formatted textual representation and
+        rewrites original file with new content, or stdout. Alternatively it outputs only DIFF what would be changed
+        Returns True if file was modified, or False if there is no change
         """
+        # If config is write locked, dont allow saving
+        if self.write_locked:
+            warn("Configuration modification is disabled")
+            warn(self.write_locked_reason)
+            return False
 
         # Prepare all lines for configuration
         lines: list[str] = [SSHCONFIG_SIGNATURE_LINE]
@@ -310,7 +319,7 @@ class SSH_Config:
             lines.append(SSHCONFIG_GLOBAL_KEYWORDS_LINE)
             for token, value in self.global_params.items():
                 lines.append(f"{token} {value}")
-                lines.append("")
+            lines.append("")
 
         # Render all groups
         for group in self.groups:
@@ -342,7 +351,7 @@ class SSH_Config:
 
                 # Add "host" line definition
                 alt_names = " " + " ".join(host.alt_names) if host.alt_names else ""
-                lines.append(f"{HOST_KEYWORD.capitalize()} {host.name}{alt_names}")
+                lines.append(f"Host {host.name}{alt_names}")
 
                 # Add all assigned host params
                 for token, value in host.params.items():
@@ -358,34 +367,30 @@ class SSH_Config:
                 # Add newline after host definition
                 lines.append("")
 
-        # If we are running in diff mode, only show the changes, and return without storing new configuration!
+        # If we are running in diff mode, only show the changes, and return false (dont store new config)
         if self.diff:
-            generate_diff(self.ssh_config_lines, lines)
-            return
+            output_diff(self.ssh_config_lines, lines)
+            return False
 
         # Store new config lines as actual
         self.ssh_config_lines = lines
-        return self
-
-
-    def write_out(self) -> None:
-        """
-        Write generated SSH config to target file
-        """
-        # When we are running in "diff" mode, dont write out anything!
-        if self.diff: return
 
         # Prepare multiline content string for output configuration
-        config_content = "\n".join(self.ssh_config_lines)
+        config_content = "\n".join(lines)
 
+        # When output is changed to write config to STDOUT, just print all lines
         if self.stdout:
-            # When output is changed to write config to STDOUT, just print all lines
             print(config_content)
-        else:
-            # Write content to target config file
-            # TODO: This is prone to errors, and we should check it target file is writable, and catch exceptions!
-            with open(self.ssh_config_file, "w") as out:
-                out.write(config_content)
+            return False
+
+        # Write content to target config file
+        try:
+            with open(self.ssh_config_file, "w") as config_file:
+                config_file.write(config_content)
+                return True
+        except:
+            error(f"Failed modifying configuration file: {self.ssh_config_file}!")
+            exit(1)
 
 
     def check_group_by_name(self, name: str) -> bool:
@@ -513,7 +518,7 @@ class SSH_Config:
         while True:
             # Search for host in current configuration
             if (not self.check_host_by_name(name)):
-                print(f"Cannot get info for used host '{name}' as next proxyjump, as it is not defined in configuration!")
+                warn(f"Cannot get info for used host '{name}' as next proxyjump, as it is not defined in configuration!")
                 return None
 
             found_host = self.get_host_by_name(name)

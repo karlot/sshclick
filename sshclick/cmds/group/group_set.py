@@ -59,7 +59,5 @@ def cmd(ctx, name, desc, info):
     else:
         found_group.info = []
 
-    if config.generate_ssh_config(): config.write_out()
-
-    if not config.stdout and not config.diff:
+    if config.generate_ssh_config():
         print(f"Modified group: {name}")

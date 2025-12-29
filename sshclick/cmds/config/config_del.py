@@ -7,7 +7,7 @@ from sshclick.sshc import SSH_Config
 SHORT_HELP = "Delete config option"
 
 # Parameters help:
-HOST_STYLE_HELP  = f"Remove host-style from configuration"
+HOST_STYLE_HELP  = "Remove host-style from configuration"
 #------------------------------------------------------------------------------
 @click.command(name="del", short_help=SHORT_HELP, help=SHORT_HELP)
 @click.option("--host-style", is_flag=True, help=HOST_STYLE_HELP)
@@ -17,8 +17,8 @@ def cmd(ctx, host_style):
 
     # Deleting host-style trough SSH configuration
     if host_style:
-        if not "host-style" in config.opts:
-            print(f"Cannot remove host-style from configuration, as it is not defined!")
+        if "host-style" not in config.opts:
+            print("Cannot remove host-style from configuration, as it is not defined!")
             return
         else:
             del config.opts["host-style"]
@@ -26,6 +26,5 @@ def cmd(ctx, host_style):
         # Write out modified config
         if config.generate_ssh_config(): config.write_out()
         return
-    
+
     print("No option was provided to delete from SSH config options!")
-    

@@ -2,11 +2,12 @@ import os.path
 import re
 from typing import List
 
-from ..globals import ENABLED_HOST_STYLES
-from .ssh_parameters import ALL_PARAM_LC_NAMES
-from .ssh_config import SSH_Config
-
 from rich.console import Console
+
+from ..globals import ENABLED_HOST_STYLES
+from .ssh_config import SSH_Config
+from .ssh_parameters import ALL_PARAM_LC_NAMES
+
 err = Console(stderr=True)
 out = Console()
 
@@ -25,10 +26,7 @@ def build_context_config(ctx) -> None:
             while True:
                 if "sshconfig" in current_obj.params:
                     full_path = os.path.expanduser(current_obj.params["sshconfig"])
-                    ctx.obj = SSH_Config(
-                        file=full_path,
-                        stdout=current_obj.params["stdout"]
-                    ).read().parse()
+                    ctx.obj = SSH_Config(file=full_path, stdout=current_obj.params["stdout"]).read().parse()
                     break
                 else:
                     current_obj = current_obj.parent

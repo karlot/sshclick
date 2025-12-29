@@ -11,7 +11,7 @@ from textual.screen import ModalScreen
 from sshclick.ssht.modal_delete import ModalDelete
 
 # Load linked utils
-from sshclick.ssht.utils import run_connect
+from sshclick.ssht.utils import run_connect, reset_fingerprint, copy_ssh_keys
 from sshclick.globals import *
 
 class ModalAction(ModalScreen[None]):
@@ -57,7 +57,8 @@ class ModalAction(ModalScreen[None]):
                 # Option("Upload file to current host", id="opt_up_file", disabled=True),
                 # Option("Test host connectivity", id="opt_test", disabled=True),
                 # Option("Clear host fingerprint", id="opt_clear_finger", disabled=True),
-                # Option("Inject SSH Key", id="opt_inject_key", disabled=True),
+                Option("Copy SSH Key to current host", id="opt_copy_key", disabled=False),
+                Option("Reset local fingerprints for host", id="opt_reset_fp"),
                 Separator(),
                 Option("Edit current host", id="opt_ed_cur", disabled=ACTIONS_EDIT_DISABLED),
                 Option("Delete current host", id="opt_del_cur", disabled=ACTIONS_DELETE_DISABLED),
@@ -88,6 +89,11 @@ class ModalAction(ModalScreen[None]):
         elif selected_id == "opt_sftp_cur":
             run_connect(self.app, "sftp", self.node)
 
+        elif selected_id == "opt_copy_key":
+            copy_ssh_keys(self.app, self.node)
+
+        elif selected_id == "opt_reset_fp":
+            reset_fingerprint(self.app, self.node)
 
         # Create host/group actions
         elif selected_id == "opt_new_hst":

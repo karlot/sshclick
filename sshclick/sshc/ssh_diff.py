@@ -4,7 +4,7 @@ from difflib import unified_diff
 # We use console to get nice colors
 out = Console()
 
-def generate_diff(original: list[str], modified: list[str]) -> None:
+def output_diff(original: list[str], modified: list[str]) -> None:
     """
     Print out what would be difference after config change is applied
     """

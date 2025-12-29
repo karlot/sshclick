@@ -44,6 +44,7 @@ YES_HELP   = "Skip confirmation and assume 'yes'. Be careful!"
 #       ... some enhancement on Click library can be tested, or introduction of some custom Click.Option class ???
 
 # TODO: Check click.edit for multiline edit option (info, or even params?)
+# TODO: Add option to set user and address directly like in "create" command
 
 @click.command(name="set", short_help=SHORT_HELP, help=LONG_HELP)
 @click.option("-i", "--info", multiple=True, help=INFO_HELP)
@@ -131,8 +132,6 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
                 else:
                     print(f"Cannot unset parameter that is not defined!")
 
-        if not config.stdout and not config.diff:
-            print(f"Modified host: {host_name}")
-
     # Write out modified config
-    if config.generate_ssh_config(): config.write_out()
+    if config.generate_ssh_config():
+        print(f"Modified host: {','.join(selected_hosts_list)}")

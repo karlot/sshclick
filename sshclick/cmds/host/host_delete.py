@@ -1,6 +1,7 @@
 import click
 from sshclick.sshc import SSH_Config, HostType
 from sshclick.sshc import complete_ssh_host_names, expand_names
+from sshclick.logging import *
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete
@@ -46,7 +47,7 @@ def cmd(ctx, names, yes):
     for name in selected_hosts_list:
         if not config.check_host_by_name(name):
             print(f"Cannot delete host '{name}' as it is not defined in configuration!")
-            continue
+            ctx.exit(1)
 
         found_host = config.get_host_by_name(name)
         host_group = config.get_group_by_name(found_host.group)
@@ -60,7 +61,5 @@ def cmd(ctx, names, yes):
         # Remove host from list of all hosts
         config.all_hosts.remove(found_host)
 
-        if not config.stdout and not config.diff:
-            print(f"Deleted host: {name}")
-
-    if config.generate_ssh_config(): config.write_out()
+    if config.generate_ssh_config():
+        print(f"Deleted hosts: {', '.join(selected_hosts_list)}")

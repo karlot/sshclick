@@ -19,19 +19,23 @@ If autocomplete is enabled, command will try to give suggestions for your inputs
 
 # Parameters help:
 INFO_HELP  = "Set host info, can be set multiple times, or set to empty value to clear it (example: -i '')"
+ADDR_HELP  = "Set host ip/hostname parameter directly (shortcut for 'hostname' parameter)"
+USER_HELP  = "Set host user parameter directly (shortcut for 'user' parameter)"
 PARAM_HELP = "Sets parameter for the host, takes 2 values (<sshparam> <value>). To unset/remove parameter from host, set its value to empty string like this (example: -p user '')"
 GROUP_HELP = "Defined in which group host will be created, if not specified, 'default' group will be used"
 FORCE_HELP = "Allows during host creation, to create group for host if target group is missing/not yet defined."
 #------------------------------------------------------------------------------
 
 @click.command(name="create", short_help=SHORT_HELP, help=LONG_HELP)
+@click.option("-a", "--address", help=ADDR_HELP)
+@click.option("-u", "--user", help=USER_HELP)
 @click.option("-i", "--info", multiple=True, help=INFO_HELP)
 @click.option("-p", "--parameter", nargs=2, multiple=True, help=PARAM_HELP, shell_complete=complete_params)
 @click.option("-g", "--group", "target_group_name", help=GROUP_HELP, shell_complete=complete_ssh_group_names)
 @click.option("--force", is_flag=True, help=FORCE_HELP)
 @click.argument("name")
 @click.pass_context
-def cmd(ctx, name, info, parameter, target_group_name, force):
+def cmd(ctx, name, address, user, info, parameter, target_group_name, force):
     config: SSH_Config = ctx.obj
 
     if not target_group_name:
@@ -57,14 +61,27 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
     # This is patter host
     target_type = HostType.PATTERN if "*" in name else HostType.NORMAL
     new_host = SSH_Host(name=name, group=target_group_name, type=target_type, info=list(info))
+    if user:
+        new_host.params["user"] = user
+    if address:
+        new_host.params["hostname"] = address
 
     # Add all passed parameters to config
     for param, value in parameter:
         # parameter keyword will be lowercased as they are case insensitive
         param = param.lower()
+
+        # Parameter exception rules
         if not value or value.isspace():
             print(f"Cannot define empty value for parameter during host creation!")
             ctx.exit(1)
+        if param == "user" and user:
+            print(f"Trying to define user directly through argument and parameters, make no sense! Use only one")
+            ctx.exit(1)
+        if param == "hostname" and address:
+            print(f"Trying to define hostname directly through argument and parameters, make no sense! Use only one")
+            ctx.exit(1)
+
         if param in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
             # We need to handle host parameter as "list"
             if not param in new_host.params:
@@ -81,8 +98,6 @@ def cmd(ctx, name, info, parameter, target_group_name, force):
     else:
         target_group.patterns.append(new_host)
 
-    if not config.stdout and not config.diff:
-        print(f"Created host: {name}")
-
     # Generate new config
-    if config.generate_ssh_config(): config.write_out()
+    if config.generate_ssh_config():
+        print(f"Created host: {name}")

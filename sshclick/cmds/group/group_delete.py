@@ -50,9 +50,8 @@ def cmd(ctx, names, yes):
         config.groups.remove(config.get_group_by_name(name))
         config_updated = True
 
-        if not config.stdout and not config.diff:
-            print(f"Deleted group: {name}")
-
-    # ReWrite config only when config was actually changed
+    # Re-write config only when config was actually changed
+    # TODO: Add this to all modification commands
     if config_updated:
-        if config.generate_ssh_config(): config.write_out()
+        if config.generate_ssh_config():
+            print(f"Deleted group: {name}")

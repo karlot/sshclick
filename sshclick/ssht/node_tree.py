@@ -1,9 +1,8 @@
-# from sshclick.globals import USER_SSH_CONFIG
-from sshclick.sshc import SSH_Config, SSH_Host
-
 from textual.app import ComposeResult
 from textual.widgets import Static, Tree
 
+# from sshclick.globals import USER_SSH_CONFIG
+from sshclick.sshc import SSH_Config, SSH_Host, HostType
 from sshclick.ssht.modal_action import ModalAction
 
 
@@ -25,7 +24,10 @@ class SSHTree(Static):
             # g = ssh_tree.root.add(f":file_folder: {group.name} ([green]{len(group.hosts)}[/]) ", data=group, expand=False)
             g = ssh_tree.root.add(f":file_folder: {group.name}", data=group, expand=False)
             for host in group.hosts + group.patterns:
-                g.add_leaf(host.name, data=host)
+                if host.type == HostType.PATTERN:
+                    g.add_leaf(f"[yellow]{host.name}[/]", data=host)
+                else:
+                    g.add_leaf(f"{host.name}", data=host)
         
         yield ssh_tree
 

@@ -37,7 +37,5 @@ def cmd(ctx, name, desc, info):
     # Add new group to config and show newly created group
     config.groups.append(new_group)
 
-    if not config.stdout and not config.diff:
+    if config.generate_ssh_config():
         print(f"Created group: {name}")
-
-    if config.generate_ssh_config(): config.write_out()

@@ -26,7 +26,5 @@ def cmd(ctx, name, new_name):
 
     config.get_group_by_name(name).name = new_name
 
-    if not config.stdout and not config.diff:
+    if config.generate_ssh_config():
         print(f"Renamed group: {name} -> {new_name}")
-
-    if config.generate_ssh_config(): config.write_out()

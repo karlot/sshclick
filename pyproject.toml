@@ -1,4 +1,4 @@
-# !!! Remember to update version here and in the code !!! 
+# !!! Remember to update version here and in the code !!!
 # (ಠ_ಠ)  -- I wish poetry could just read version from the package
 
 [tool.poetry]
@@ -21,22 +21,18 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
-
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 click = "^8.1"
 rich = "^13.8"
 textual = ">=0.50,<0.80"
 
-
 [tool.poetry.dev-dependencies]
 pytest = "^8.0"
-
 
 [tool.poetry.scripts]
 sshc = "sshclick.main_cli:cli"
 ssht = "sshclick.main_tui:tui"
-
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
