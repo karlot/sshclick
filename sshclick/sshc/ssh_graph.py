@@ -2,7 +2,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.padding import Padding
 
-from sshclick.sshc import SSH_Host
+from .ssh_host import SSH_Host
 
 # from rich import print
 # from rich import inspect
@@ -113,4 +113,3 @@ def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True):
                 tbl.add_row(*tunnel_row)
 
     return tbl
-

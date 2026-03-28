@@ -1,7 +1,6 @@
 import click
 from sshclick.sshc import SSH_Config, HostType
 from sshclick.sshc import complete_ssh_host_names, expand_names
-from sshclick.logging import *
 
 #------------------------------------------------------------------------------
 # COMMAND: host delete

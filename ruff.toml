@@ -1,8 +1,0 @@
-# Expand max line lenght (I dont like it too short, it really isnt 1990s anymore)
-line-length = 140
-
-[format]
-# Prefer double quotes
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false

@@ -15,7 +15,7 @@ class StatusBar(Grid):
     def update_state(self, state: TUIState) -> None:
         """Render the current config path and read/write mode."""
 
-        mode_value = f"[b $warning]READ ONLY[/]" if state.is_read_only else f"[b $success]Writable[/]"
+        mode_value = "[b $warning]READ ONLY[/]" if state.is_read_only else "[b $success]Writable[/]"
 
         self.query_one("#status_config", Static).update(f"[b]Config:[/] {state.config_file}")
         self.query_one("#status_mode", Static).update(f"[b]Mode:[/] {mode_value}")

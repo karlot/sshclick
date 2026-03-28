@@ -54,7 +54,8 @@ def cmd(ctx, group_filter, name_filter, verbose):
     if verbose:
         for host in filtered_hosts:
             for param in host.get_all_params():
-                if param not in table_params: table_params.append(param)
+                if param not in table_params:
+                    table_params.append(param)
     
     header = ["name"] + host_props + [f"param:{p}" for p in table_params]
     table = Table(*header, box=box.SQUARE, style="gray35")
@@ -81,12 +82,14 @@ def cmd(ctx, group_filter, name_filter, verbose):
 # - if value is based on non-local source, it adds reference to the source
 # - if value is list, it merges line into multiline output, keeping color and source references
 def merge_with_color(v, s="local"):
-    if v == "": return ""
+    if v == "":
+        return ""
     if s == "local":
-        if isinstance(v, list): return "\n".join(v)
+        if isinstance(v, list):
+            return "\n".join(v)
         return v
 
     c = "green" if s == "global" else "yellow"
-    if isinstance(v, list): return "\n".join([f"[{c}]{val}  ({s})[/]" for val in v])
-    return f"[{c}]{v}  ({s})[/]"    
-
+    if isinstance(v, list):
+        return "\n".join([f"[{c}]{val}  ({s})[/]" for val in v])
+    return f"[{c}]{v}  ({s})[/]"

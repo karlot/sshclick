@@ -117,7 +117,7 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
             param = param.lower()            # lowercase keyword/param as they are case insensitive
             if value:
                 if param in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
-                    if not param in current_host.params:
+                    if param not in current_host.params:
                         current_host.params[param] = [value]
                     else:
                         if value in current_host.params[param]:
@@ -130,7 +130,7 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
                 if param in current_host.params:
                     current_host.params.pop(param)
                 else:
-                    print(f"Cannot unset parameter that is not defined!")
+                    print("Cannot unset parameter that is not defined!")
 
     # Write out modified config
     if config.generate_ssh_config():

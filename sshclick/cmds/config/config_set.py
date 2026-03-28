@@ -24,7 +24,7 @@ def cmd(ctx, host_style):
 
     # Setting host-style trough SSH configuration
     if host_style:
-        if not host_style in ENABLED_HOST_STYLES:
+        if host_style not in ENABLED_HOST_STYLES:
             print(f"Cannot set style '{host_style}', as it is not one of available styles!")
             return
         else:

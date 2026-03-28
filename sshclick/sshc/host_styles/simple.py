@@ -27,7 +27,7 @@ def render(host: SSH_Host):
     if host.info:
         out_info = "\n".join(host.info)
         panel_data = panel_data + [
-            f"",
+            "",
             f"[gray50]{out_info}[/]",
         ]
     host_panel = Panel("\n".join(panel_data), box=box.SIMPLE, border_style="grey35", padding=(0,0))

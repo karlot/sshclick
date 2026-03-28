@@ -1,15 +1,29 @@
-import os, re, fnmatch, time, glob, shlex
+import os
+import re
+import fnmatch
+import time
+import glob
+import shlex
 from dataclasses import dataclass
-from typing import Optional
 from enum import Enum
+from typing import Optional
 
 from .ssh_host import SSH_Host, HostType
 from .ssh_group import SSH_Group
-from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 from .ssh_diff import output_diff
+from .ssh_parameters import PARAMS_WITH_ALLOWED_MULTIPLE_VALUES
 
-from sshclick.globals import *
-from sshclick.logging import *
+from sshclick.globals import (
+    DEFAULT_GROUP_DESC,
+    DEFAULT_GROUP_NAME,
+    SSHCONFIG_GLOBAL_KEYWORDS_LINE,
+    SSHCONFIG_INDENT,
+    SSHCONFIG_META_PREFIX,
+    SSHCONFIG_META_SEPARATOR,
+    SSHCONFIG_SIGNATURE_LINE,
+)
+from sshclick.logging import DEBUG, debug, error, warn
+
 
 class MetaTAG(str, Enum):
     CONFIG = "config"
@@ -222,7 +236,8 @@ class SSH_Config:
             line_number = config_line.source_line
             source_label = f"{source_file}:{line_number}" if source_file else f"line {line_number}"
             line = config_line.text.strip()     # remove start and end whitespace
-            if not line: continue   # Skip empty lines, go to next...
+            if not line:
+                continue   # Skip empty lines, go to next...
             
             if line.startswith("#"):
                 # Reworked parsing method... special "meta" keys not needed, regex now parses words
@@ -235,7 +250,8 @@ class SSH_Config:
                 match = re.search(r"^#[ @]{1}(\w+):\s+(.+)$", line)
 
                 # If we didn't find metadata, its just comment or something we dont care about
-                if not match: continue
+                if not match:
+                    continue
                 
                 # extract two items expected in matching group
                 metadata, value = match.groups()
@@ -296,7 +312,7 @@ class SSH_Config:
 
             # ----- MATCH -----
             elif keyword == "match":
-                warn(f"Unsupported keyword 'Match' found, ignoring...")
+                warn("Unsupported keyword 'Match' found, ignoring...")
 
             # ----- HOST -----
             elif keyword == "host":
@@ -336,7 +352,7 @@ class SSH_Config:
                     # Added support for top/global level keywords, this will be filled only from start of the file
                     debug(f"SSH Config global keyword defined: {keyword} -> {value}")
                     if keyword in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
-                        if not keyword in self.global_params:
+                        if keyword not in self.global_params:
                             self.global_params[keyword] = [value]
                         else:
                             self.global_params[keyword].append(value)
@@ -345,7 +361,7 @@ class SSH_Config:
                 else:
                     debug(f"SSH Config keyword for host '{self.current_host.name}': {keyword} -> {value}")
                     if keyword in PARAMS_WITH_ALLOWED_MULTIPLE_VALUES:
-                        if not keyword in self.current_host.params:
+                        if keyword not in self.current_host.params:
                             self.current_host.params[keyword] = [value]
                         else:
                             self.current_host.params[keyword].append(value)
@@ -370,7 +386,8 @@ class SSH_Config:
 
         for host in self.all_hosts:
             # We only check what "normal" hosts inherits
-            if host.type == HostType.PATTERN: continue
+            if host.type == HostType.PATTERN:
+                continue
 
             # Add global parameters to host, if they are not already defined
             # They normally override any other parameters, but only if they are not defined already as used
@@ -398,8 +415,10 @@ class SSH_Config:
                         else:
                             # If matching host is after current host, store parameter only if it is not
                             # already defined in current host parameters or used parameters that are inherited
-                            if param in host.params: continue
-                            if param in host.matched_params: continue
+                            if param in host.params:
+                                continue
+                            if param in host.matched_params:
+                                continue
                             # if param not in host.params or param not in host.matched_params:
                             host.matched_params[param] = (value, other_host.name)
         if DEBUG:
@@ -528,7 +547,8 @@ class SSH_Config:
         function will either return 'None' or will throw exception
         """
         for group in self.groups:
-            if group.name == name: return group
+            if group.name == name:
+                return group
         raise Exception(f"Requested group '{name}' not found in the SSH configuration")
 
 
@@ -546,7 +566,8 @@ class SSH_Config:
         function will either return ('None','None') or will throw exception
         """
         for host in self.all_hosts:
-            if host.name == name: return host
+            if host.name == name:
+                return host
         raise Exception(f"Requested host '{name}' not found in the SSH configuration")
 
 
@@ -575,10 +596,12 @@ class SSH_Config:
 
         for host in self.all_hosts:
             # If group filter is defined, check if current host matches the group name to progress
-            if group_filter and not re.search(group_filter, host.group): continue
+            if group_filter and not re.search(group_filter, host.group):
+                continue
             
             # When host is not skipped, check if name filter is used, and filter out hosts
-            if name_filter and not re.search(name_filter, host.name): continue
+            if name_filter and not re.search(name_filter, host.name):
+                continue
 
             # If host is not skipped, add it to filtered list
             filtered_hosts.append(host)
@@ -656,7 +679,8 @@ class SSH_Config:
             # Find proxy info if it exists, if not, break the loop
             proxy_val, _ = found_host.get_applied_param("proxyjump")
 
-            if not proxy_val: break
+            if not proxy_val:
+                break
             name = proxy_val
 
         return traced_hosts
