@@ -14,6 +14,7 @@
   - [Comment blocks and metadata](https://github.com/karlot/sshclick#comment-blocks-and-metadata-in-ssh-config)
   - [Include keyword support](https://github.com/karlot/sshclick#include-keyword-support)
 - [Example usage and features](https://github.com/karlot/sshclick#example-usage-and-features)
+  - [Textual TUI browser (`ssht`)](https://github.com/karlot/sshclick#textual-tui-browser-ssht)
   - [Group commands and options](https://github.com/karlot/sshclick#group-commands-and-options)
   - [Host commands and options](https://github.com/karlot/sshclick#host-commands-and-options)
   - [Config commands and options](https://github.com/karlot/sshclick#config-commands-and-sshclick-configuration-options)
@@ -32,7 +33,7 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 
 **Only commands that modify configuration will edit and rewrite your SSH config file. In that case, comments and extra information outside the format SSHClick understands may be discarded, and the configuration will be reformatted to match SSHClick style. See the notes below to understand how SSHClick keeps the file organized.**
 
-**NEW!** *Now comes with additional TUI that can be accessed via `ssht` command.*  
+SSHClick also includes a separate Textual-based TUI browser that can be launched with `ssht`.  
 
 ![splash_gif](https://raw.githubusercontent.com/karlot/sshclick/master/tapes/sshc_tui_example.svg)
 
@@ -40,7 +41,7 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 
 - I need something that works fast and great in terminal, and does not require complex setup.
 - SSH config is the only config I need to backup.
-- SSH config is very feature-full with all options SSH client support, why inventing extra layer?
+- SSH config is already feature-rich with all options the SSH client supports, so there is no need to invent another storage layer
 - I need quick way to search, group and visualize all hosts inside SSH configuration (especially since it can grow huge)
 
 ## What does it do?
@@ -48,6 +49,7 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 SSHClick (`sshc`) is a tool designed to work with existing SSH configuration files on Linux, Windows, and WSL terminal environments.  
 It parses your SSH config, and can provide easy commands to list, filter, modify or view specific Host entries.
 Through additional metadata comments it can add abstractions such as groups and extra information that remain readable in the configuration file and can also be parsed and shown by the tool.
+The companion `ssht` command opens a Textual TUI on top of the same parsed configuration, so you can browse groups and hosts interactively from the terminal.
 
 ### Installation procedure
 
@@ -212,6 +214,63 @@ Commands:
 ```
 
 The Textual interface is launched separately with `ssht`, and you can inspect its options with `ssht --help`. It supports the same `--config` option and `SSHC_CONFIG` environment variable as `sshc`.
+
+### Textual TUI browser (`ssht`)
+
+`ssht` is the interactive browser for the same SSHClick config model used by `sshc`. It is intended for quick navigation, inspection, and common connection actions without leaving the terminal.
+
+Current TUI features:
+
+- left-side tree navigation for groups, normal hosts, and pattern hosts
+- host and group detail inspector in the main pane
+- host `Overview` and `Network` tabs
+- direct `ssh`, `sftp`, key-copy, and fingerprint-reset actions for normal hosts
+- centered action modal and destructive delete confirmation
+- status bar with active config path and writable/read-only mode
+- include-aware read-only state when top-level `Include` is present
+
+Current TUI limitations:
+
+- create and edit flows are still planned and not enabled yet
+- delete is available only when the loaded config is writable
+- current `Include` support stays strictly read-only
+
+Useful key bindings in the current TUI:
+
+- `q` quit
+- `a` open actions for the current selection
+- `s` open SSH session for the selected host
+- `f` open SFTP session for the selected host
+- `d` delete selected host or group when writable
+- `r` reload configuration from disk
+- `Space` expand/collapse the selected group in the tree
+- `Enter` toggles group nodes in the tree
+
+Example:
+
+```console
+$ ssht --help
+Usage: ssht [OPTIONS]
+
+  SSHClick - SSH Config browser TUI. version <version>
+
+  NOTE: This opens the Textual interface for browsing your SSH configuration.
+
+Options:
+  --config TEXT  Config file (default: ~/.ssh/config). Can be set with
+                 SSHC_CONFIG.
+  --version      Show the version and exit.
+  -h, --help     Show this message and exit.
+```
+
+You can launch the TUI against a specific config file or through the shared env var:
+
+```console
+ssht --config ~/.ssh/config
+SSHC_CONFIG=~/.ssh/config ssht
+```
+
+When a config uses top-level `Include`, `ssht` will still merge the visible data into one browser view, but it will clearly switch to read-only mode and disable write actions.
 
 ### `group` commands and options
 

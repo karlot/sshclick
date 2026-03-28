@@ -2,11 +2,14 @@ import signal
 import subprocess
 from collections.abc import Sequence
 from contextlib import nullcontext
+from typing import ContextManager, Protocol
 
-from textual.app import App
+
+class SupportsSuspend(Protocol):
+    def suspend(self) -> ContextManager[object]: ...
 
 
-def run_interactive_command(argv: Sequence[str], tui: App | None = None) -> int:
+def run_interactive_command(argv: Sequence[str], tui: SupportsSuspend | None = None) -> int:
     suspend_context = tui.suspend() if tui is not None else nullcontext()
 
     with suspend_context:

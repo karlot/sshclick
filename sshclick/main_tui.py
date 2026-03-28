@@ -2,13 +2,14 @@ import click
 
 from sshclick.cli_common import CONTEXT_SETTINGS, SSHCONFIG_ENVVAR, SSHCONFIG_HELP
 from sshclick.globals import USER_SSH_CONFIG
+from sshclick.ssht.app import SSHTui
 from sshclick.version import VERSION
-from sshclick.ssht.sshtui import SSHTui
 
 MAIN_HELP = f"""
 SSHClick - SSH Config browser TUI. version {VERSION}
 
-NOTE: This opens the Textual interface for browsing your SSH configuration.
+NOTE: This opens the Textual interface for browsing your SSH configuration,
+inspecting groups and hosts, and launching common host actions.
 """
 
 ## Entry for "ssht" command
