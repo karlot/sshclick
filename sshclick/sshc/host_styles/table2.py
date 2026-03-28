@@ -19,6 +19,8 @@ def render(host: SSH_Host):
     outer_table.add_row("Name",  host.name + alt_names)
     outer_table.add_row("Group", host.group)
     outer_table.add_row("Type",  str(out_type))
+    if host.get_source_label():
+        outer_table.add_row("Source", host.get_source_label())
     outer_table.add_row("Info",  Panel(out_info, border_style="grey35", style="grey50"))
 
     param_table = Table(box=box.SQUARE, style="grey35", show_header=True, show_edge=True, expand=True)

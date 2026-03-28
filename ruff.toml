@@ -1,5 +1,5 @@
 # Expand max line lenght (I dont like it too short, it really isnt 1990s anymore)
-line-length = 120
+line-length = 140
 
 [format]
 # Prefer double quotes

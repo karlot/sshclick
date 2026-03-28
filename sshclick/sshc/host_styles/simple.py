@@ -19,6 +19,8 @@ def render(host: SSH_Host):
         f"[bright_white]Group[/]:  {host.group}",
         f"[bright_white]Type [/]:  {out_type}",
     ]
+    if host.get_source_label():
+        panel_data.append(f"[bright_white]Source[/]: {host.get_source_label()}")
     
     #// Add Host info data (if host info exist)
     #// -----------------------------------------------------------------------

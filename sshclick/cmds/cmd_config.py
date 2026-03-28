@@ -3,7 +3,7 @@ import click
 #------------------------------------------------------------------------------
 # CONFIG Commands
 #------------------------------------------------------------------------------
-@click.group(name="config", help="Modify SSHClick configuration trough SSH Config")
+@click.group(name="config", help="Modify SSHClick configuration through SSH Config")
 def ssh_config():
     pass
 

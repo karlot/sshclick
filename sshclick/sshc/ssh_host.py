@@ -16,6 +16,8 @@ class SSH_Host:
     """ Class for SSH host config structure """
     name: str
     group: str
+    source_file: str = field(default="", compare=False)
+    source_line: int = field(default=0, compare=False)
     password: str = ""
     type: HostType = HostType.NORMAL
     alt_names: list = field(default_factory=list)
@@ -55,6 +57,10 @@ class SSH_Host:
             return (value, "local")
         # There is no requested parameter for this host
         return ("", "")
+
+
+    def get_source_label(self) -> str:
+        return f"{self.source_file}:{self.source_line}" if self.source_file else ""
 
 
     # Method for interaction with printing the object via Rich library

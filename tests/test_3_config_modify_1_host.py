@@ -31,6 +31,16 @@ def test_add_new_host():
     assert config.ssh_config_lines == config1_modified_lines
 
 
+def test_add_new_host_missing_group_returns_false():
+    config = SSH_Config(None, [])
+    config.parse()
+
+    new_host = SSH_Host(name="testnew", group="missing-group", params={"hostname": "2.2.3.3"})
+
+    assert config.add_host(new_host) is False
+    assert config.all_hosts == []
+
+
 #------------------------------------------------------------------------------
 # Test parsing configuration and add new host then verify rendering output is
 # modified as expected - on existing config

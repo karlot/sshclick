@@ -1,10 +1,13 @@
 #<<<<< SSH Config file managed by sshclick >>>>>
 
+# Additional hosts can be organized in separate file while still appearing in one logical view
+Include config_sample_extra
+
 #-------------------------------------------------------------------------------
 #@group: network
 #@desc: Network devices in my lab
 #@info: user='admin' password='password'
-#@info: Not really, but for demo its ok :)
+#@info: Not really, but for demo it's ok :)
 #-------------------------------------------------------------------------------
 Host net-switch1
     hostname 10.1.1.1
@@ -47,7 +50,7 @@ Host lab-serv2
     hostname 10.10.0.2
 
 #@host: This server is [red]not[/] reachable directly, only via [green]lab-serv1[/]
-#@host: SSHClick can represent how end-to-end tunels will be established
+#@host: SSHClick can represent how end-to-end tunnels will be established
 Host server-behind-lab
     hostname 10.30.0.1
     user testuser

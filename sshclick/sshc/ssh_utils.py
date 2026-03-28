@@ -16,19 +16,21 @@ def filter_dict(d: dict, ignored: list = []) -> dict:
 # Custom parsing trough parent object types until required parameters are found
 # Then build config object and bound it to ctx.obj
 def build_context_config(ctx) -> None:
-    if ctx.obj is None:
-        current_obj = ctx.parent
-        try:
-            while True:
-                if "config" in current_obj.params:
-                    full_path = os.path.expanduser(current_obj.params["config"])
-                    ctx.obj = SSH_Config(file=full_path, stdout=current_obj.params["stdout"]).read().parse()
-                    break
-                else:
-                    current_obj = current_obj.parent
-        except:
-            print("\nINTERNAL ERROR: Could not reconstruct context for SSH configuration!", file=sys.stderr)
-            ctx.exit(1)
+    if ctx.obj is not None:
+        return
+
+    current_obj = ctx.parent
+    while current_obj is not None:
+        params = getattr(current_obj, "params", None) or {}
+        config = params.get("config")
+        if config is not None:
+            full_path = os.path.expanduser(config)
+            ctx.obj = SSH_Config(file=full_path, stdout=params.get("stdout", False)).read().parse()
+            return
+        current_obj = current_obj.parent
+
+    print("\nINTERNAL ERROR: Could not reconstruct context for SSH configuration!", file=sys.stderr)
+    ctx.exit(1)
 
 
 # For some reason I cant get context object initialized by main app when running autocomplete

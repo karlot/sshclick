@@ -33,6 +33,8 @@ def cmd(ctx, name):
         ctx.exit(1)
 
     found_group = config.get_group_by_name(name)
+    source_refs = found_group.source_refs if found_group.source_refs else [(host.source_file, host.source_line) for host in found_group.hosts + found_group.patterns if host.source_file]
+    source_lines = [f"{source_file}:{source_line}" for source_file, source_line in source_refs if source_file]
 
     host_list = Table(box=box.ROUNDED, style="white", show_header=False, expand=True)
     host_list.add_column("name", ratio=1)
@@ -62,6 +64,8 @@ def cmd(ctx, name):
 
     table.add_row("name",        found_group.name,                   style="white")
     table.add_row("description", found_group.desc,                   style="grey50")
+    if source_lines:
+        table.add_row("defined-in", Panel("\n".join(source_lines)),  style="grey50")
     table.add_row("info",        Panel("\n".join(found_group.info)), style="grey50")
     # table.add_row("hosts",       Panel("\n".join(host_list)),         style="white")
     table.add_row("hosts",       host_list,         style="white")
@@ -69,4 +73,3 @@ def cmd(ctx, name):
 
     console = Console()
     console.print(table)
-

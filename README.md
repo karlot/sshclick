@@ -12,26 +12,25 @@
   - [Uninstall procedure](https://github.com/karlot/sshclick#uninstall-procedure)
 - [SSH Config structure](https://github.com/karlot/sshclick#ssh-config-structure-and-important-note-about-comments)
   - [Comment blocks and metadata](https://github.com/karlot/sshclick#comment-blocks-and-metadata-in-ssh-config)
+  - [Include keyword support](https://github.com/karlot/sshclick#include-keyword-support)
 - [Example usage and features](https://github.com/karlot/sshclick#example-usage-and-features)
   - [Group commands and options](https://github.com/karlot/sshclick#group-commands-and-options)
   - [Host commands and options](https://github.com/karlot/sshclick#host-commands-and-options)
   - [Config commands and options](https://github.com/karlot/sshclick#config-commands-and-sshclick-configuration-options)
   - [Output styling and user ENV variables](https://github.com/karlot/sshclick#output-styling-and-user-env-variables)
-<!-- - [Recorded demos](https://github.com/karlot/sshclick#recorded-demos)
-  - [sshc group operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-group-operations)
-  - [sshc host operations](https://github.com/karlot/sshclick#demo-showing-some-sshc-host-operations) -->
+- [Sample configuration](https://github.com/karlot/sshclick#sample-configuration)
 - [Author](https://github.com/karlot/sshclick#author)
 - [License](https://github.com/karlot/sshclick#license)
 
 ## Intro
 
-Terminal based assisted management of your SSH config files.  
-Built out of boredom with managing messy and huge ssh_config files.  
+Terminal-based assisted management of SSH config files.  
+Built out of boredom with managing messy and huge `ssh_config` files.  
 
 Backup your SSH config files before using!  
 SSHClick can be used with "show" and "list" commands for hosts, without modifying your SSH Config in any way!  
 
-**Only commands that modify configuration will edit and rewrite/restructure your SSH Config file. In that case, any added comment or infos that are not in form that SSHClick understand will be discarded, and configuration will be re-formatted to match SSHClick style. See below details to understand how SSH Click would keep your config organized**!
+**Only commands that modify configuration will edit and rewrite your SSH config file. In that case, comments and extra information outside the format SSHClick understands may be discarded, and the configuration will be reformatted to match SSHClick style. See the notes below to understand how SSHClick keeps the file organized.**
 
 **NEW!** *Now comes with additional TUI that can be accessed via `ssht` command.*  
 
@@ -46,16 +45,16 @@ SSHClick can be used with "show" and "list" commands for hosts, without modifyin
 
 ## What does it do?
 
-SSHClick (sshc) is just a tool designed to work with existing SSH configuration files on your Linux/Windows/WSL terminal environment.  
+SSHClick (`sshc`) is a tool designed to work with existing SSH configuration files on Linux, Windows, and WSL terminal environments.  
 It parses your SSH config, and can provide easy commands to list, filter, modify or view specific Host entries.
-Trough additional "metadata" comments it can add abstractions such as "groups" and various information that is both readable in the configuration file, and can be parsed and printed while using the tool.
+Through additional metadata comments it can add abstractions such as groups and extra information that remain readable in the configuration file and can also be parsed and shown by the tool.
 
 ### Installation procedure
 
 1. **Check preconditions:**
     - Currently only tested on Linux (Debian 10,11, Ubuntu 20.04,22.04), but should work on other systems as well
-    - Minimum python3.7 (tested up to 3.11 beta) & pip installed
-        - it is preferable to not use system python version, to install "custom" user python on linux, you can try using pyenv (<https://github.com/pyenv/pyenv>
+    - Minimum Python 3.10 with `pip` installed
+        - it is preferable not to use the system Python version; to install a custom user Python on Linux, you can try using `pyenv` (<https://github.com/pyenv/pyenv>)
     - git installed (for installing from source)
 
 2. **Install package:**
@@ -123,23 +122,23 @@ rm -r sshclick
 
 ## SSH Config structure, and important note about comments
 
-SSHClick when editing and writing to SSH config file must use specific style, and is internally using comments to "organize" configuration itself. This means comments outside of what sshclick is handling are unsupported and will be lost when SSHClick modifies a file.)
+When SSHClick edits and writes an SSH config file it must use a specific style, and it internally uses comments to organize the configuration. This means comments outside what SSHClick handles are unsupported and may be lost when SSHClick modifies a file.
 
 ### Comment blocks and metadata in SSH Config
 
-SSHClick uses comments to add extra information which it can use to add concept of grouping and extra information to hosts. Special metadata lines start with `#@<tag>:` or `# <tag>:` followed by some of meta-tags like `group`, `desc`, `info`. This are all considered group meta-tags, as they apply on the group level. Note that line separations above and below group header are added only for visual aid, they are ignored at parsing, but are included when modifying/generating SSH config file.  
+SSHClick uses comments to add extra information that it can use for grouping and host metadata. Special metadata lines start with `#@<tag>:` or `# <tag>:` followed by tags such as `group`, `desc`, or `info`. These are considered group metadata tags because they apply on the group level. Note that separator lines above and below the group header are only visual aids: they are ignored during parsing, but are included when modifying or generating the SSH config file.  
 
-This metadata headers can be added manually also in SSH config, or sshclick can add them and move hosts under specific group, using `sshc` cli tool
+These metadata headers can also be added manually in SSH config, or `sshc` can add them and move hosts under a specific group.
 
 Normally start of the "GROUP HEADER" inside SSH Config would look like below.  
 
-- `#@group:` or `# group:` is KEY metadata tag, that during "parsing" defines that all hosts configured below this "tag" belong to this group
-- `#@desc:` or `# desc:` is optional tag that adds "description" to defined group, and will display in usual group display commands
+- `#@group:` or `# group:` is the key metadata tag that defines that all hosts configured below it belong to this group
+- `#@desc:` or `# desc:` is an optional tag that adds a description to the defined group, and will be displayed in normal group display commands
 - `#@info:` or `# info:` is optional tag that can appear multiple times, adding extra information lines tied to the group.
 
 Additionally each "host" definition can have optional meta info:
 
-- `#@host:` or `# host:` is optional tag that can appear multiple times, that can hold some information about the host, this meta info when defined applies to next "host" definition that will appear. If this key is added after "host" config keyword, it will be applied to next host, for that reason, keep this host meta info above the actual host definition.
+- `#@host:` or `# host:` is an optional tag that can appear multiple times and can hold information about the host. This metadata applies to the next `Host` definition that appears. If this key is added after a `Host` config keyword, it will apply to the next host, so keep host metadata above the actual host definition.
 
 Following is sample how group header is rendered by SSHClick:
 
@@ -161,27 +160,33 @@ Host ...
 
 If there are no groups defined, then all hosts are considered to be part of "default" group. SSHClick can be used to move hosts between groups and handle keeping SSH config "tidy" and with consistent format.
 
+### Include keyword support
+
+SSHClick currently supports only top-level `Include` keyword handling. Included files are parsed into one effective read-only view, so hosts and groups from the main file and included files can be browsed together in both `sshc` and `ssht`.
+
+When any `Include` keyword is present, SSHClick intentionally disables configuration modification and rendering back to disk. This is currently a strict feature boundary, until include-aware editing and write-back behavior are designed fully.
+
 ## Example usage and features
 
-SSHClick is deploying `sshc` cli tool that allows interacting with your SSH Config file and perform various organization,listing, displaying and modification of SSH Group/Host configuration parameters.  
-`sshc` comes with pre-built lots of help options so each level of commands provide `--help` options to provide you info what commands and options are available at which command level.  
+SSHClick provides the `sshc` CLI tool for interacting with your SSH config file and performing organization, listing, display, and modification of SSH group and host configuration parameters.  
+`sshc` provides `--help` at each command level so you can inspect available commands and options quickly.  
 
-For example to check version, type: `sshc --version`  
+For example, to check the version, type: `sshc --version`  
 *Sample output:*
 
 ```console
 $ sshc --version
-SSHClick (sshc) - Version: 0.6.0
+SSHClick (sshc) - Version: <version>
 ```
 
-If you run `sshc` command alone, or adding `-h` or `--help` option, it will show help what else must be added to the command...  
+If you run `sshc` alone, or add `-h` or `--help`, it will show what else can be added to the command.  
 *Example:*
 
 ```console
 $ sshc --help
 Usage: sshc [OPTIONS] COMMAND [ARGS]...
 
-  SSHClick - SSH Config manager. version 0.6.0
+  SSHClick - SSH Config manager. version <version>
 
   NOTE: As this will change your SSH config files, make backups before using
   this software, as you might accidentally lose some configuration.
@@ -199,18 +204,18 @@ Options:
   -h, --help        Show this message and exit.
 
 Commands:
-  config  Modify SSHClick configuration trough SSH Config
+  config  Modify SSHClick configuration through SSH Config
   group   Command group for managing groups
   groups  Lists all groups
   host    Command group for managing hosts
   hosts   List configured hosts
 ```
 
-The Textual interface is launched separately with `ssht`, and you can inspect its options with `ssht --help`.
+The Textual interface is launched separately with `ssht`, and you can inspect its options with `ssht --help`. It supports the same `--config` option and `SSHC_CONFIG` environment variable as `sshc`.
 
 ### `group` commands and options
 
-To manage "groups" type `sshc group --help` to see options.  
+To manage groups, type `sshc group --help` to see options.  
 *Example:*
 
 ```console
@@ -233,7 +238,7 @@ Commands:
 
 ### `host` commands and options
 
-To manage "groups" type `sshc host --help` to see options.  
+To manage hosts, type `sshc host --help` to see options.  
 *Example:*
 
 ```console
@@ -257,13 +262,13 @@ Commands:
 
 ### `config` commands and SSHClick configuration options
 
-SSHClick does not to have its own configuration files, so most of configuration that it tries to understand, come from commands arguments/options, environment variables, and SSH Config file itself.
+SSHClick does not have its own separate configuration files, so most configuration it understands comes from command arguments and options, environment variables, and the SSH config file itself.
 
-Sometimes when you want to persist some config options, not to repeat it via command, you can use ENV variables, that can be set trough user shell profile.
+When you want to persist some config options instead of repeating them on the command line, you can use environment variables set through your shell profile.
 
-Now there is also option to store such config in SSH Config file itself (as metadata comment), so it can be portable and backed up together with SSH Config file.
+There is also an option to store such config in the SSH config file itself as metadata comments, so it stays portable and backed up together with the SSH config file.
 
-Command `config` takes `set` or `del` commands that add or remove specific configuration.
+The `config` command currently supports `show`, `set`, and `del` subcommands.
 
 #### Example
 
@@ -271,14 +276,15 @@ Command `config` takes `set` or `del` commands that add or remove specific confi
 $ sshc config --help
 Usage: sshc config [OPTIONS] COMMAND [ARGS]...
 
-  Modify SSHClick configuration trough SSH Config
+  Modify SSHClick configuration through SSH Config
 
 Options:
   -h, --help  Show this message and exit.
 
 Commands:
-  del  Delete config option
-  set  Set config option
+  del   Delete config option
+  set   Set config option
+  show  Show all config options
 ```
 
 #### Example: Set host output style to 'card'
@@ -298,7 +304,7 @@ Options:
 $ sshc config set --host-style card
 ```
 
-This will now store config in "currently used" SSH config file as following:
+This will now store config in the currently used SSH config file as follows:
 
 ```conf
 #<<<<< SSH Config file managed by sshclick >>>>>
@@ -313,7 +319,7 @@ sshc config del --host-style
 
 ### Output styling and user ENV variables
 
-`sshc host show` can display host output is several formats, you can specify it with `sshc host show <host> --style <style>`  
+`sshc host show` can display host output in several formats. You can select one with `sshc host show <host> --style <style>`.  
 Available styles are:
 
 | Style              | Description                                       |
@@ -325,25 +331,27 @@ Available styles are:
 | `table2`           | Nested table with separated host SSH params       |
 | `json`             | JSON output, useful for binding with other tools  |
 
-If you want to have some style statically set for your shell, you can export ENV variable with `export SSHC_HOST_STYLE=table`, and add it to `.profile` or `.bashrc` or `.zshrc`, so its set when shell session is starting, to set "default" style to that one.  
-Alternatively, you can use SSHClick internal "config" mechanism to store some config data into your SSH Config file (as commented metadata) so it can be backed up with your SSH config. To do so, you can use following command as example: `sshc config set --host-style table`.
+If you want to set a default style for your shell, you can export an environment variable such as `export SSHC_HOST_STYLE=table`, and add it to `.profile`, `.bashrc`, or `.zshrc` so it is set when the shell session starts.  
+Alternatively, you can use the SSHClick internal config mechanism to store some config data in your SSH config file as commented metadata, so it can be backed up together with your SSH config. For example: `sshc config set --host-style table`.
 
-In case user do not line "fancy" colors in output, you can set ENV variable to disable all color outputs with `export NO_COLOR=1`. If you want it permanently you can add it to startup "rc" files as well.
+If you do not like colorized output, you can disable it with `export NO_COLOR=1`. If you want it permanently, add it to your shell startup files as well.
 
 > NOTE! When sending output into non-terminal such as to file, SSHClick will recognize that and will remove all ANSI Escape characters (colors and stuff...) so that output is captured in clear way.
 
-## Recorded demos
+## Sample configuration
 
-Following demos will use this config sample file as input (located in ~/.ssh/config):
+The user-facing sample files live in [example/config_sample](example/config_sample) and [example/config_sample_extra](example/config_sample_extra). The main sample demonstrates top-level `Include` usage in read-only mode.
 
 ```conf
 #<<<<< SSH Config file managed by sshclick >>>>>
+
+Include config_sample_extra
 
 #-------------------------------------------------------------------------------
 #@group: network
 #@desc: Network devices in my lab
 #@info: user='admin' password='password'
-#@info: Not really, but for demo its ok :)
+#@info: Not really, but for demo it's ok :)
 #-------------------------------------------------------------------------------
 Host net-switch1
     hostname 10.1.1.1
@@ -386,7 +394,7 @@ Host lab-serv2
     hostname 10.10.0.2
 
 #@host: This server is [red]not[/] reachable directly, only via [green]lab-serv1[/]
-#@host: SSHClick can represent how end-to-end tunels will be established
+#@host: SSHClick can represent how end-to-end tunnels will be established
 Host server-behind-lab
     hostname 10.30.0.1
     user testuser
@@ -402,16 +410,6 @@ Host lab-*
 
 ```
 
-<!-- 
-### Demo showing some `sshc group` operations:
-[![asciicast](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89.svg)](https://asciinema.org/a/BQoVXv2HSeIvTyATeKUBGfr89)
-
-### Demo showing some `sshc host` operations:
-[![asciicast](https://asciinema.org/a/wzLefl49CRErBoFwC6ir96FFA.svg)](https://asciinema.org/a/wzLefl49CRErBoFwC6ir96FFA)
-
-### Demo displaying "end-to-end" tunnel visualization in graph
-[![asciicast](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE.svg)](https://asciinema.org/a/I4O2bfDiRAN7xEGdTB1S9rChE) -->
-
 ## Author
 
 Karlo Tisaj  
@@ -422,7 +420,7 @@ github: <https://github.com/karlot>
 
 MIT License
 
-Copyright (c) 2024 Karlo Tisaj
+Copyright (c) 2026 Karlo Tisaj
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -41,7 +41,8 @@ class SSHHostInfo(Static):
         
         det.update(Panel(
             (f"[b]AltHost[/b]: " + ", ".join(host.alt_names) + "\n" if host.alt_names else "") +
-            f"[b]Group[/b]:   {host.group}\n"
+            f"[b]Group[/b]:   {host.group}\n" +
+            (f"[b]Source[/b]:  {host.source_file}:{host.source_line}\n" if host.source_file else "") +
             f"[b]Type[/b]:    {host.type.value}",
             border_style=DEF_PANEL_COLOR
         ))

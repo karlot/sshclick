@@ -1,4 +1,5 @@
-import os, re, fnmatch, time
+import os, re, fnmatch, time, glob, shlex
+from dataclasses import dataclass
 from typing import Optional
 from enum import Enum
 
@@ -19,6 +20,13 @@ class MetaTAG(str, Enum):
     HPASS = "pass"
 
 
+@dataclass(frozen=True)
+class ConfigLine:
+    text: str
+    source_file: Optional[str]
+    source_line: int
+
+
 class SSH_Config:
     """
     SSH Configuration class
@@ -29,6 +37,8 @@ class SSH_Config:
     def __init__(self, file: Optional[str], config_lines: Optional[list[str]] = None, stdout: bool = False, diff: bool = False):
         self.ssh_config_file: Optional[str] = file
         self.ssh_config_lines: list[str] = list(config_lines) if config_lines is not None else []
+        self.config_lines_full: list[ConfigLine] = []
+        self.included_files: list[str] = []
 
         # configuration representation (array of SSH groups?)
         self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME, desc=DEFAULT_GROUP_DESC)]
@@ -36,6 +46,7 @@ class SSH_Config:
 
         # options
         self.write_locked: bool = False     # Internal "safety" for not allowing to change original file when writing is unsafe
+        self.write_locked_reason: str = ""
         self.stdout: bool = stdout          # Redirect configuration change/write to stdout instead of input file
         self.diff: bool = diff              # Option to only show differences that would be applied to configuration
         self.opts: dict = {}
@@ -51,25 +62,117 @@ class SSH_Config:
         self.global_params: dict = {}
 
 
+    def _set_write_locked(self, reason: str) -> None:
+        self.write_locked = True
+        if not self.write_locked_reason:
+            self.write_locked_reason = reason
+
+
+    def _build_line_records(self, lines: list[str], source_file: Optional[str]) -> list[ConfigLine]:
+        return [ConfigLine(text=line, source_file=source_file, source_line=index + 1) for index, line in enumerate(lines)]
+
+
+    def _read_config_lines(self, config_path: str) -> list[str]:
+        with open(config_path, "r") as fh:
+            return fh.read().split("\n")
+
+
+    def _resolve_include_paths(self, value: str, base_dir: str) -> list[str]:
+        include_paths: list[str] = []
+
+        for pattern in shlex.split(value):
+            expanded_pattern = os.path.expandvars(os.path.expanduser(pattern))
+            if not os.path.isabs(expanded_pattern):
+                expanded_pattern = os.path.join(base_dir, expanded_pattern)
+
+            matched_paths = sorted(glob.glob(expanded_pattern))
+            if matched_paths:
+                include_paths.extend(matched_paths)
+            else:
+                warn(f"Included config path did not match any files: {expanded_pattern}")
+
+        return include_paths
+
+
+    def _load_line_records_from_file(self, config_path: str) -> list[ConfigLine]:
+        root_path = os.path.abspath(config_path)
+        root_lines = self._read_config_lines(root_path)
+        self.ssh_config_lines = root_lines
+
+        records: list[ConfigLine] = []
+        in_top_level_scope = True
+        base_dir = os.path.dirname(root_path)
+
+        for line_number, raw_line in enumerate(root_lines, start=1):
+            stripped_line = raw_line.strip()
+            if not stripped_line or stripped_line.startswith("#"):
+                records.append(ConfigLine(text=raw_line, source_file=root_path, source_line=line_number))
+                continue
+
+            match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", stripped_line)
+            if not match:
+                records.append(ConfigLine(text=raw_line, source_file=root_path, source_line=line_number))
+                continue
+
+            keyword, value = match.groups()
+            keyword = keyword.lower()
+
+            if keyword in {"host", "match"}:
+                in_top_level_scope = False
+
+            if in_top_level_scope and keyword == "include":
+                self._set_write_locked("Keyword 'Include' found, configuration currently read-only, when this keyword is used!")
+                for include_path in self._resolve_include_paths(value, base_dir):
+                    include_path = os.path.abspath(include_path)
+                    if include_path not in self.included_files:
+                        self.included_files.append(include_path)
+                    try:
+                        records.extend(self._build_line_records(self._read_config_lines(include_path), include_path))
+                    except OSError as exc:
+                        warn(f"Failed reading included SSH config file ({include_path}): {exc}")
+                continue
+
+            records.append(ConfigLine(text=raw_line, source_file=root_path, source_line=line_number))
+
+        return records
+
+
+    def _get_or_create_group_index(self, name: str, source_file: Optional[str] = None, source_line: int = 0) -> int:
+        for index, group in enumerate(self.groups):
+            if group.name == name:
+                if source_file:
+                    source_ref = (source_file, source_line)
+                    if source_ref not in group.source_refs:
+                        group.source_refs.append(source_ref)
+                return index
+
+        new_group = SSH_Group(name=name)
+        if source_file:
+            new_group.source_refs.append((source_file, source_line))
+        self.groups.append(new_group)
+        return len(self.groups) - 1
+
+
     def read(self):
         """
         Read content of SSH config file
         """
         config_path = self.ssh_config_file
         if config_path is None:
+            self.config_lines_full = self._build_line_records(self.ssh_config_lines, None)
             return self
 
         try:
-            with open(config_path, "r") as fh:
-                content = fh.read()
-                self.ssh_config_lines = content.split("\n")
+            self.config_lines_full = self._load_line_records_from_file(config_path)
         except FileNotFoundError:
             warn(f"SSH config file not found ({config_path})")
             answer = input("Would you like to create it (y/n)? :")
             if answer.lower() in ["y", "yes"]:
                 try:
                     # Make sure full path is available
-                    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+                    config_dir = os.path.dirname(config_path)
+                    if config_dir:
+                        os.makedirs(config_dir, exist_ok=True)
                     # Write initial config file
                     with open(config_path, "w") as file:
                         file.write(SSHCONFIG_SIGNATURE_LINE)
@@ -78,12 +181,16 @@ class SSH_Config:
                     
                     # Assume we start with empty lines
                     self.ssh_config_lines = []
-                except:
-                    error(f"Failed to create ssh config file in ({config_path})")
+                    self.config_lines_full = []
+                except OSError as exc:
+                    error(f"Failed to create ssh config file in ({config_path}): {exc}")
                     exit(1)
             else:
                 error("Cannot proceed without config file")
                 exit(1)
+        except OSError as exc:
+            error(f"Failed reading SSH config file ({config_path}): {exc}")
+            exit(1)
         return self
 
 
@@ -106,9 +213,15 @@ class SSH_Config:
         """
         Parse config lines one by one and generate configuration structure
         """
+        if not self.config_lines_full:
+            self.config_lines_full = self._build_line_records(self.ssh_config_lines, self.ssh_config_file)
+
         # Parse each line of the configuration, line by line
-        for config_line_index, line in enumerate(self.ssh_config_lines):
-            line = line.strip()     # remove start and end whitespace
+        for config_line in self.config_lines_full:
+            source_file = config_line.source_file
+            line_number = config_line.source_line
+            source_label = f"{source_file}:{line_number}" if source_file else f"line {line_number}"
+            line = config_line.text.strip()     # remove start and end whitespace
             if not line: continue   # Skip empty lines, go to next...
             
             if line.startswith("#"):
@@ -139,21 +252,21 @@ class SSH_Config:
                     self._config_flush_host()
 
                     debug(f"META group: '{value}'")
-                    self.groups.append(SSH_Group(name=value))
-
-                    self.current_grindex = len(self.groups) - 1
+                    self.current_grindex = self._get_or_create_group_index(value, source_file, line_number)
                     self.current_group = value
                     debug(f"META Group index: {self.current_grindex}")
                     continue
 
                 elif metadata == MetaTAG.GDESC:
                     debug(f"META Group description: '{value}'")
-                    self.groups[self.current_grindex].desc = value
+                    if not self.groups[self.current_grindex].desc:
+                        self.groups[self.current_grindex].desc = value
                     continue
 
                 elif metadata == MetaTAG.GINFO:
                     debug(f"META Group info: '{value}'")
-                    self.groups[self.current_grindex].info.append(value)
+                    if value not in self.groups[self.current_grindex].info:
+                        self.groups[self.current_grindex].info.append(value)
                     continue
 
                 elif metadata == MetaTAG.HINFO:
@@ -162,7 +275,7 @@ class SSH_Config:
                     continue
 
                 else:
-                    warn(f"Unhandled metadata: '{metadata}' on SSH-config line number: {config_line_index + 1}")
+                    warn(f"Unhandled metadata: '{metadata}' on SSH-config {source_label}")
                     continue
 
             # This NEW regex should fix this spec from ssh_config definition:
@@ -170,7 +283,7 @@ class SSH_Config:
             # NOTE: I have tested clients like ssh or sftp, they dont complain, and allow multiple "=" symbols. :)
             match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", line)
             if not match:
-                warn(f"Ignoring unmatched keyword in configuration line '{line}' on SSH-config ({config_line_index + 1})")
+                warn(f"Ignoring unmatched keyword in configuration line '{line}' on SSH-config ({source_label})")
                 continue
 
             keyword, value = match.groups()
@@ -179,8 +292,7 @@ class SSH_Config:
             # First we need to handle "top-level" keywords that defines host blocks or special behavior
             # ----- INCLUDE -----
             if keyword == "include":
-                self.write_locked = True
-                self.write_locked_reason = "Keyword 'Include' found, configuration currently read-only, when this keyword is used!"
+                self._set_write_locked("Keyword 'Include' found, configuration currently read-only, when this keyword is used!")
 
             # ----- MATCH -----
             elif keyword == "match":
@@ -204,6 +316,8 @@ class SSH_Config:
                     alt_names=names,
                     password=self.current_host_pass,
                     group=self.current_group,
+                    source_file=source_file or "",
+                    source_line=line_number,
                     type=host_type,
                     info=self.current_host_info,
                 )
@@ -395,8 +509,8 @@ class SSH_Config:
             with open(self.ssh_config_file, "w") as config_file:
                 config_file.write(config_content)
                 return True
-        except:
-            error(f"Failed modifying configuration file: {self.ssh_config_file}!")
+        except OSError as exc:
+            error(f"Failed modifying configuration file: {self.ssh_config_file}! ({exc})")
             exit(1)
 
 
@@ -479,9 +593,8 @@ class SSH_Config:
         if not host.group:
             raise Exception("Internal ERROR, host group missing, or empty, please report issue!")
         
-        try:
-            found_group = self.get_group_by_name(host.group)
-        except:
+        found_group = next((group for group in self.groups if group.name == host.group), None)
+        if found_group is None:
             # When group does not exist, we return false
             return False
 

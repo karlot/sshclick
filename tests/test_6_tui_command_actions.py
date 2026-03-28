@@ -1,5 +1,11 @@
+from pathlib import Path
+from types import SimpleNamespace
+
 from sshclick.sshc import HostType, SSH_Host
+from sshclick.ssht.sshtui import SSHTui
 from sshclick.ssht.utils.commands import copy_ssh_keys, reset_fingerprint, run_connect
+
+TEST_CONFIG = Path(__file__).resolve().parent / "config_example"
 
 
 class DummyTUI:
@@ -106,3 +112,14 @@ def test_tui_commands_ignore_non_normal_hosts(monkeypatch):
     copy_ssh_keys(tui, pattern)
 
     assert tui.notifications == []
+
+
+def test_sshtui_highlight_ignores_missing_data_view(monkeypatch):
+    app = SSHTui(config_file=str(TEST_CONFIG))
+    host = SSH_Host(name="demo", group="default")
+
+    monkeypatch.setattr(app, "query_one_optional", lambda selector: None)
+
+    app.on_tree_node_highlighted(SimpleNamespace(node=SimpleNamespace(data=host)))
+
+    assert app.current_node is host

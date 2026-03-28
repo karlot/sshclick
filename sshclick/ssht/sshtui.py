@@ -98,10 +98,9 @@ class SSHTui(App):
         # For some reason if there was no keyboard interaction, and only mouse is used
         # to expand group and select host, then NoMatch error is generated in self.query_one()
         # TODO: Recheck event orders and see if there is better way of solving it
-        try:
-            self.query_one(SSHDataView).update(self.current_node)
-        except:
-            pass
+        data_view = self.query_one_optional(SSHDataView)
+        if data_view is not None:
+            data_view.update(self.current_node)
 
     # ---------------------------------
     # Actions
@@ -113,7 +112,7 @@ class SSHTui(App):
         run_connect(self, prog, self.current_node)
 
     def action_delete(self) -> None:
-        if self.current_node != None:
+        if self.current_node is not None:
             self.push_screen(ModalDelete(self.current_node))
 
     def action_action(self) -> None:

@@ -1,5 +1,4 @@
 from typing import Union
-from textwrap import dedent
 from ..ssh_host import SSH_Host, HostType
 
 from rich.table import Table
@@ -19,12 +18,15 @@ def render(host: SSH_Host):
 
     #// Add Host data panel to the group
     #// -----------------------------------------------------------------------
-    host_panel_data = f"""\
-    [bright_white]Name [/]:  {host.name}{alt_names}
-    [bright_white]Group[/]:  {host.group}
-    [bright_white]Type [/]:  {out_type}\
-    """
-    grp_inputs.append(Panel(dedent(host_panel_data), border_style="grey35", title="Host", title_align="left"))
+    host_panel_data = [
+        f"[bright_white]Name [/]:  {host.name}{alt_names}",
+        f"[bright_white]Group[/]:  {host.group}",
+        f"[bright_white]Type [/]:  {out_type}",
+    ]
+    if host.get_source_label():
+        host_panel_data.append(f"[bright_white]Source[/]: {host.get_source_label()}")
+
+    grp_inputs.append(Panel("\n".join(host_panel_data), border_style="grey35", title="Host", title_align="left"))
 
     #// Add Host info panel to the group (if host info exist)
     #// -----------------------------------------------------------------------

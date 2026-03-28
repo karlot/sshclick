@@ -17,6 +17,8 @@ def render(host: SSH_Host):
     layout_table.add_row(f"[bright_white]Name [/]:  {host.name}{alt_names}")
     layout_table.add_row(f"[bright_white]Group[/]:  {host.group}")
     layout_table.add_row(f"[bright_white]Type [/]:  {out_type}")
+    if host.get_source_label():
+        layout_table.add_row(f"[bright_white]Source[/]: {host.get_source_label()}")
 
     #// Add Host info panel (if host info exist)
     #// -----------------------------------------------------------------------
@@ -29,7 +31,7 @@ def render(host: SSH_Host):
 
     #// Prepare table with params and append it to the layout table
     #// -----------------------------------------------------------------------
-    param_table = Table(box=box.SIMPLE, style="grey35", show_header=True, show_edge=False, pad_edge=False)
+    param_table = Table(box=box.SIMPLE, style="grey35", show_header=True, show_edge=False, pad_edge=False, expand=True)
     param_table.add_column("Param")
     param_table.add_column("Value")
     param_table.add_column("Inherited-from")

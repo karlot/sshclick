@@ -1,0 +1,14 @@
+#-------------------------------------------------------------------------------
+#@group: lab-servers
+#@desc: Testing/Support servers
+#@info: Additional hosts loaded from a separate included file
+#-------------------------------------------------------------------------------
+#@host: CI runner defined in separately included file
+Host lab-ci1
+    hostname 10.10.0.21
+    user buildbot
+    proxyjump jumper1
+
+#@host: Metrics relay defined in separately included file
+Host lab-metrics1
+    hostname 10.10.0.22

@@ -19,6 +19,8 @@ def render(host: SSH_Host):
     table.add_row("Name",  host.name + alt_names)
     table.add_row("Group", host.group)
     table.add_row("Type",  str(out_type))
+    if host.get_source_label():
+        table.add_row("Source", host.get_source_label())
     table.add_row("Info",  out_info, style="grey50")
     
     # Add rows for SSH Config parameters
@@ -33,4 +35,3 @@ def render(host: SSH_Host):
             table.add_row(f"Param:{param}", output_value, source, style="yellow")
 
     return table
-

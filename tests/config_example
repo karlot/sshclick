@@ -1,0 +1,54 @@
+#<<<<< SSH Config file managed by sshclick >>>>>
+#@config: host-style=simple
+
+ServerAliveInterval 30
+
+#-------------------------------------------------------------------------------
+#@group: network
+#@desc: Network devices in the test lab
+#@info: Group info line for parser and UI tests
+#-------------------------------------------------------------------------------
+#@host: Managed switch in rack 1
+Host net-switch1
+    hostname 10.1.1.1
+
+Host net-*
+    user admin
+
+
+#-------------------------------------------------------------------------------
+#@group: jumphost
+#@desc: SSH bastion hosts
+#-------------------------------------------------------------------------------
+#@host: Entry point into the internal network
+Host jumper1
+    hostname 123.123.123.123
+    user master
+    port 1234
+
+
+#-------------------------------------------------------------------------------
+#@group: lab-servers
+#@desc: Testing and support systems
+#@info: Rich markup [red]can[/] appear in metadata
+#-------------------------------------------------------------------------------
+#@host: Reachable only through the jumphost
+Host lab-serv1
+    hostname 10.10.0.1
+    user admin
+
+#@host: Matches inherited pattern parameters
+Host lab-serv2
+    hostname 10.10.0.2
+
+#@host: Multi-hop target with local forwarding
+Host server-behind-lab
+    hostname 10.30.0.1
+    user testuser
+    port 1234
+    proxyjump lab-serv1
+    localforward 7630 127.0.0.1:7630
+
+Host lab-* alias-lab
+    user user123
+    proxyjump jumper1
