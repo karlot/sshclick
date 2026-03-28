@@ -1,7 +1,8 @@
-import subprocess, signal, os
+import os
 
 from textual.app import App
 
+from sshclick.process_utils import run_captured_command, run_interactive_command
 # SSHClick stuff
 from sshclick.globals import SSH_CONNECT_TIMEOUT
 from sshclick.sshc import SSH_Host, HostType
@@ -20,33 +21,24 @@ def run_connect(tui: App, prog, target, opts=DEFAULT_CONNECT_OPTS):
     if not isinstance(target, SSH_Host) or target.type != HostType.NORMAL:
         return
 
-    # Build command arguments and join into full CLI command
-    cmd_args = " ".join([f"-o {k}={v}" for k, v in opts.items()])
-    full_cmd = f"{prog} {cmd_args} {target.name}"
-    with tui.suspend():
-        # Temporary suspend default sig-int handling if user presses Ctrl-C
-        original_handler = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, lambda sig, frame: None)
+    argv = [prog]
+    for key, value in opts.items():
+        argv.extend(["-o", f"{key}={value}"])
+    argv.append(target.name)
 
-        result = subprocess.run(full_cmd, stderr=subprocess.PIPE, text=True, shell=True)
-        if result.returncode == 255:
-            # SSH connection originated error
-            tui.notify(
-                str(result.stderr),
-                title=f"{target.name}: code {result.returncode}",
-                severity="error")
-        elif result.returncode > 0:
-            tui.notify(
-                str(result.stderr),
-                title=f"{target.name}: code {result.returncode}",
-                severity="warning")
-        # else:
-        #     tui.notify(
-        #         f"Connection to '{target.name}' interrupted!",
-        #         severity="error")
-        
-        # Restore default sig-int handling
-        signal.signal(signal.SIGINT, original_handler)
+    try:
+        rc = run_interactive_command(argv, tui=tui)
+    except FileNotFoundError:
+        tui.notify(f"'{prog}' command not found", title=target.name, severity="error")
+        return
+    except OSError as exc:
+        tui.notify(str(exc), title=target.name, severity="error")
+        return
+
+    if rc == 255:
+        tui.notify(f"{prog} exited with code {rc}", title=target.name, severity="error")
+    elif rc > 0:
+        tui.notify(f"{prog} exited with code {rc}", title=target.name, severity="warning")
 
 
 # ---------------------------------
@@ -58,22 +50,18 @@ def reset_fingerprint(tui: App, target):
     if not isinstance(target, SSH_Host) or target.type != HostType.NORMAL:
         return
 
-    # Build command arguments and join into full CLI command
-    full_cmd = f"ssh-keygen -R {target.params.get('hostname', target.name)}"
-    with tui.suspend():
-        # Temporary suspend default sig-int handling if user presses Ctrl-C
-        original_handler = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, lambda sig, frame: None)
+    argv = ["ssh-keygen", "-R", target.params.get("hostname", target.name)]
+    try:
+        result = run_captured_command(argv)
+    except FileNotFoundError:
+        tui.notify("'ssh-keygen' command not found", title=target.name, severity="error")
+        return
+    except OSError as exc:
+        tui.notify(str(exc), title=target.name, severity="error")
+        return
 
-        result = subprocess.run(full_cmd, stderr=subprocess.PIPE, text=True, shell=True)
-        if result.returncode > 0:
-            tui.notify(
-                str(result.stderr),
-                title=f"{target.name}: code {result.returncode}",
-                severity="warning")
-        
-        # Restore default sig-int handling
-        signal.signal(signal.SIGINT, original_handler)
+    if result.returncode > 0:
+        tui.notify(str(result.stderr), title=f"{target.name}: code {result.returncode}", severity="warning")
 
 # ---------------------------------
 # Copy SSH Keys
@@ -84,19 +72,17 @@ def copy_ssh_keys(tui: App, target):
     if not isinstance(target, SSH_Host) or target.type != HostType.NORMAL:
         return
 
-    # Build command arguments and join into full CLI command
-    full_cmd = f"ssh-copy-id {target.params.get('user', os.environ.get('USER'))}@{target.params.get('hostname', target.name)}"
-    with tui.suspend():
-        # Temporary suspend default sig-int handling if user presses Ctrl-C
-        original_handler = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, lambda sig, frame: None)
+    target_spec = f"{target.params.get('user', os.environ.get('USER'))}@{target.params.get('hostname', target.name)}"
+    argv = ["ssh-copy-id", target_spec]
 
-        result = subprocess.run(full_cmd, stderr=subprocess.PIPE, text=True, shell=True)
-        if result.returncode > 0:
-            tui.notify(
-                str(result.stderr),
-                title=f"{target.name}: code {result.returncode}",
-                severity="warning")
-        
-        # Restore default sig-int handling
-        signal.signal(signal.SIGINT, original_handler)
+    try:
+        rc = run_interactive_command(argv, tui=tui)
+    except FileNotFoundError:
+        tui.notify("'ssh-copy-id' command not found", title=target.name, severity="error")
+        return
+    except OSError as exc:
+        tui.notify(str(exc), title=target.name, severity="error")
+        return
+
+    if rc > 0:
+        tui.notify(f"ssh-copy-id exited with code {rc}", title=target.name, severity="warning")

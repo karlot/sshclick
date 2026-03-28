@@ -1,39 +1,55 @@
-# !!! Remember to update version here and in the code !!!
-# (ಠ_ಠ)  -- I wish poetry could just read version from the package
-
-[tool.poetry]
+# UV Standardized structure
+[project]
 name = "sshclick"
-homepage = "https://github.com/karlot/sshclick"
-version = "0.8.0a"
+# version = "0.8.0"   # Move to dynamic
+dynamic = ["version"]
 description = "SSH terminal config manager"
-authors = ["Karlo Tisaj <karlot@gmail.com>"]
-license = "MIT"
 readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Karlo Tisaj", email = "karlot@gmail.com"},
+]
+requires-python = "<4.0,>=3.9"
+dependencies = [
+    "click>=8",
+    "rich>=14",
+    "textual>=6",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<4.0"
-click = "^8.1"
-rich = "^13.8"
-textual = ">=0.50,<0.80"
+[project.urls]
+homepage = "https://github.com/karlot/sshclick"
 
-[tool.poetry.dev-dependencies]
-pytest = "^8.0"
-
-[tool.poetry.scripts]
+[project.scripts]
 sshc = "sshclick.main_cli:cli"
 ssht = "sshclick.main_tui:tui"
 
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest]
+addopts = ["-ra", "-q"]
+testpaths = ["tests"]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sshclick"]

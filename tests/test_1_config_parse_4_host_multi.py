@@ -10,7 +10,7 @@ Host test2
 
 def test_parse_single_host():
     lines = config1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", hosts=[
@@ -37,7 +37,7 @@ Host test2
 
 def test_parse_single_host_with_params():
     lines = config2.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", hosts=[
@@ -67,7 +67,7 @@ Host test2
 
 def test_parse_single_host_with_info():
     lines = config3.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", hosts=[
@@ -95,7 +95,7 @@ Host test2
 
 def test_parse_single_host_with_info_and_params():
     lines = config4.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", hosts=[
@@ -111,5 +111,4 @@ def test_parse_single_host_with_info_and_params():
             })
         ])
     ]
-
 

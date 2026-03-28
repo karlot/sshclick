@@ -187,10 +187,14 @@ Usage: sshc [OPTIONS] COMMAND [ARGS]...
   this software, as you might accidentally lose some configuration.
 
 Options:
-  --sshconfig TEXT  Config file (default: ~/.ssh/config)
+  --config TEXT  Config file (default: ~/.ssh/config). Can be set with
+                 SSHC_CONFIG.
   --stdout          Send changed SSH config to STDOUT instead to original
                     file, can be enabled with setting ENV variable (export
                     SSHC_STDOUT=1)
+  --diff            Show only difference is config changes, instead of
+                    applying them. Can be enabled with setting ENV variable
+                    (export SSHC_DIFF=1)
   --version         Show the version and exit.
   -h, --help        Show this message and exit.
 
@@ -200,8 +204,9 @@ Commands:
   groups  Lists all groups
   host    Command group for managing hosts
   hosts   List configured hosts
-  tui     TUI Interface (experimental)
 ```
+
+The Textual interface is launched separately with `ssht`, and you can inspect its options with `ssht --help`.
 
 ### `group` commands and options
 
@@ -248,7 +253,6 @@ Commands:
   rename   Rename existing host
   set      Set/Change host configuration
   show     Show current host configuration
-  test     Test SSH host connection  (experimental)
 ```
 
 ### `config` commands and SSHClick configuration options

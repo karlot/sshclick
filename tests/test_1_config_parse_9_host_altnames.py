@@ -30,5 +30,5 @@ results = [
 #-----------------------------------
 def test_parse_lowercase():
     lines = config1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
     assert groups == results

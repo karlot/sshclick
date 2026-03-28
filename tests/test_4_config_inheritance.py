@@ -23,7 +23,7 @@ Host test-*
 """
 
 def test_host_pattern_matching_manual():
-    config = SSH_Config("none", config1.splitlines())
+    config = SSH_Config(None, config1.splitlines())
     config.parse()
 
     assert config.get_host_by_name("test-data").matched_params == {
@@ -38,7 +38,7 @@ def test_host_pattern_matching_manual():
 
 
 def test_host_pattern_matching_parsed():
-    config = SSH_Config("none", config1.splitlines())
+    config = SSH_Config(None, config1.splitlines())
     config.parse()
 
     # Default group is always first

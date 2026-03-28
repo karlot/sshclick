@@ -9,7 +9,7 @@ Host *
 
 def test_parse_glob_pattern():
     lines = config1.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", patterns=[
@@ -33,7 +33,7 @@ Host test2-*
 
 def test_parse_multiple_patterns():
     lines = config2.splitlines()
-    groups = SSH_Config("none", lines).parse().groups
+    groups = SSH_Config(None, lines).parse().groups
 
     assert groups == [
         SSH_Group(name="default", desc="Default group", patterns=[

@@ -11,7 +11,7 @@ config1 = """
 """
 
 def test_parse_config_opts():
-    config = SSH_Config("none", config1.splitlines()).parse()
+    config = SSH_Config(None, config1.splitlines()).parse()
 
     # Verify parsed config options
     assert config.opts == {

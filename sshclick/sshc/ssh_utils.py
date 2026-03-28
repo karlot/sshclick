@@ -24,14 +24,14 @@ def build_context_config(ctx) -> None:
         current_obj = ctx.parent
         try:
             while True:
-                if "sshconfig" in current_obj.params:
-                    full_path = os.path.expanduser(current_obj.params["sshconfig"])
+                if "config" in current_obj.params:
+                    full_path = os.path.expanduser(current_obj.params["config"])
                     ctx.obj = SSH_Config(file=full_path, stdout=current_obj.params["stdout"]).read().parse()
                     break
                 else:
                     current_obj = current_obj.parent
         except:
-            err.print("INTERNAL ERROR: Could not reconstruct context for SSH configuration!")
+            err.print("\nINTERNAL ERROR: Could not reconstruct context for SSH configuration!")
             ctx.exit(1)
 
 

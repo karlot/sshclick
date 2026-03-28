@@ -4,8 +4,9 @@ from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
 # from textual import on
 from textual.app import ComposeResult
 from textual.widgets import OptionList
-from textual.widgets.option_list import Option, Separator
+from textual.widgets.option_list import Option
 from textual.screen import ModalScreen
+
 
 # SSHTui modules
 from sshclick.ssht.modal_delete import ModalDelete
@@ -35,7 +36,7 @@ class ModalAction(ModalScreen[None]):
             yield OptionList(
                 Option("Create new host", id="opt_new_hst", disabled=ACTIONS_EDIT_DISABLED),
                 Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
-                Separator(),
+                None,
                 Option("Cancel (ESC)", id="opt_cancel"),
             )
         elif isinstance(self.node, SSH_Group):
@@ -43,10 +44,10 @@ class ModalAction(ModalScreen[None]):
             yield OptionList(
                 Option("Edit current group", id="opt_ed_cur", disabled=ACTIONS_EDIT_DISABLED),
                 Option("Delete current group", id="opt_del_cur", disabled=ACTIONS_DELETE_DISABLED),
-                Separator(),
+                None,
                 Option("Create new host", id="opt_new_hst", disabled=ACTIONS_CREATE_HOST_DISABLED),
                 Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
-                Separator(),
+                None,
                 Option("Cancel (ESC)", id="opt_cancel"),
             )
         else:
@@ -55,17 +56,16 @@ class ModalAction(ModalScreen[None]):
                 Option("SSH to current host", id="opt_ssh_cur"),
                 Option("SFTP to current host", id="opt_sftp_cur"),
                 # Option("Upload file to current host", id="opt_up_file", disabled=True),
-                # Option("Test host connectivity", id="opt_test", disabled=True),
                 # Option("Clear host fingerprint", id="opt_clear_finger", disabled=True),
                 Option("Copy SSH Key to current host", id="opt_copy_key", disabled=False),
                 Option("Reset local fingerprints for host", id="opt_reset_fp"),
-                Separator(),
+                None,
                 Option("Edit current host", id="opt_ed_cur", disabled=ACTIONS_EDIT_DISABLED),
                 Option("Delete current host", id="opt_del_cur", disabled=ACTIONS_DELETE_DISABLED),
-                Separator(),
+                None,
                 Option("Create new host", id="opt_new_hst", disabled=ACTIONS_CREATE_HOST_DISABLED),
                 Option("Create new group", id="opt_new_grp", disabled=ACTIONS_CREATE_GROUP_DISABLED),
-                Separator(),
+                None,
                 Option("Cancel (ESC)", id="opt_cancel"),
             )
 
@@ -113,4 +113,3 @@ class ModalAction(ModalScreen[None]):
 
         # Other, not implemented
         # ...
-

@@ -26,9 +26,9 @@ class SSH_Config:
     Main class for handling SSH configuration, reading from file, parsing and
     generating and writing contents back to SSH configuration file
     """
-    def __init__(self, file: str, config_lines: list[str] = [], stdout: bool = False, diff: bool = False):
-        self.ssh_config_file: str = file
-        self.ssh_config_lines: list[str] = config_lines
+    def __init__(self, file: Optional[str], config_lines: Optional[list[str]] = None, stdout: bool = False, diff: bool = False):
+        self.ssh_config_file: Optional[str] = file
+        self.ssh_config_lines: list[str] = list(config_lines) if config_lines is not None else []
 
         # configuration representation (array of SSH groups?)
         self.groups: list[SSH_Group] = [SSH_Group(name=DEFAULT_GROUP_NAME, desc=DEFAULT_GROUP_DESC)]
@@ -56,6 +56,9 @@ class SSH_Config:
         Read content of SSH config file
         """
         config_path = self.ssh_config_file
+        if config_path is None:
+            return self
+
         try:
             with open(config_path, "r") as fh:
                 content = fh.read()
@@ -381,6 +384,10 @@ class SSH_Config:
         # When output is changed to write config to STDOUT, just print all lines
         if self.stdout:
             print(config_content)
+            return False
+
+        # In-memory configuration objects can be rendered and mutated, but must not write to disk
+        if self.ssh_config_file is None:
             return False
 
         # Write content to target config file

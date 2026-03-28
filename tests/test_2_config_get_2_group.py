@@ -33,14 +33,14 @@ Host test2
 # Tests
 #-----------------------------------
 def test_check_group_nok():
-    config = SSH_Config("none", config1.splitlines())
+    config = SSH_Config(None, config1.splitlines())
     config.parse()
 
     assert not config.check_group_by_name("testgroup-2")
 
 
 def test_get_group_nok_exception():
-    config = SSH_Config("none", config1.splitlines())
+    config = SSH_Config(None, config1.splitlines())
     config.parse()
 
     with pytest.raises(Exception):
@@ -48,7 +48,7 @@ def test_get_group_nok_exception():
     
 
 def test_get_group_ok():
-    config = SSH_Config("none", config2.splitlines())
+    config = SSH_Config(None, config2.splitlines())
     config.parse()
 
     group = config.get_group_by_name("testgroup-2")

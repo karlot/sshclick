@@ -15,7 +15,7 @@ config1_modified_lines=[
 ]
 
 def test_add_new_group():
-    config = SSH_Config("none", config1.splitlines())
+    config = SSH_Config(None, config1.splitlines())
     config.parse()
 
     new_group = SSH_Group(name="testgroup")
@@ -53,7 +53,7 @@ config2_modified_lines=[
 ]
 
 def test_add_new_group_complex():
-    config = SSH_Config("none", config2.splitlines())
+    config = SSH_Config(None, config2.splitlines())
     config.parse()
 
     new_group = SSH_Group(name="testgroup", desc="description123")

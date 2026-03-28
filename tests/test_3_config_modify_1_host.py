@@ -14,7 +14,7 @@ config1_modified_lines=[
 ]
 
 def test_add_new_host():
-    config = SSH_Config("none", [])     # Start with empty configuration
+    config = SSH_Config(None, [])     # Start with empty configuration
     config.parse()
 
     new_host = SSH_Host(name="testnew", info=["some-host-info"], group="default", params={"hostname": "2.2.3.3"})
@@ -80,7 +80,7 @@ config2_modified_lines=[
 ]
 
 def test_add_new_host_complex():
-    config = SSH_Config("none", config2.splitlines())
+    config = SSH_Config(None, config2.splitlines())
     config.parse()
 
     new_host = SSH_Host(name="test-new", info=["this is a new host"], group="testgroup", params={"hostname": "1.1.1.1"})

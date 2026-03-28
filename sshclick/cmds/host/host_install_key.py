@@ -1,13 +1,12 @@
-import os
 import click
-from shutil import which
 
+from sshclick.process_utils import run_interactive_command
 from sshclick.sshc import SSH_Config, complete_ssh_host_names
 from sshclick.globals import SSH_CONNECT_TIMEOUT
 
 
 #------------------------------------------------------------------------------
-# COMMAND: host test
+# COMMAND: host install
 #------------------------------------------------------------------------------
 SHORT_HELP = "Install SSH key to hosts (experimental)"
 LONG_HELP  = """
@@ -22,10 +21,9 @@ TIME_HELP  = "Timeout for SSH connection"
 
 @click.command(name="install", short_help=SHORT_HELP, help=LONG_HELP)
 @click.option("--timeout", default=SSH_CONNECT_TIMEOUT, help=TIME_HELP)
-@click.option("--password", help=TIME_HELP)
 @click.argument("name", required=True, shell_complete=complete_ssh_host_names)
 @click.pass_context
-def cmd(ctx, name, timeout, password):
+def cmd(ctx, name, timeout):
     config: SSH_Config = ctx.obj
 
     # filter config only on host names, not on group level
@@ -36,21 +34,18 @@ def cmd(ctx, name, timeout, password):
     # Get host from config
     host = config.get_host_by_name(name)
 
-    # Build default command args for ssh commands
-    ssh_command_args = f"-f -o StrictHostKeyChecking=no -o ConnectTimeout={timeout} {name}"
+    ssh_command = ["ssh-copy-id", "-f", "-o", f"ConnectTimeout={timeout}", name]
+    try:
+        rc = run_interactive_command(ssh_command)
+    except FileNotFoundError:
+        print("Cannot install SSH key automatically, as 'ssh-copy-id' is not installed.")
+        ctx.exit(1)
+    except KeyboardInterrupt:
+        ctx.exit(130)
+    except OSError as exc:
+        print(f"Failed running ssh-copy-id: {exc}")
+        ctx.exit(1)
 
-    if password:
-        if which("sshpass"):
-            ssh_command = f"sshpass -p {password} ssh-copy-id {ssh_command_args}"
-            rc = os.system(ssh_command)
-        else:
-            print("Cannot install key automatically with directly provided password, as 'sshpass' is not installed.")
-            print("Try to repeat command, but remove --password option, and enter pass directly if prompted.")
-            ctx.exit(1)
-    else:
-        ssh_command = f"ssh-copy-id {ssh_command_args}"
-        rc = os.system(ssh_command)
-        
     print(f"Copy key to: {name} ({host.params['hostname']}) ", end="")
     if rc == 0:
         print("successful!")
