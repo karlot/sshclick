@@ -9,9 +9,19 @@
 __pycache__
 .mypy_cache
 .pytest_cache
+.ruff_cache
+.hypothesis
+.tox
+.nox
+.coverage
+htmlcov
 
 # pyenv stuff
 .python-version
+
+# Local environments / tooling
+.venv
+.codex
 
 # Builds
 build
