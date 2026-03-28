@@ -9,17 +9,16 @@ license = {text = "MIT"}
 authors = [
     {name = "Karlo Tisaj", email = "karlot@gmail.com"},
 ]
-requires-python = "<4.0,>=3.9"
+requires-python = "<4.0,>=3.10"
 dependencies = [
-    "click>=8",
-    "rich>=14",
-    "textual>=6",
+    "click>=8.3.1",
+    "rich>=14.2.0",
+    "textual>=8.2.0",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -37,7 +36,7 @@ ssht = "sshclick.main_tui:tui"
 
 [dependency-groups]
 dev = [
-    "pytest>=8",
+    "pytest>=9.0.2",
 ]
 
 [tool.pytest]
@@ -45,7 +44,7 @@ addopts = ["-ra", "-q"]
 testpaths = ["tests"]
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling>=1.29.0", "hatch-vcs>=0.5.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]

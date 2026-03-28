@@ -3,6 +3,7 @@
 ## Version 0.7.0 (2024-04-)
 
 - Updated packaging and development setup for modern `pyproject.toml` / `uv` / `hatch` workflow
+- Bumped minimum supported Python version to `3.10`
 - Updated development and runtime dependencies (`pytest`, `click`, `rich`, `textual`) to current releases
 - Added `ruff` configuration and small code cleanup/refactoring around logging and command helpers
 - Reworked `ssht` entrypoint to support `--help`, `--config`, `--version` and shared `SSHC_CONFIG` env variable
