@@ -1,15 +1,11 @@
 import os.path
 import re
+import sys
 from typing import List
-
-from rich.console import Console
 
 from ..globals import ENABLED_HOST_STYLES
 from .ssh_config import SSH_Config
 from .ssh_parameters import ALL_PARAM_LC_NAMES
-
-err = Console(stderr=True)
-out = Console()
 
 
 # Make a copy of input dict with all keys as LC and filtered out based on input filter list
@@ -31,7 +27,7 @@ def build_context_config(ctx) -> None:
                 else:
                     current_obj = current_obj.parent
         except:
-            err.print("\nINTERNAL ERROR: Could not reconstruct context for SSH configuration!")
+            print("\nINTERNAL ERROR: Could not reconstruct context for SSH configuration!", file=sys.stderr)
             ctx.exit(1)
 
 

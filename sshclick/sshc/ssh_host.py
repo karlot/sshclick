@@ -1,12 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
 import importlib
-import socket
 
 from ..globals import DEFAULT_HOST_STYLE
-
-from rich.console import Console
-console = Console()
 
 class HostType(str, Enum):
     NORMAL = "normal"
@@ -74,5 +70,8 @@ class SSH_Host:
             return f"SSH_Host style [bright_red]'{self.print_style}'[/] is not implemented!"
         except Exception:
             if DEBUG_STYLES:
+                from rich.console import Console
+
+                console = Console()
                 console.print_exception(show_locals=False, max_frames=1, suppress=[importlib])
             return f"SSH_Host style [bright_red]'{self.print_style}'[/] is broken!"
