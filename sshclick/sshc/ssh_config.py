@@ -518,11 +518,18 @@ class SSH_Config:
         """
         # Keep list of linked hosts via proxyjump option
         traced_hosts = []
+        visited_hosts = set()
 
         # we are first checking host that is asked, and then check if that host has a "proxy" defined
         # if proxy is defined, we add found host to traced list, and search attached proxy, it this way we
         # can trace full connection path for later graph processing
         while True:
+            if name in visited_hosts:
+                warn(f"Cannot trace proxyjump for host '{name}', loop detected in proxy chain!")
+                return None
+
+            visited_hosts.add(name)
+
             # Search for host in current configuration
             if (not self.check_host_by_name(name)):
                 warn(f"Cannot get info for used host '{name}' as next proxyjump, as it is not defined in configuration!")

@@ -67,3 +67,39 @@ def test_host_pattern_matching_parsed():
             SSH_Host(name='test-*', group='group1', type=HostType.PATTERN, params={'port': '1111', 'user': 'test1234'}),
         ]
     )
+
+
+config2 = """
+Host app
+    hostname 10.1.1.20
+    proxyjump jump
+
+Host jump
+    hostname 10.1.1.10
+"""
+
+
+def test_trace_proxyjump_simple_chain():
+    config = SSH_Config(None, config2.splitlines()).parse()
+
+    traced_hosts = config.trace_proxyjump("app")
+
+    assert traced_hosts is not None
+    assert [host.name for host in traced_hosts] == ["app", "jump"]
+
+
+config3 = """
+Host app
+    hostname 10.1.1.20
+    proxyjump jump
+
+Host jump
+    hostname 10.1.1.10
+    proxyjump app
+"""
+
+
+def test_trace_proxyjump_loop_returns_none():
+    config = SSH_Config(None, config3.splitlines()).parse()
+
+    assert config.trace_proxyjump("app") is None
