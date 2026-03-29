@@ -46,7 +46,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 140
 target-version = "py310"
-extend-exclude = ["sshclick/ssht/old"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -54,8 +53,8 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"sshclick/cmds/cmd_config.py" = ["E402"]
-"sshclick/cmds/cmd_group.py" = ["E402"]
+"sshclick/cli/commands/cmd_config.py" = ["E402"]
+"sshclick/cli/commands/cmd_group.py" = ["E402"]
 "sshclick/main_cli.py" = ["E402"]
 
 [build-system]

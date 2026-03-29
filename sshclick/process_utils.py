@@ -6,10 +6,22 @@ from typing import ContextManager, Protocol
 
 
 class SupportsSuspend(Protocol):
-    def suspend(self) -> ContextManager[object]: ...
+    """Protocol for UI objects that can temporarily hand terminal control away."""
+
+    def suspend(self) -> ContextManager[object]:
+        """Return a context manager that suspends the UI while a child command runs."""
+        ...
 
 
 def run_interactive_command(argv: Sequence[str], tui: SupportsSuspend | None = None) -> int:
+    """
+    Run an interactive child command with inherited terminal IO.
+
+    When a TUI instance is provided, the UI is suspended first so the child
+    process can take over the terminal cleanly. The parent temporarily ignores
+    Ctrl-C and Ctrl-\ while waiting, which keeps those signals directed at the
+    interactive child instead of tearing down SSHClick itself.
+    """
     suspend_context = tui.suspend() if tui is not None else nullcontext()
 
     with suspend_context:

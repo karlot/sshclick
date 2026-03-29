@@ -2,11 +2,6 @@
 
 ## Near Term
 
-- Shared mutation layer for CLI and TUI
-  - Extract create/edit/delete logic for hosts, groups, and config options out of Click commands
-  - Reuse the same operation layer from both `sshc` and `ssht`
-  - Return structured results so the TUI does not need to depend on CLI-shaped flows
-
 - TUI edit/create flows
   - Add proper form-based create and edit flows in `ssht`
   - Keep action selection in centered modals, and use drawers for larger forms
@@ -15,7 +10,12 @@
 - Broader command coverage
   - Add more higher-level tests for modifying CLI commands and write flows
   - Add more app-level Textual tests for interactive TUI flows beyond browsing and reload
-  - Cover create/edit/delete behavior once the shared mutation layer exists
+  - Cover create/edit/delete behavior now that the shared mutation layer is in place
+
+- CLI/TUI workflow cleanup
+  - Keep migrating remaining write flows to the shared `ops` layer where it improves consistency
+  - Use the shared operations as the only mutation path for upcoming TUI forms
+  - Review CLI output/reporting so success and error handling stay consistent across commands
 
 - Include/read-only polish
   - Keep improving read-only signaling when config is locked because of `Include`

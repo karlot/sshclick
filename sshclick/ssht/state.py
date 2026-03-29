@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from sshclick.sshc import HostType, SSH_Config, SSH_Group, SSH_Host
+from sshclick.core import HostType, SSH_Config, SSH_Group, SSH_Host
 
 # Shared node type used by the tree, details pane, and modal flows.
 SSHNode = SSH_Group | SSH_Host | None

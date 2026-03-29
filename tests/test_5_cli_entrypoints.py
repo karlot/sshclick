@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 from sshclick import main_cli, main_tui
-from sshclick.sshc import build_context_config
+from sshclick.core import SSH_Config, build_context_config
 
 
 TEST_CONFIG = Path(__file__).resolve().parent / "config_example"
@@ -42,6 +42,51 @@ def test_sshc_config_del_removes_host_style(tmp_path):
 
     assert result.exit_code == 0
     assert "#@config: host-style=simple" not in config_path.read_text(encoding="utf-8")
+
+
+def test_sshc_group_set_desc_works_without_info(tmp_path):
+    config_path = tmp_path / "config"
+    config_path.write_text(
+        "#@group: lab\n#@desc: old desc\nHost lab-host\n    hostname 10.10.0.1\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(main_cli.cli, ["--config", str(config_path), "group", "set", "lab", "--desc", "new desc"])
+
+    assert result.exit_code == 0
+
+    updated_config = SSH_Config(str(config_path)).read().parse()
+    assert updated_config.get_group_by_name("lab").desc == "new desc"
+
+
+def test_sshc_group_rename_updates_host_group_references(tmp_path):
+    config_path = tmp_path / "config"
+    config_path.write_text(
+        "#@group: old-group\nHost lab-host\n    hostname 10.10.0.1\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(main_cli.cli, ["--config", str(config_path), "group", "rename", "old-group", "new-group"])
+
+    assert result.exit_code == 0
+
+    updated_config = SSH_Config(str(config_path)).read().parse()
+    renamed_group = updated_config.get_group_by_name("new-group")
+    assert renamed_group.hosts[0].group == "new-group"
+    assert updated_config.get_host_by_name("lab-host").group == "new-group"
+
+
+def test_sshc_host_rename_updates_host_name(tmp_path):
+    config_path = tmp_path / "config"
+    config_path.write_text("Host old-host\n    hostname 10.10.0.1\n", encoding="utf-8")
+
+    result = CliRunner().invoke(main_cli.cli, ["--config", str(config_path), "host", "rename", "old-host", "new-host"])
+
+    assert result.exit_code == 0
+
+    updated_config = SSH_Config(str(config_path)).read().parse()
+    assert updated_config.check_host_by_name("new-host") is True
+    assert updated_config.check_host_by_name("old-host") is False
 
 
 def test_ssht_help_mentions_sshc_config():

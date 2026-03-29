@@ -8,6 +8,9 @@
 - Added `ruff` configuration and small code cleanup/refactoring around logging and command helpers
 - Reworked `ssht` entrypoint to support `--help`, `--config`, `--version` and shared `SSHC_CONFIG` env variable
 - Rebuilt `ssht` into a dedicated Textual app shell with themed tree navigation, details inspector, action modal, read-only include mode, and higher-level integration coverage
+- Reorganized the Python package layout into clearer `cli`, `core`, `ops`, and `ssht` layers
+- Added a shared mutation/operations layer so CLI and TUI can reuse host, group, and config write logic
+- Removed the archived pre-refactor TUI reference code after the new Textual structure settled
 - Removed experimental `sshc host test` command for now
 - Hardened external command execution by removing `os.system`, `shell=True` and `host install --password`
 - Added CLI entrypoint coverage for `sshc` / `ssht` config handling and help output

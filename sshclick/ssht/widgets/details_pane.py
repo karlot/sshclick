@@ -7,7 +7,7 @@ from rich.table import Table
 from textual.containers import Vertical
 from textual.widgets import ContentSwitcher, Label, Static, TabbedContent, TabPane
 
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, generate_graph
+from sshclick.core import SSH_Config, SSH_Group, SSH_Host, generate_graph
 from sshclick.ssht.state import SSHNode
 
 
@@ -289,6 +289,7 @@ class DetailsPane(Vertical):
         return self._theme_var("sshclick-border", "grey35")
 
     def _sync_scrollbar_visibility(self) -> None:
+        """Hide tiny phantom scrollbars when the content effectively fits."""
         # Textual doesn't have an automatic "show only when needed" scrollbar
         # mode here, so we hide tiny phantom scrollbars ourselves.
         self.styles.scrollbar_visibility = "visible" if self.max_scroll_y > 1 else "hidden"

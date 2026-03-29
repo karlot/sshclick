@@ -1,4 +1,4 @@
-from sshclick.sshc import SSH_Config, SSH_Group
+from sshclick.core import SSH_Config, SSH_Group
 
 #-----------------------------------
 # FILE CONTENT SAMPLES FOR PARSING

@@ -1,6 +1,6 @@
 import click
 
-from sshclick.cli_common import CONTEXT_SETTINGS, SSHCONFIG_ENVVAR, SSHCONFIG_HELP, load_ssh_config
+from sshclick.cli.common import CONTEXT_SETTINGS, SSHCONFIG_ENVVAR, SSHCONFIG_HELP, load_ssh_config
 from sshclick.globals import USER_SSH_CONFIG
 from sshclick.version import VERSION
 
@@ -35,17 +35,17 @@ def cli(ctx: click.core.Context, config: str, stdout: bool, diff: bool):
 # Link all commands to root command
 # ------------------------------------------------------------------------------
 # Top commands
-from .cmds import cmd_group, cmd_host, cmd_config
+from .cli.commands import cmd_group, cmd_host, cmd_config
 
 cli.add_command(cmd_host.ssh_host)
 cli.add_command(cmd_group.ssh_group)
 cli.add_command(cmd_config.ssh_config)
 
 # Top level aliases (groups --> group list, hosts --> host list, etc..)
-from .cmds.cmd_group import group_list
+from .cli.commands.cmd_group import group_list
 
 cli.add_command(group_list.cmd, "groups")
 
-from .cmds.cmd_host import host_list
+from .cli.commands.cmd_host import host_list
 
 cli.add_command(host_list.cmd, "hosts")

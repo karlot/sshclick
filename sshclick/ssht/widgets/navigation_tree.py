@@ -3,7 +3,7 @@ from textual.app import ComposeResult
 from textual.message import Message
 from textual.widgets import Static, Tree
 
-from sshclick.sshc import SSH_Config, SSH_Group, SSH_Host, HostType
+from sshclick.core import SSH_Config, SSH_Group, SSH_Host, HostType
 
 
 class NavigationTree(Static):
@@ -23,15 +23,19 @@ class NavigationTree(Static):
             super().__init__()
             self.node_data = node_data
 
+
     def __init__(self, sshconf: SSH_Config, id: str | None = None) -> None:
         self.sshconf = sshconf
         super().__init__(id=id)
 
+
     def compose(self) -> ComposeResult:
         yield Tree("SSH Configuration", id="sshtree", data=None)
 
+
     def on_mount(self) -> None:
         self.rebuild(self.sshconf)
+
 
     def rebuild(self, sshconf: SSH_Config) -> None:
         """Recreate the visual tree from the parsed SSHClick config model."""
@@ -49,8 +53,10 @@ class NavigationTree(Static):
                 label = host.name if host.type != HostType.PATTERN else Text(host.name, style=pattern_color)
                 group_node.add_leaf(label, data=host)
 
+
     def focus_tree(self) -> None:
         self.query_one(Tree).focus()
+
 
     def select_node_by_name(self, name: str | None) -> bool:
         """Expand parents as needed and move the tree cursor to the named node."""
@@ -71,8 +77,10 @@ class NavigationTree(Static):
         tree.select_node(target_node)
         return True
 
+
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted) -> None:
         self.post_message(self.NodeHighlighted(event.node.data))
+
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         # Enter on a group should behave like a folder toggle, while hosts keep
@@ -80,6 +88,7 @@ class NavigationTree(Static):
         if isinstance(event.node.data, SSH_Group):
             event.node.toggle()
         self.post_message(self.NodeSubmitted(event.node.data))
+
 
     def _find_tree_node(self, node, name: str):
         """Return the first tree node whose SSHClick data object matches the given name."""

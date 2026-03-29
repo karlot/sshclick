@@ -5,7 +5,8 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header
 
 from sshclick.globals import USER_SSH_CONFIG
-from sshclick.sshc import HostType, SSH_Config, SSH_Group
+from sshclick.ops import delete_group, delete_host
+from sshclick.core import SSH_Config, SSH_Group
 from sshclick.ssht.screens import ActionMenuScreen, ConfirmDeleteScreen
 from sshclick.ssht.state import SSHNode, TUIState
 from sshclick.ssht.theme import SSHCLICK_DARK_THEME, register_sshclick_theme
@@ -29,6 +30,7 @@ class SSHTui(App):
         ("r", "reload", "Reload"),
     ]
 
+
     def __init__(self, config_file: str = USER_SSH_CONFIG) -> None:
         super().__init__()
         config_path = os.path.expanduser(config_file)
@@ -36,9 +38,11 @@ class SSHTui(App):
         self.state = TUIState(config_file=config_path, sshconf=sshconf)
         self.current_node: SSHNode = None
 
+
     def get_theme_variable_defaults(self) -> dict[str, str]:
         # Custom theme variables must exist before the stylesheet is parsed.
         return dict(SSHCLICK_DARK_THEME.variables)
+
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -51,23 +55,36 @@ class SSHTui(App):
                 yield DetailsPane(self.state.sshconf, id="details_pane")
         yield Footer()
 
+
     def on_mount(self) -> None:
         register_sshclick_theme(self)
         self.theme = SSHCLICK_DARK_THEME.name
         self._refresh_view(rebuild_tree=True)
         self._focus_tree()
 
+
     def on_navigation_tree_node_highlighted(self, event) -> None:
         self._set_current_node(self._event_node(event))
 
+
     def on_navigation_tree_node_submitted(self, event: NavigationTree.NodeSubmitted) -> None:
         self._set_current_node(event.node_data)
+
 
     # Compatibility bridge for older tests / event paths used by the previous TUI layout
     def on_tree_node_highlighted(self, event) -> None:
         self._set_current_node(self._event_node(event))
 
+
     def _handle_action_menu_result(self, action_id: str | None) -> None:
+        """
+        Handle the action selected in the centered modal menu.
+
+        The screen itself only returns an action id. This method keeps the real
+        behavior mapping in one place so CLI-like actions, destructive flows,
+        and future edit/create flows all go through the same app-level routing.
+        """
+
         # Keep all action dispatching in one place so the modal stays dumb.
         if action_id is None:
             self._focus_tree()
@@ -82,12 +99,12 @@ class SSHTui(App):
             self._handle_unimplemented_action()
         self._focus_tree()
 
+
     def action_quit(self) -> None:
         self.exit(0)
 
-    def action_toggle_actions(self) -> None:
-        """Open the centered action menu for the current selection."""
 
+    def action_toggle_actions(self) -> None:
         self.push_screen(
             ActionMenuScreen(
                 self.current_node,
@@ -97,30 +114,34 @@ class SSHTui(App):
             self._handle_action_menu_result,
         )
 
-    def action_connect(self, prog: str) -> None:
-        """Launch SSH or SFTP for the selected host."""
 
+    def action_connect(self, prog: str) -> None:
         run_connect(self, prog, self.current_node)
 
+
     def action_reload(self) -> None:
-        """Reload the parsed config while trying to preserve selection by name."""
+        """
+        Reload the parsed config and restore the previous selection when possible.
+
+        This is the main refresh path after external writes or destructive TUI
+        actions. Selection is restored by node name so the UI lands roughly
+        where the user was before the reload.
+        """
 
         selected_name = self._selected_name()
         self.state.sshconf = SSH_Config(file=self.state.config_file).read().parse()
         self._refresh_view(preferred_name=selected_name, rebuild_tree=True)
         self.notify("Configuration reloaded", severity="information")
 
-    def action_delete(self) -> None:
-        """Ask for confirmation before removing the selected host or group."""
 
+    def action_delete(self) -> None:
         if not self._can_delete_current_node():
             return
 
         self.push_screen(ConfirmDeleteScreen(self.current_node), self._delete_confirmed)
 
-    def _delete_confirmed(self, confirmed: bool | None) -> None:
-        """Apply the destructive delete once the confirmation modal resolves."""
 
+    def _delete_confirmed(self, confirmed: bool | None) -> None:
         if not confirmed or self.current_node is None:
             return
 
@@ -131,14 +152,21 @@ class SSHTui(App):
         self.current_node = None
         self.action_reload()
 
-    def _set_current_node(self, node: SSHNode) -> None:
-        """Store the active node and refresh the dependent widgets."""
 
+    def _set_current_node(self, node: SSHNode) -> None:
         self.current_node = node
         self.state.current_node = node
         self._refresh_view()
 
+
     def _refresh_view(self, preferred_name: str | None = None, *, rebuild_tree: bool = False) -> None:
+        """
+        Refresh every widget that depends on config state or current selection.
+
+        This is the central synchronization point for the TUI. It updates the
+        tree, details pane, status bar, and left-hand statistics while avoiding
+        unnecessary tree rebuilds that would collapse expanded groups.
+        """
         self._restore_selection(preferred_name)
 
         nav_tree = self.query_one_optional(NavigationTree)
@@ -161,33 +189,28 @@ class SSHTui(App):
         if tree_stats is not None:
             tree_stats.update_state(self.state)
 
-    def _find_node_by_name(self, name: str) -> SSHNode:
-        """Best-effort lookup used to restore selection after config reload."""
 
+    def _find_node_by_name(self, name: str) -> SSHNode:
         if self.state.sshconf.check_host_by_name(name):
             return self.state.sshconf.get_host_by_name(name)
         if self.state.sshconf.check_group_by_name(name):
             return self.state.sshconf.get_group_by_name(name)
         return None
 
-    def _event_node(self, event) -> SSHNode:
-        """Extract the selected SSHClick node from Tree or compatibility events."""
 
+    def _event_node(self, event) -> SSHNode:
         return event.node.data if hasattr(event, "node") else getattr(event, "node_data", None)
 
-    def _focus_tree(self) -> None:
-        """Return keyboard focus to the navigation tree."""
 
+    def _focus_tree(self) -> None:
         self.query_one(NavigationTree).focus_tree()
 
-    def _selected_name(self) -> str | None:
-        """Return the current node name so selection can survive a reload."""
 
+    def _selected_name(self) -> str | None:
         return self.current_node.name if self.current_node is not None else None
 
-    def _handle_connection_action(self, action_id: str) -> None:
-        """Dispatch interactive host actions from the action modal."""
 
+    def _handle_connection_action(self, action_id: str) -> None:
         if action_id == "act_ssh":
             self.action_connect("ssh")
         elif action_id == "act_sftp":
@@ -197,17 +220,15 @@ class SSHTui(App):
         elif action_id == "act_reset_fp" and self.current_node is not None:
             reset_fingerprint(self, self.current_node)
 
-    def _handle_unimplemented_action(self) -> None:
-        """Show the current placeholder message for create/edit flows."""
 
+    def _handle_unimplemented_action(self) -> None:
         if self.state.is_read_only:
             self.notify(self.state.read_only_reason, title="Read-only config", severity="warning")
             return
         self.notify("This flow will be implemented in the next TUI phase.", title="Not implemented", severity="information")
 
-    def _can_delete_current_node(self) -> bool:
-        """Validate whether the current selection may enter the delete flow."""
 
+    def _can_delete_current_node(self) -> bool:
         if self.current_node is None:
             self.notify("Select host or group first", severity="warning")
             return False
@@ -219,29 +240,20 @@ class SSHTui(App):
             return False
         return True
 
-    def _delete_current_node(self) -> tuple[str, str]:
-        """Remove the selected host or group from the in-memory config model."""
 
+    def _delete_current_node(self) -> tuple[str, str]:
         if isinstance(self.current_node, SSH_Group):
-            self.state.sshconf.groups.remove(self.current_node)
-            return ("group", self.current_node.name)
+            deleted_group = delete_group(self.state.sshconf, self.current_node.name)
+            return ("group", deleted_group.name)
         return self._delete_current_host()
 
-    def _delete_current_host(self) -> tuple[str, str]:
-        """Remove the selected host from its group and from the global host list."""
 
-        found_host = self.current_node
-        host_group = self.state.sshconf.get_group_by_name(found_host.group)
-        if found_host.type == HostType.NORMAL:
-            host_group.hosts.remove(found_host)
-        else:
-            host_group.patterns.remove(found_host)
-        self.state.sshconf.all_hosts.remove(found_host)
-        return ("host", found_host.name)
+    def _delete_current_host(self) -> tuple[str, str]:
+        deleted_host = delete_host(self.state.sshconf, self.current_node.name)
+        return ("host", deleted_host.name)
+
 
     def _restore_selection(self, preferred_name: str | None) -> None:
-        """Restore selection by name after a config reload, if possible."""
-
         if preferred_name is None:
             return
         self.current_node = self._find_node_by_name(preferred_name)

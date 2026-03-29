@@ -1,6 +1,6 @@
 from textwrap import dedent
 
-from sshclick.sshc import SSH_Config
+from sshclick.core import SSH_Config
 
 
 def test_parse_top_level_include_merges_groups_and_tracks_sources(tmp_path):

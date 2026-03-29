@@ -2,7 +2,7 @@ from textual.app import App
 from textual.theme import Theme
 
 
-# Default VS-dark inspired palette used by the rebuilt TUI.
+# Default VS-dark inspired palette
 SSHCLICK_DARK_THEME = Theme(
     name="SSHClick-dark",
     primary="#0E639C",

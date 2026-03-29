@@ -1,4 +1,4 @@
-from sshclick.sshc import SSH_Config
+from sshclick.core import SSH_Config
 
 #------------------------------------------------------------------------------
 # Test parsing groups with group metadata (desc and multi-info)

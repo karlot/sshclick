@@ -5,7 +5,7 @@ from textual.app import App
 from sshclick.process_utils import run_captured_command, run_interactive_command
 # SSHClick stuff
 from sshclick.globals import SSH_CONNECT_TIMEOUT
-from sshclick.sshc import SSH_Host, HostType
+from sshclick.core import SSH_Host, HostType
 
 # Forced defaults for sane openssh connection
 DEFAULT_CONNECT_OPTS = {
@@ -17,6 +17,13 @@ DEFAULT_CONNECT_OPTS = {
 # Connect options
 # ---------------------------------
 def run_connect(tui: App, prog, target, opts=DEFAULT_CONNECT_OPTS):
+    """
+    Run an interactive SSH-family program for a normal host node.
+
+    The command always receives the shared connection defaults used by the TUI,
+    and any failure is reported back through Textual notifications instead of
+    raising into the app event loop.
+    """
     # "Connect" only works on normal nodes (not groups or patterns)
     if not isinstance(target, SSH_Host) or target.type != HostType.NORMAL:
         return

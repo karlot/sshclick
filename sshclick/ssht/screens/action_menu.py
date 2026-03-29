@@ -4,7 +4,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Label, OptionList, Static
 from textual.widgets.option_list import Option
 
-from sshclick.sshc import HostType, SSH_Group
+from sshclick.core import HostType, SSH_Group
 from sshclick.ssht.state import SSHNode
 
 
@@ -29,14 +29,17 @@ class ActionMenuScreen(ModalScreen[str | None]):
             yield Static(note, id="action_menu_note")
             yield OptionList(*self._build_options(), id="action_menu_options")
 
+
     def on_mount(self) -> None:
         self.query_one(OptionList).focus()
+
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         if event.option_id == "act_close":
             self.dismiss(None)
             return
         self.dismiss(event.option_id)
+
 
     def _build_options(self) -> list[Option | None]:
         """Return the option list that matches the current selection."""

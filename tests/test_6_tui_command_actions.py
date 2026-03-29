@@ -5,7 +5,7 @@ from textwrap import dedent
 
 from textual.widgets import Label, OptionList, Static
 
-from sshclick.sshc import HostType, SSH_Host
+from sshclick.core import HostType, SSH_Host
 from sshclick.ssht.sshtui import SSHTui
 from sshclick.ssht.utils.commands import copy_ssh_keys, reset_fingerprint, run_connect
 
