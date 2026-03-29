@@ -3,8 +3,8 @@ import shutil
 
 from textual.widgets import Input, Label, OptionList, Select, Static, Switch, TextArea
 
-from sshclick.ssht.screens import AddParameterScreen, HostParameterRequest, ManageHostScreen
-from sshclick.ssht.sshtui import SSHTui
+from sshclick.tui.screens import AddParameterScreen, HostParameterRequest, ManageHostScreen
+from sshclick.tui.sshtui import SSHTui
 
 from .tui_support import TEST_CONFIG
 

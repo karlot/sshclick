@@ -5,7 +5,7 @@ from textual.widgets import Label, OptionList, Static
 from textual.widgets.option_list import Option
 
 from sshclick.core import HostType, SSH_Group
-from sshclick.ssht.state import SSHNode
+from sshclick.tui.state import SSHNode
 
 
 class ActionMenuScreen(ModalScreen[str | None]):

@@ -1,6 +1,6 @@
 from textual.widgets import Static
 
-from sshclick.ssht.state import TUIState
+from sshclick.tui.state import TUIState
 
 
 class TreeStats(Static):

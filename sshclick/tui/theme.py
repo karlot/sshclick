@@ -22,8 +22,9 @@ SSHCLICK_DARK_THEME = Theme(
         "sshclick-border": "#3C3C3C",
         "sshclick-muted": "#C8C8C8",
         "sshclick-tree-cursor": "#094771",
-        "sshclick-scrollbar": "#4E94CE",
-        "sshclick-scrollbar-hover": "#3794FF",
+        "sshclick-scrollbar": "#3A4E61",
+        "sshclick-scrollbar-hover": "#4B6A86",
+        "sshclick-scrollbar-active": "#5A82A5",
         "sshclick-pattern": "#4FC1FF",
     },
 )

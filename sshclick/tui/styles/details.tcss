@@ -3,9 +3,6 @@ DetailsPane {
     height: auto;
     padding: 0 1 0 1;
     background: $panel;
-    scrollbar-background: $surface;
-    scrollbar-color: $sshclick-scrollbar;
-    scrollbar-color-hover: $sshclick-scrollbar-hover;
 }
 
 #details_switcher {

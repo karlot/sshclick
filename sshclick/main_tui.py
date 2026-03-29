@@ -2,7 +2,7 @@ import click
 
 from sshclick.cli.common import CONTEXT_SETTINGS, SSHCONFIG_ENVVAR, SSHCONFIG_HELP
 from sshclick.globals import USER_SSH_CONFIG
-from sshclick.ssht.app import SSHTui
+from sshclick.tui.app import SSHTui
 from sshclick.version import VERSION
 
 MAIN_HELP = f"""

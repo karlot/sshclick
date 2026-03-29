@@ -7,8 +7,9 @@
 - Rebuilt `ssht` into a dedicated Textual browser with themed navigation, a richer details inspector, action modals, and higher-level integration coverage
 - Added guided TUI management flows for hosts, groups, and SSHClick config metadata
 - Polished the TUI details experience with grouped cards, a reworked `Connectivity` tab, and direct arrow-key navigation across tree nodes and host tabs
+- Refined TUI chrome with a versioned header, themed scrollbars, and direct edit shortcuts for the current selection
 - Added top-level `Include` support in strict read-only mode, with merged logical browsing of included hosts/groups and source tracking
-- Reorganized the package into clearer `cli`, `core`, `ops`, and `ssht` layers, including a shared mutation layer for CLI and TUI write flows
+- Reorganized the package into clearer `cli`, `core`, `ops`, and `tui` layers, including a shared mutation layer for CLI and TUI write flows
 - Hardened external command execution by removing `os.system`, `shell=True`, and `host install --password`
 - Removed the experimental `sshc host test` command
 - Expanded higher-level tests and supporting fixtures, including in-memory config rendering support for safer testing

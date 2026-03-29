@@ -8,7 +8,7 @@ from textual.containers import Grid, Vertical
 from textual.widgets import ContentSwitcher, Static, TabbedContent, TabPane
 
 from sshclick.core import SSH_Config, SSH_Group, SSH_Host, generate_graph
-from sshclick.ssht.state import SSHNode
+from sshclick.tui.state import SSHNode
 
 
 class DetailsPane(Vertical):

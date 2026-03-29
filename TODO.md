@@ -24,6 +24,7 @@
 
 - TUI connectivity expansion
   - Extend the host `Connectivity` tab with more diagnostics where it makes sense
+  - Prefer actions and keyboard shortcuts for tools like ping and traceroute instead of inline buttons in the tab
   - Possible future additions: reachability, ping, traceroute, richer tunnel summary
   - Reuse existing core graph output wherever possible
 

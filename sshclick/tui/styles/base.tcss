@@ -1,0 +1,25 @@
+Screen {
+    color: $foreground;
+    layers: base overlay;
+}
+
+* {
+    scrollbar-background: $sshclick-chrome;
+    scrollbar-background-hover: $surface;
+    scrollbar-background-active: $surface;
+    scrollbar-color: $sshclick-scrollbar;
+    scrollbar-color-hover: $sshclick-scrollbar-hover;
+    scrollbar-color-active: $sshclick-scrollbar-active;
+    scrollbar-corner-color: $sshclick-chrome;
+    scrollbar-size-vertical: 1;
+}
+
+Header {
+    background: $sshclick-chrome;
+    color: $foreground;
+}
+
+Footer {
+    background: $sshclick-chrome;
+    color: $sshclick-muted;
+}

@@ -228,6 +228,7 @@ Current TUI features:
 - centered action modal and destructive delete confirmation
 - right-side management drawers for creating and editing hosts, groups, and SSHClick config metadata
 - guided host editor with multiline info editing and additional SSH parameter picker
+- direct keyboard edit flow for the selected host or group
 - status bar with active config path and writable/read-only mode
 - include-aware read-only state when top-level `Include` is present
 
@@ -241,6 +242,7 @@ Useful key bindings in the current TUI:
 
 - `q` quit
 - `a` open actions for the current selection
+- `e` edit the currently selected host or group when writable
 - `s` open SSH session for the selected host
 - `f` open SFTP session for the selected host
 - `d` delete selected host or group when writable

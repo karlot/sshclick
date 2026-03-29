@@ -3,8 +3,8 @@ import shutil
 
 from textual.widgets import Input, Label, TextArea
 
-from sshclick.ssht.screens import ManageGroupScreen
-from sshclick.ssht.sshtui import SSHTui
+from sshclick.tui.screens import ManageGroupScreen
+from sshclick.tui.sshtui import SSHTui
 
 from .tui_support import TEST_CONFIG
 

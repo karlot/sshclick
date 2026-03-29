@@ -7,7 +7,7 @@ from textual.widgets import Footer, Header
 from sshclick.globals import USER_SSH_CONFIG
 from sshclick.core import SSH_Config, SSH_Group, SSH_Host
 from sshclick.ops import SSHClickOpsError, create_group, create_host, delete_group, delete_host, delete_host_style, edit_group, edit_host, set_host_style
-from sshclick.ssht.screens import (
+from sshclick.tui.screens import (
     ActionMenuScreen,
     ConfirmDeleteScreen,
     ManageConfigRequest,
@@ -17,10 +17,14 @@ from sshclick.ssht.screens import (
     ManageHostRequest,
     ManageHostScreen,
 )
-from sshclick.ssht.state import SSHNode, TUIState
-from sshclick.ssht.theme import SSHCLICK_DARK_THEME, register_sshclick_theme
-from sshclick.ssht.utils import copy_ssh_keys, reset_fingerprint, run_connect
-from sshclick.ssht.widgets import DetailsPane, NavigationTree, StatusBar, TreeStats
+from sshclick.tui.state import SSHNode, TUIState
+from sshclick.tui.theme import SSHCLICK_DARK_THEME, register_sshclick_theme
+from sshclick.tui.utils import copy_ssh_keys, reset_fingerprint, run_connect
+from sshclick.tui.widgets import DetailsPane, NavigationTree, StatusBar, TreeStats
+from sshclick.version import VERSION
+
+
+DISPLAY_VERSION = VERSION.split("+", 1)[0]
 
 
 class SSHTui(App):
@@ -32,12 +36,13 @@ class SSHTui(App):
         "styles/details.tcss",
         "styles/modals.tcss",
     ]
-    TITLE = "SSHClick"
-    SUB_TITLE = "Browser"
+    TITLE = "SSHClick TUI"
+    SUB_TITLE = f"SSH Config Browser · v{DISPLAY_VERSION}"
 
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("a", "toggle_actions", "Actions"),
+        ("e", "edit_selected", "Edit"),
         ("s", "connect('ssh')", "SSH"),
         ("f", "connect('sftp')", "SFTP"),
         ("d", "delete", "Delete"),
@@ -176,6 +181,31 @@ class SSHTui(App):
             ),
             self._handle_action_menu_result,
         )
+
+
+    def action_edit_selected(self) -> None:
+        """Open the appropriate editor for the currently selected host or group."""
+
+        if self.current_node is None:
+            self.notify("Select host or group first", severity="warning")
+            return
+        if self.state.is_read_only:
+            self.notify(self.state.read_only_reason, title="Read-only config", severity="warning")
+            return
+
+        if isinstance(self.current_node, SSH_Host):
+            self.push_screen(
+                ManageHostScreen(self.state.sshconf, self.current_node, editing_host=self.current_node),
+                self._handle_edit_host_result,
+            )
+            return
+
+        if isinstance(self.current_node, SSH_Group):
+            self.push_screen(
+                ManageGroupScreen(self.state.sshconf, self.current_node, editing_group=self.current_node),
+                self._handle_edit_group_result,
+            )
+            return
 
 
     def action_connect(self, prog: str) -> None:

@@ -1,5 +1,5 @@
 from sshclick.core import HostType, SSH_Host
-from sshclick.ssht.utils.commands import copy_ssh_keys, reset_fingerprint, run_connect
+from sshclick.tui.utils.commands import copy_ssh_keys, reset_fingerprint, run_connect
 
 from .tui_support import DummyTUI
 
@@ -14,7 +14,7 @@ def test_run_connect_builds_expected_argv(monkeypatch):
         captured["tui"] = tui
         return 0
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_interactive_command", fake_run_interactive_command)
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_interactive_command", fake_run_interactive_command)
 
     run_connect(tui, "ssh", host)
 
@@ -30,7 +30,7 @@ def test_run_connect_reports_missing_program(monkeypatch):
     def fake_run_interactive_command(argv, tui=None):
         raise FileNotFoundError
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_interactive_command", fake_run_interactive_command)
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_interactive_command", fake_run_interactive_command)
 
     run_connect(tui, "ssh", host)
 
@@ -41,7 +41,7 @@ def test_run_connect_reports_non_zero_exit(monkeypatch):
     tui = DummyTUI()
     host = SSH_Host(name="demo", group="default")
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_interactive_command", lambda argv, tui=None: 255)
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_interactive_command", lambda argv, tui=None: 255)
 
     run_connect(tui, "ssh", host)
 
@@ -61,7 +61,7 @@ def test_reset_fingerprint_uses_hostname_param(monkeypatch):
         captured["argv"] = argv
         return DummyResult()
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_captured_command", fake_run_captured_command)
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_captured_command", fake_run_captured_command)
 
     reset_fingerprint(tui, host)
 
@@ -79,7 +79,7 @@ def test_copy_ssh_keys_uses_user_and_hostname(monkeypatch):
         captured["tui"] = tui
         return 0
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_interactive_command", fake_run_interactive_command)
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_interactive_command", fake_run_interactive_command)
 
     copy_ssh_keys(tui, host)
 
@@ -92,8 +92,8 @@ def test_tui_commands_ignore_non_normal_hosts(monkeypatch):
     tui = DummyTUI()
     pattern = SSH_Host(name="demo-*", group="default", type=HostType.PATTERN)
 
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_interactive_command", lambda argv, tui=None: (_ for _ in ()).throw(AssertionError("should not run")))
-    monkeypatch.setattr("sshclick.ssht.utils.commands.run_captured_command", lambda argv: (_ for _ in ()).throw(AssertionError("should not run")))
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_interactive_command", lambda argv, tui=None: (_ for _ in ()).throw(AssertionError("should not run")))
+    monkeypatch.setattr("sshclick.tui.utils.commands.run_captured_command", lambda argv: (_ for _ in ()).throw(AssertionError("should not run")))
 
     run_connect(tui, "ssh", pattern)
     reset_fingerprint(tui, pattern)

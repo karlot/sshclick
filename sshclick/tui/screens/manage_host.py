@@ -7,7 +7,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, ContentSwitcher, Input, Label, OptionList, Select, Static, Switch, TextArea
 
 from sshclick.core import ALL_PARAM_SPECS, HostType, PARAMS_WITH_ALLOWED_MULTIPLE_VALUES, SSH_Config, SSH_Group, SSH_Host
-from sshclick.ssht.utils import discover_identity_files
+from sshclick.tui.utils import discover_identity_files
 
 from .add_parameter import AddParameterScreen, HostParameterRequest
 

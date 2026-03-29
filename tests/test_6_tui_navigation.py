@@ -6,7 +6,7 @@ from textwrap import dedent
 from textual.widgets import OptionList, Static, TabbedContent
 
 from sshclick.core import SSH_Host
-from sshclick.ssht.sshtui import SSHTui
+from sshclick.tui.sshtui import SSHTui
 
 from .tui_support import TEST_CONFIG
 
@@ -250,6 +250,48 @@ def test_sshtui_action_menu_opens_for_selected_host():
             assert type(action_screen).__name__ == "ActionMenuScreen"
             assert "lab-serv1" in str(action_screen.query_one("#action_menu_context", Static).render())
             assert action_screen.query_one("#action_menu_options", OptionList) is not None
+
+    asyncio.run(scenario())
+
+
+def test_sshtui_edit_shortcut_opens_host_editor():
+    async def scenario():
+        app = SSHTui(config_file=str(TEST_CONFIG))
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            for key in ["down", "down", "down", "down", "space", "down"]:
+                await pilot.press(key)
+                await pilot.pause()
+
+            await pilot.press("e")
+            await pilot.pause()
+
+            edit_screen = app.screen_stack[-1]
+            assert type(edit_screen).__name__ == "ManageHostScreen"
+            assert app.current_node is not None
+            assert app.current_node.name == "lab-serv1"
+
+    asyncio.run(scenario())
+
+
+def test_sshtui_edit_shortcut_opens_group_editor():
+    async def scenario():
+        app = SSHTui(config_file=str(TEST_CONFIG))
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            for key in ["down", "down"]:
+                await pilot.press(key)
+                await pilot.pause()
+
+            await pilot.press("e")
+            await pilot.pause()
+
+            edit_screen = app.screen_stack[-1]
+            assert type(edit_screen).__name__ == "ManageGroupScreen"
+            assert app.current_node is not None
+            assert app.current_node.name == "network"
 
     asyncio.run(scenario())
 

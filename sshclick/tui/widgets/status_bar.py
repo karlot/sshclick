@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.containers import Grid
 from textual.widgets import Static
 
-from sshclick.ssht.state import TUIState
+from sshclick.tui.state import TUIState
 
 
 class StatusBar(Grid):

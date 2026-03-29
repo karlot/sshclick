@@ -3,8 +3,8 @@ import shutil
 
 from textual.widgets import Label, Select
 
-from sshclick.ssht.screens import ManageConfigScreen
-from sshclick.ssht.sshtui import SSHTui
+from sshclick.tui.screens import ManageConfigScreen
+from sshclick.tui.sshtui import SSHTui
 
 from .tui_support import TEST_CONFIG
 
