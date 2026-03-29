@@ -5,9 +5,18 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header
 
 from sshclick.globals import USER_SSH_CONFIG
-from sshclick.ops import SSHClickOpsError, create_host, delete_group, delete_host
 from sshclick.core import SSH_Config, SSH_Group, SSH_Host
-from sshclick.ssht.screens import ActionMenuScreen, ConfirmDeleteScreen, CreateHostRequest, CreateHostScreen
+from sshclick.ops import SSHClickOpsError, create_group, create_host, delete_group, delete_host, delete_host_style, edit_group, edit_host, set_host_style
+from sshclick.ssht.screens import (
+    ActionMenuScreen,
+    ConfirmDeleteScreen,
+    ManageConfigRequest,
+    ManageConfigScreen,
+    ManageGroupRequest,
+    ManageGroupScreen,
+    ManageHostRequest,
+    ManageHostScreen,
+)
 from sshclick.ssht.state import SSHNode, TUIState
 from sshclick.ssht.theme import SSHCLICK_DARK_THEME, register_sshclick_theme
 from sshclick.ssht.utils import copy_ssh_keys, reset_fingerprint, run_connect
@@ -83,6 +92,15 @@ class SSHTui(App):
             self.action_toggle_actions()
 
 
+    def on_navigation_tree_node_action_requested(self, event: NavigationTree.NodeActionRequested) -> None:
+        """Open the action menu for the node requested by a right-click."""
+
+        if self._tree_rebuilding:
+            return
+        self._set_current_node(event.node_data)
+        self.action_toggle_actions()
+
+
     # Compatibility bridge for older tests / event paths used by the previous TUI layout
     def on_tree_node_highlighted(self, event) -> None:
         if self._tree_rebuilding:
@@ -110,9 +128,27 @@ class SSHTui(App):
         elif action_id in {"act_delete_host", "act_delete_group"}:
             self.action_delete()
         elif action_id == "act_create_host":
-            self.push_screen(CreateHostScreen(self.state.sshconf, self.current_node), self._handle_create_host_result)
+            self.push_screen(ManageHostScreen(self.state.sshconf, self.current_node), self._handle_create_host_result)
             return
-        elif action_id in {"act_edit_host", "act_edit_group", "act_create_group"}:
+        elif action_id == "act_create_group":
+            self.push_screen(ManageGroupScreen(self.state.sshconf, self.current_node), self._handle_create_group_result)
+            return
+        elif action_id == "act_edit_config":
+            self.push_screen(ManageConfigScreen(self.state.sshconf.opts.get("host-style")), self._handle_edit_config_result)
+            return
+        elif action_id == "act_edit_host" and isinstance(self.current_node, SSH_Host):
+            self.push_screen(
+                ManageHostScreen(self.state.sshconf, self.current_node, editing_host=self.current_node),
+                self._handle_edit_host_result,
+            )
+            return
+        elif action_id == "act_edit_group" and isinstance(self.current_node, SSH_Group):
+            self.push_screen(
+                ManageGroupScreen(self.state.sshconf, self.current_node, editing_group=self.current_node),
+                self._handle_edit_group_result,
+            )
+            return
+        elif action_id in {"act_edit_host", "act_edit_group"}:
             self._handle_unimplemented_action()
         self._focus_tree()
 
@@ -173,7 +209,7 @@ class SSHTui(App):
         self._focus_tree()
 
 
-    def _handle_create_host_result(self, request: CreateHostRequest | None) -> None:
+    def _handle_create_host_result(self, request: ManageHostRequest | None) -> None:
         """
         Persist a new host from the create drawer and refresh the UI around it.
 
@@ -187,19 +223,13 @@ class SSHTui(App):
             return
 
         try:
-            parameters: list[tuple[str, str]] = list(request.extra_parameters)
-            if request.port:
-                parameters.append(("port", request.port))
-            if request.identity_file:
-                parameters.append(("identityfile", request.identity_file))
-
             created_host = create_host(
                 self.state.sshconf,
                 request.name,
                 address=request.hostname or None,
                 user=request.user or None,
-                info=(request.info_line,) if request.info_line else (),
-                parameters=parameters,
+                info=self._request_info_lines(request),
+                parameters=self._request_parameters(request),
                 target_group_name=request.group_name,
                 force_group=request.create_group,
             )
@@ -212,6 +242,115 @@ class SSHTui(App):
             self.notify(f"Created host: {created_host.name}", severity="information")
 
         self._refresh_view(preferred_name=created_host.name, rebuild_tree=True)
+        self._focus_tree()
+
+
+    def _handle_create_group_result(self, request: ManageGroupRequest | None) -> None:
+        """Persist a new group from the drawer and focus it in the tree."""
+
+        if request is None:
+            self._focus_tree()
+            return
+
+        try:
+            created_group = create_group(
+                self.state.sshconf,
+                request.name,
+                desc=request.desc,
+                info=self._request_info_lines(request),
+            )
+        except SSHClickOpsError as exc:
+            self.notify(str(exc), title="Create group failed", severity="error")
+            self._focus_tree()
+            return
+
+        if self.state.sshconf.generate_ssh_config():
+            self.notify(f"Created group: {created_group.name}", severity="information")
+
+        self._refresh_view(preferred_name=created_group.name, rebuild_tree=True)
+        self._focus_tree()
+
+
+    def _handle_edit_config_result(self, request: ManageConfigRequest | None) -> None:
+        """Persist SSHClick config metadata edited from the TUI drawer."""
+
+        if request is None:
+            self._focus_tree()
+            return
+
+        try:
+            if request.host_style is None:
+                if "host-style" in self.state.sshconf.opts:
+                    delete_host_style(self.state.sshconf)
+            else:
+                set_host_style(self.state.sshconf, request.host_style)
+        except SSHClickOpsError as exc:
+            self.notify(str(exc), title="Update config failed", severity="error")
+            self._focus_tree()
+            return
+
+        if self.state.sshconf.generate_ssh_config():
+            self.notify("Updated SSHClick config", severity="information")
+
+        self._refresh_view()
+        self._focus_tree()
+
+
+    def _handle_edit_host_result(self, request: ManageHostRequest | None) -> None:
+        """Persist an edited host definition from the guided drawer and refresh the UI."""
+
+        if request is None or request.original_name is None:
+            self._focus_tree()
+            return
+
+        try:
+            edited_host = edit_host(
+                self.state.sshconf,
+                request.original_name,
+                new_name=request.name,
+                address=request.hostname or None,
+                user=request.user or None,
+                info=self._request_info_lines(request),
+                parameters=self._request_parameters(request),
+                target_group_name=request.group_name,
+                force_group=request.create_group,
+            )
+        except SSHClickOpsError as exc:
+            self.notify(str(exc), title="Edit host failed", severity="error")
+            self._focus_tree()
+            return
+
+        if self.state.sshconf.generate_ssh_config():
+            self.notify(f"Updated host: {edited_host.name}", severity="information")
+
+        self._refresh_view(preferred_name=edited_host.name, rebuild_tree=True)
+        self._focus_tree()
+
+
+    def _handle_edit_group_result(self, request: ManageGroupRequest | None) -> None:
+        """Persist an edited group definition from the guided drawer and refresh the UI."""
+
+        if request is None or request.original_name is None:
+            self._focus_tree()
+            return
+
+        try:
+            edited_group = edit_group(
+                self.state.sshconf,
+                request.original_name,
+                new_name=request.name,
+                desc=request.desc,
+                info=self._request_info_lines(request),
+            )
+        except SSHClickOpsError as exc:
+            self.notify(str(exc), title="Edit group failed", severity="error")
+            self._focus_tree()
+            return
+
+        if self.state.sshconf.generate_ssh_config():
+            self.notify(f"Updated group: {edited_group.name}", severity="information")
+
+        self._refresh_view(preferred_name=edited_group.name, rebuild_tree=True)
         self._focus_tree()
 
 
@@ -279,6 +418,26 @@ class SSHTui(App):
 
     def _selected_name(self) -> str | None:
         return self.current_node.name if self.current_node is not None else None
+
+
+    def _request_parameters(self, request: ManageHostRequest) -> list[tuple[str, str]]:
+        """Build the parameter list shared by create and edit host flows."""
+
+        parameters: list[tuple[str, str]] = list(request.extra_parameters)
+        if request.port:
+            parameters.append(("port", request.port))
+        if request.identity_file:
+            parameters.append(("identityfile", request.identity_file))
+        return parameters
+
+
+    def _request_info_lines(self, request: ManageHostRequest | ManageGroupRequest) -> tuple[str, ...]:
+        """Convert multiline textarea content into stored SSHClick info lines."""
+
+        if not request.info_text:
+            return ()
+
+        return tuple(line.strip() for line in request.info_text.splitlines() if line.strip())
 
 
     def _handle_connection_action(self, action_id: str) -> None:

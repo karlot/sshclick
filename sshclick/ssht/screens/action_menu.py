@@ -57,6 +57,7 @@ class ActionMenuScreen(ModalScreen[str | None]):
             return [
                 Option("Create new host", id="act_create_host", disabled=True),
                 Option("Create new group", id="act_create_group", disabled=True),
+                Option("Edit SSHClick config", id="act_edit_config", disabled=self.is_read_only),
                 None,
                 Option("Reload configuration", id="act_reload"),
                 Option("Close", id="act_close"),
@@ -69,6 +70,7 @@ class ActionMenuScreen(ModalScreen[str | None]):
                 None,
                 Option("Create new host", id="act_create_host", disabled=self.is_read_only),
                 Option("Create new group", id="act_create_group", disabled=self.is_read_only),
+                Option("Edit SSHClick config", id="act_edit_config", disabled=self.is_read_only),
                 None,
                 Option("Reload configuration", id="act_reload"),
                 Option("Close", id="act_close"),
@@ -85,6 +87,7 @@ class ActionMenuScreen(ModalScreen[str | None]):
             None,
             Option("Create new host", id="act_create_host", disabled=self.is_read_only),
             Option("Create new group", id="act_create_group", disabled=self.is_read_only),
+            Option("Edit SSHClick config", id="act_edit_config", disabled=self.is_read_only),
             None,
             Option("Reload configuration", id="act_reload"),
             Option("Close", id="act_close"),

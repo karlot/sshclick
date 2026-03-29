@@ -1,9 +1,66 @@
 from rich.text import Text
+from textual import events, on
 from textual.app import ComposeResult
 from textual.message import Message
 from textual.widgets import Static, Tree
 
 from sshclick.core import SSH_Config, SSH_Group, SSH_Host, HostType
+
+
+class SSHObjectTree(Tree[SSH_Group | SSH_Host | None]):
+    """Tree widget with SSHClick-specific mouse behavior."""
+
+    class NodeActionRequested(Message):
+        """Posted when a node asks to open the contextual action menu."""
+
+        def __init__(self, node_data: SSH_Group | SSH_Host | None) -> None:
+            super().__init__()
+            self.node_data = node_data
+
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.auto_expand = False
+        self._pending_click_button: int | None = None
+
+
+    async def _on_click(self, event: events.Click) -> None:
+        """Keep left-click for selection and reserve right-click for actions."""
+
+        async with self.lock:
+            meta = event.style.meta
+            if "line" not in meta:
+                return
+
+            self._pending_click_button = event.button
+            self.call_after_refresh(self._clear_pending_click_button)
+
+            cursor_line = meta["line"]
+            node = self.get_node_at_line(cursor_line)
+            if node is None:
+                return
+
+            if meta.get("toggle", False):
+                return
+
+            self.cursor_line = cursor_line
+
+            if event.button == 3:
+                self.post_message(self.NodeActionRequested(node.data))
+
+
+    def action_select_cursor(self) -> None:
+        """Reserve select actions for keyboard submit, not mouse clicks."""
+
+        if self._pending_click_button is not None:
+            self._pending_click_button = None
+            return
+
+        super().action_select_cursor()
+
+
+    def _clear_pending_click_button(self) -> None:
+        self._pending_click_button = None
 
 
 class NavigationTree(Static):
@@ -23,6 +80,13 @@ class NavigationTree(Static):
             super().__init__()
             self.node_data = node_data
 
+    class NodeActionRequested(Message):
+        """Posted when the user requests actions for the current tree node."""
+
+        def __init__(self, node_data: SSH_Group | SSH_Host | None) -> None:
+            super().__init__()
+            self.node_data = node_data
+
 
     def __init__(self, sshconf: SSH_Config, id: str | None = None) -> None:
         self.sshconf = sshconf
@@ -30,7 +94,7 @@ class NavigationTree(Static):
 
 
     def compose(self) -> ComposeResult:
-        yield Tree("SSH Configuration", id="sshtree", data=None)
+        yield SSHObjectTree("SSH Configuration", id="sshtree", data=None)
 
 
     def on_mount(self) -> None:
@@ -41,7 +105,7 @@ class NavigationTree(Static):
         """Recreate the visual tree from the parsed SSHClick config model."""
 
         self.sshconf = sshconf
-        tree = self.query_one(Tree)
+        tree = self.query_one(SSHObjectTree)
         pattern_color = getattr(self.app, "theme_variables", {}).get("sshclick-pattern", "bright_blue")
         tree.clear()
         tree.reset("SSH Configuration", data=None)
@@ -55,7 +119,7 @@ class NavigationTree(Static):
 
 
     def focus_tree(self) -> None:
-        self.query_one(Tree).focus()
+        self.query_one(SSHObjectTree).focus()
 
 
     def select_node_by_name(self, name: str | None) -> bool:
@@ -64,7 +128,7 @@ class NavigationTree(Static):
         if not name:
             return False
 
-        tree = self.query_one(Tree)
+        tree = self.query_one(SSHObjectTree)
         target_node = self._find_tree_node(tree.root, name)
         if target_node is None:
             return False
@@ -81,7 +145,7 @@ class NavigationTree(Static):
     def get_expanded_group_names(self) -> list[str]:
         """Return the names of groups that are currently expanded in the tree."""
 
-        tree = self.query_one(Tree)
+        tree = self.query_one(SSHObjectTree)
         expanded_groups: list[str] = []
 
         for node in tree.root.children:
@@ -97,7 +161,7 @@ class NavigationTree(Static):
         if not names:
             return
 
-        tree = self.query_one(Tree)
+        tree = self.query_one(SSHObjectTree)
         for node in tree.root.children:
             if isinstance(node.data, SSH_Group) and node.data.name in names:
                 node.expand()
@@ -108,12 +172,21 @@ class NavigationTree(Static):
 
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
-        # Tree already handles expand/collapse on non-leaf submit. We only need
-        # to stop group submit from bubbling into the app-level action flow.
+        # Keyboard submit should toggle groups, while hosts bubble up into the
+        # app-level action flow.
         if isinstance(event.node.data, SSH_Group):
+            if event.node.is_expanded:
+                event.node.collapse()
+            else:
+                event.node.expand()
             return
 
         self.post_message(self.NodeSubmitted(event.node.data))
+
+
+    @on(SSHObjectTree.NodeActionRequested)
+    def on_ssh_object_tree_node_action_requested(self, event: SSHObjectTree.NodeActionRequested) -> None:
+        self.post_message(self.NodeActionRequested(event.node_data))
 
 
     def _find_tree_node(self, node, name: str):

@@ -1,9 +1,9 @@
-CreateHostScreen {
+ManageHostScreen {
     layer: overlay;
     background: rgba(17, 17, 17, 0.72);
 }
 
-#create_host_dialog {
+#manage_host_dialog {
     dock: right;
     width: 64;
     max-width: 72;
@@ -15,13 +15,13 @@ CreateHostScreen {
     overflow-y: auto;
 }
 
-#create_host_title {
+#manage_host_title {
     color: $foreground;
     text-style: bold;
     margin: 0 0 1 0;
 }
 
-#create_host_detected_type {
+#manage_host_detected_type {
     color: $secondary;
     margin: 0 0 1 0;
 }
@@ -31,42 +31,50 @@ CreateHostScreen {
     margin: 1 0 0 0;
 }
 
-#create_host_dialog Input {
+#manage_host_dialog Input {
     margin: 0 0 1 0;
     border: round $sshclick-border;
     background: $background;
 }
 
-#create_host_dialog Input:focus,
-#create_host_dialog Select:focus {
+#manage_host_dialog TextArea {
+    height: 5;
+    margin: 0 0 1 0;
+    border: round $sshclick-border;
+    background: $background;
+}
+
+#manage_host_dialog Input:focus,
+#manage_host_dialog Select:focus,
+#manage_host_dialog TextArea:focus {
     border: round $primary;
 }
 
-#create_host_dialog Select {
+#manage_host_dialog Select {
     margin: 0 0 1 0;
     border: round $sshclick-border;
     background: $background;
 }
 
-#create_host_endpoint_row {
+#manage_host_endpoint_row {
     height: auto;
 }
 
-#create_host_address {
+#manage_host_address {
     width: 1fr;
     margin-right: 1;
 }
 
-#create_host_port {
+#manage_host_port {
     width: 12;
 }
 
-#create_host_group_section {
+#manage_host_group_section {
     height: auto;
     margin: 0 0 1 0;
 }
 
-#create_host_group_switch_row {
+#manage_host_group_switch_row {
     height: auto;
     align: left middle;
     margin: 0 0 1 0;
@@ -75,55 +83,55 @@ CreateHostScreen {
     background: $background;
 }
 
-#create_host_group_switch_label {
+#manage_host_group_switch_label {
     width: 1fr;
     color: $secondary;
 }
 
-#create_host_create_group {
+#manage_host_create_group {
     border: none;
     padding: 0;
     background: transparent;
 }
 
-#create_host_create_group > .switch--slider {
+#manage_host_create_group > .switch--slider {
     color: $error;
 }
 
-#create_host_create_group.-on > .switch--slider {
+#manage_host_create_group.-on > .switch--slider {
     color: $success;
 }
 
-#create_host_create_group:focus {
+#manage_host_create_group:focus {
     background-tint: transparent;
 }
 
-#create_host_group_mode {
+#manage_host_group_mode {
     height: auto;
 }
 
-#create_host_group_existing_mode,
-#create_host_group_new_mode {
+#manage_host_group_existing_mode,
+#manage_host_group_new_mode {
     height: auto;
 }
 
-#create_host_group_existing_mode Select,
-#create_host_group_new_mode Input {
+#manage_host_group_existing_mode Select,
+#manage_host_group_new_mode Input {
     margin: 0;
 }
 
-#create_host_param_buttons {
+#manage_host_param_buttons {
     height: auto;
     margin: 1 0 1 0;
     align: right middle;
 }
 
-#create_host_param_buttons Button {
+#manage_host_param_buttons Button {
     margin-right: 1;
     border: none;
 }
 
-#create_host_extra_params_empty {
+#manage_host_extra_params_empty {
     height: auto;
     margin: 0 0 1 0;
     padding: 0;
@@ -132,7 +140,7 @@ CreateHostScreen {
     background: $background;
 }
 
-#create_host_extra_params {
+#manage_host_extra_params {
     display: none;
     height: auto;
     max-height: 8;
@@ -141,25 +149,25 @@ CreateHostScreen {
     background: $background;
 }
 
-#create_host_extra_params > .option-list--option-highlighted {
+#manage_host_extra_params > .option-list--option-highlighted {
     background: $sshclick-tree-cursor;
     color: $foreground;
 }
 
-#create_host_error {
+#manage_host_error {
     height: auto;
     min-height: 1;
     margin: 1 0 0 0;
     color: $error;
 }
 
-#create_host_buttons {
+#manage_host_buttons {
     height: auto;
     margin-top: 1;
     align-horizontal: right;
 }
 
-#create_host_buttons Button {
+#manage_host_buttons Button {
     margin-left: 1;
     min-width: 12;
 }

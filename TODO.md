@@ -2,10 +2,10 @@
 
 ## Near Term
 
-- TUI edit/create flows
-  - Add proper form-based create and edit flows in `ssht`
+- TUI workflow polish
+  - Refine the new host/group/config drawers and action flows in `ssht`
   - Keep action selection in centered modals, and use drawers for larger forms
-  - Start with host create/edit before group editing flows
+  - Review validation, defaults, and field grouping after more manual usage
 
 - Broader command coverage
   - Add more higher-level tests for modifying CLI commands and write flows

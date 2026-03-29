@@ -5,6 +5,7 @@
 - Modernized packaging and development setup around `pyproject.toml`, `uv` / `hatch`, `ruff`, and a Python `3.10+` baseline
 - Reworked both entrypoints so `sshc` and `ssht` share `--config` handling and the `SSHC_CONFIG` environment variable
 - Rebuilt `ssht` into a dedicated Textual browser with themed navigation, a richer details inspector, action modals, and higher-level integration coverage
+- Added guided TUI management flows for hosts, groups, and SSHClick config metadata
 - Added top-level `Include` support in strict read-only mode, with merged logical browsing of included hosts/groups and source tracking
 - Reorganized the package into clearer `cli`, `core`, `ops`, and `ssht` layers, including a shared mutation layer for CLI and TUI write flows
 - Hardened external command execution by removing `os.system`, `shell=True`, and `host install --password`

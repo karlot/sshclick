@@ -1,0 +1,58 @@
+ManageGroupScreen {
+    layer: overlay;
+    background: rgba(17, 17, 17, 0.72);
+}
+
+#manage_group_dialog {
+    dock: right;
+    width: 56;
+    max-width: 64;
+    min-width: 44;
+    height: 100%;
+    padding: 1 2;
+    background: $surface 100%;
+    border-left: solid $sshclick-border;
+    overflow-y: auto;
+}
+
+#manage_group_title {
+    color: $foreground;
+    text-style: bold;
+    margin: 0 0 1 0;
+}
+
+#manage_group_dialog Input {
+    margin: 0 0 1 0;
+    border: round $sshclick-border;
+    background: $background;
+}
+
+#manage_group_dialog TextArea {
+    height: 7;
+    margin: 0 0 1 0;
+    border: round $sshclick-border;
+    background: $background;
+}
+
+#manage_group_dialog Input:focus,
+#manage_group_dialog TextArea:focus {
+    border: round $primary;
+}
+
+#manage_group_error {
+    height: auto;
+    min-height: 1;
+    margin: 1 0 0 0;
+    color: $error;
+}
+
+#manage_group_buttons {
+    height: auto;
+    margin-top: 1;
+    align-horizontal: right;
+}
+
+#manage_group_buttons Button {
+    margin-left: 1;
+    min-width: 12;
+}

@@ -54,6 +54,54 @@ def create_host(
     return new_host
 
 
+def edit_host(
+    config: SSH_Config,
+    original_name: str,
+    *,
+    new_name: str,
+    address: str | None = None,
+    user: str | None = None,
+    info: Sequence[str] = (),
+    parameters: Sequence[tuple[str, str]] = (),
+    target_group_name: str | None = None,
+    force_group: bool = False,
+) -> SSH_Host:
+    """Replace a host definition in the in-memory model using guided-form values."""
+
+    if not config.check_host_by_name(original_name):
+        raise SSHClickOpsError(f"Unknown host '{original_name}'!")
+    if new_name != original_name and config.check_host_by_name(new_name):
+        raise SSHClickOpsError(f"Cannot rename host '{original_name}' to '{new_name}' as new name is already used!")
+
+    current_host = config.get_host_by_name(original_name)
+    source_group = config.get_group_by_name(current_host.group)
+    target_group_name = target_group_name or current_host.group
+    target_group = source_group if target_group_name == current_host.group else _resolve_target_group(config, new_name, target_group_name, force_group)
+
+    old_type = current_host.type
+    new_type = HostType.PATTERN if "*" in new_name else HostType.NORMAL
+
+    current_host.name = new_name
+    current_host.group = target_group.name
+    current_host.type = new_type
+    current_host.info = list(info)
+    current_host.params = {}
+
+    if user:
+        current_host.params["user"] = user
+    if address:
+        current_host.params["hostname"] = address
+
+    for param, value in parameters:
+        _store_host_parameter(current_host, param.lower(), value, address=address, user=user)
+
+    if source_group != target_group or old_type != new_type:
+        _rehome_host(config, current_host, source_group, target_group, old_type)
+
+    _recompute_inheritance(config)
+    return current_host
+
+
 def delete_host(config: SSH_Config, name: str) -> SSH_Host:
     """Delete a host or pattern host from the in-memory config model and return it."""
 
@@ -137,6 +185,28 @@ def _resolve_target_group(config: SSH_Config, host_name: str, target_group_name:
         f"Cannot create host '{host_name}' in group '{target_group_name}' since the group does not exist\n"
         "Create group first, or use '--force' option to create it automatically!"
     )
+
+
+def _rehome_host(config: SSH_Config, host: SSH_Host, source_group: SSH_Group, target_group: SSH_Group, old_type: HostType) -> None:
+    """Move a host between group/type buckets when edit mode changes its placement."""
+
+    if old_type == HostType.NORMAL:
+        source_group.hosts.remove(host)
+    else:
+        source_group.patterns.remove(host)
+
+    if host.type == HostType.NORMAL:
+        target_group.hosts.append(host)
+    else:
+        target_group.patterns.append(host)
+
+
+def _recompute_inheritance(config: SSH_Config) -> None:
+    """Refresh inherited parameters after an in-memory host edit."""
+
+    for host in config.all_hosts:
+        host.matched_params = {}
+    config._check_inheritance()
 
 
 def _store_host_parameter(host: SSH_Host, param: str, value: str, *, address: str | None, user: str | None) -> None:

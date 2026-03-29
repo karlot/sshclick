@@ -1,0 +1,60 @@
+ManageConfigScreen {
+    layer: overlay;
+    background: rgba(17, 17, 17, 0.72);
+}
+
+#manage_config_dialog {
+    dock: right;
+    width: 52;
+    max-width: 60;
+    min-width: 40;
+    height: 100%;
+    padding: 1 2;
+    background: $surface 100%;
+    border-left: solid $sshclick-border;
+    overflow-y: auto;
+}
+
+#manage_config_title {
+    color: $foreground;
+    text-style: bold;
+    margin: 0 0 1 0;
+}
+
+#manage_config_note {
+    color: $secondary;
+    margin: 0 0 1 0;
+}
+
+#manage_config_dialog Select {
+    margin: 0 0 1 0;
+    border: round $sshclick-border;
+    background: $background;
+}
+
+#manage_config_dialog Select:focus {
+    border: round $primary;
+}
+
+#manage_config_help {
+    color: $secondary;
+    margin: 0 0 1 0;
+}
+
+#manage_config_error {
+    height: auto;
+    min-height: 1;
+    margin: 1 0 0 0;
+    color: $error;
+}
+
+#manage_config_buttons {
+    height: auto;
+    margin-top: 1;
+    align-horizontal: right;
+}
+
+#manage_config_buttons Button {
+    margin-left: 1;
+    min-width: 12;
+}
