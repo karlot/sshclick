@@ -3,7 +3,7 @@ import shutil
 from types import SimpleNamespace
 from textwrap import dedent
 
-from textual.widgets import Label, OptionList, Static
+from textual.widgets import OptionList, Static, TabbedContent
 
 from sshclick.core import SSH_Host
 from sshclick.ssht.sshtui import SSHTui
@@ -53,7 +53,6 @@ def test_sshtui_tree_navigation_can_expand_group_and_select_host():
 
             assert app.current_node is not None
             assert app.current_node.name == "lab-serv1"
-            assert str(app.query_one("#details_header", Label).render()) == "Host: lab-serv1"
 
     asyncio.run(scenario())
 
@@ -77,6 +76,36 @@ def test_sshtui_enter_on_group_toggles_expand_without_opening_actions():
             assert app.current_node.name == "network"
             assert network_group.is_expanded is True
             assert len(app.screen_stack) == 1
+
+    asyncio.run(scenario())
+
+
+def test_sshtui_left_and_right_expand_and_collapse_selected_group():
+    async def scenario():
+        app = SSHTui(config_file=str(TEST_CONFIG))
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            tree = app.query_one("#sshtree")
+            network_group = next(node for node in tree.root.children if node.label.plain == "network")
+            assert network_group.is_expanded is False
+
+            for key in ["down", "down"]:
+                await pilot.press(key)
+                await pilot.pause()
+
+            assert app.current_node is not None
+            assert app.current_node.name == "network"
+
+            await pilot.press("right")
+            await pilot.pause()
+            assert network_group.is_expanded is True
+
+            await pilot.press("left")
+            await pilot.pause()
+            assert network_group.is_expanded is False
+
+            assert app.focused.id == "sshtree"
 
     asyncio.run(scenario())
 
@@ -225,6 +254,34 @@ def test_sshtui_action_menu_opens_for_selected_host():
     asyncio.run(scenario())
 
 
+def test_sshtui_left_and_right_switch_host_detail_tabs_from_tree_focus():
+    async def scenario():
+        app = SSHTui(config_file=str(TEST_CONFIG))
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            for key in ["down", "down", "down", "down", "space", "down"]:
+                await pilot.press(key)
+                await pilot.pause()
+
+            tabs = app.query_one("#host_tabs", TabbedContent)
+            assert tabs.active == "host_overview_tab"
+
+            await pilot.press("right")
+            await pilot.pause()
+            assert tabs.active == "host_connectivity_tab"
+
+            await pilot.press("left")
+            await pilot.pause()
+            assert tabs.active == "host_overview_tab"
+
+            assert app.focused.id == "sshtree"
+            assert app.current_node is not None
+            assert app.current_node.name == "lab-serv1"
+
+    asyncio.run(scenario())
+
+
 def test_sshtui_reload_preserves_selected_node():
     async def scenario():
         app = SSHTui(config_file=str(TEST_CONFIG))
@@ -243,7 +300,6 @@ def test_sshtui_reload_preserves_selected_node():
 
             assert app.current_node is not None
             assert app.current_node.name == "lab-serv1"
-            assert str(app.query_one("#details_header", Label).render()) == "Host: lab-serv1"
 
     asyncio.run(scenario())
 
@@ -274,7 +330,6 @@ def test_sshtui_delete_host_preserves_expanded_groups_and_selects_parent_group(t
             assert groups["lab-servers"].is_expanded is True
             assert app.current_node is not None
             assert app.current_node.name == "lab-servers"
-            assert str(app.query_one("#details_header", Label).render()) == "Group: lab-servers"
             assert "Host lab-serv1" not in config_path.read_text(encoding="utf-8")
 
     asyncio.run(scenario())

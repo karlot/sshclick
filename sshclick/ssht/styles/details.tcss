@@ -8,19 +8,9 @@ DetailsPane {
     scrollbar-color-hover: $sshclick-scrollbar-hover;
 }
 
-#details_header {
-    padding: 1 0 0 0;
-    color: $foreground;
-    text-style: bold;
-}
-
 #details_switcher {
     height: auto;
     width: 1fr;
-}
-
-#details_empty {
-    padding-top: 1;
 }
 
 #host_tabs {
@@ -45,13 +35,61 @@ DetailsPane {
     height: auto;
 }
 
-.details_section_title {
-    margin: 1 0 0 0;
-    color: $accent;
-    text-style: bold;
+.details_view {
+    height: auto;
 }
 
-.details_section_body {
+.details_tab_scroll {
     height: auto;
-    padding: 0 0 1 0;
+}
+
+.details_split_row {
+    layout: grid;
+    grid-size: 2;
+    grid-gutter: 1 0;
+    height: auto;
+    margin-top: 1;
+}
+
+#group_overview_top {
+    grid-columns: 32 1fr;
+}
+
+#host_overview_top {
+    grid-columns: 1fr 1fr;
+}
+
+#host_connectivity_top {
+    grid-columns: 1fr 1fr;
+}
+
+.details_card {
+    height: auto;
+    margin-top: 1;
+    padding: 0 1;
+    border: round $sshclick-border;
+    border-title-align: left;
+    border-title-color: $warning;
+    background: $surface;
+}
+
+.details_split_row .details_card {
+    height: 100%;
+    margin-top: 0;
+}
+
+.details_card_narrow {
+    min-width: 28;
+}
+
+#group_info_card,
+#host_connection_card {
+    width: 1fr;
+}
+
+#group_hosts_card,
+#host_info_card,
+#host_params_card,
+#host_connectivity_graph_card {
+    width: 1fr;
 }

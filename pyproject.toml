@@ -1,7 +1,6 @@
 # UV Standardized structure
 [project]
 name = "sshclick"
-# version = "0.8.0"   # Move to dynamic
 dynamic = ["version"]
 description = "SSH terminal config manager"
 readme = "README.md"

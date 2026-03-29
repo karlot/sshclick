@@ -89,7 +89,6 @@ def test_sshtui_edit_group_flow_updates_group_metadata_and_host_refs(tmp_path):
             assert app.state.sshconf.check_group_by_name("lab-servers") is False
             assert app.state.sshconf.check_group_by_name("dmz") is True
             assert app.state.sshconf.get_host_by_name("lab-serv1").group == "dmz"
-            assert str(app.query_one("#details_header", Label).render()) == "Group: dmz"
 
             rendered = config_path.read_text(encoding="utf-8")
             assert "#@group: dmz" in rendered

@@ -100,6 +100,16 @@ class SSHTui(App):
         self._set_current_node(event.node_data)
         self.action_toggle_actions()
 
+    def on_navigation_tree_node_detail_tab_requested(self, event: NavigationTree.NodeDetailTabRequested) -> None:
+        """Switch host detail tabs directly from left/right tree navigation."""
+
+        if self._tree_rebuilding or not isinstance(self.current_node, SSH_Host):
+            return
+
+        details = self.query_one_optional(DetailsPane)
+        if details is not None:
+            details.show_host_tab(event.tab_id)
+
 
     # Compatibility bridge for older tests / event paths used by the previous TUI layout
     def on_tree_node_highlighted(self, event) -> None:

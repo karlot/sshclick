@@ -22,8 +22,8 @@
   - Expand source/location visibility where it improves browsing and debugging
   - Consider clearer UI labels for what actions are disabled and why
 
-- TUI network view expansion
-  - Extend the host `Network` tab with more diagnostics where it makes sense
+- TUI connectivity expansion
+  - Extend the host `Connectivity` tab with more diagnostics where it makes sense
   - Possible future additions: reachability, ping, traceroute, richer tunnel summary
   - Reuse existing core graph output wherever possible
 

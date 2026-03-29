@@ -29,7 +29,7 @@ LINK_LR_EXT = "─"
 # -----------------------------------------------------------------------------
 # Graph generation function...
 # -----------------------------------------------------------------------------
-def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True):
+def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True, show_title=True):
     """
     Function that generates nice "graph" view of connected hosts
     """
@@ -48,12 +48,21 @@ def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True):
 
     # ----- Main graph row ----------------------------------------------------
     # Add Source info for main graph-row
-    graph_row = [Padding(Text("\n".join([
-        "Connection graph",
-        "────────────────",
+    source_lines = []
+    if show_title:
+        source_lines.extend([
+            "Connection graph",
+            "────────────────",
+        ])
+    else:
+        # Keep empty spacer rows so the source/target columns stay vertically
+        # aligned with the proxy columns even when the inner title is hidden.
+        source_lines.extend(["", ""])
+    source_lines.extend([
         "       THIS HOST",
         "  SSH Connection",
-    ])),PADDING_LR)]
+    ])
+    graph_row = [Padding(Text("\n".join(source_lines)),PADDING_LR)]
 
     # Add Jump proxies in graph-row
     for host in reversed_hosts[:-1]:
@@ -73,11 +82,16 @@ def generate_graph(traced_hosts: list[SSH_Host], print_tunnels=True):
     target_status = reversed_hosts[-1].params.get("status", "unchecked")
     target_address = f"[{ADDRESS_COLOR[target_status]}]{reversed_hosts[-1].params.get('hostname', '')}[/]"
 
-    graph_row.append(Padding(Text.from_markup("\n".join(["", "",
+    # The target column always keeps two spacer rows so it lines up with the
+    # same visual baseline as the source and proxy columns.
+    target_lines = ["", ""]
+    target_lines.extend([
         "TARGET",
         f"[{HOST_NAME_COLOR}]{reversed_hosts[-1].name}[/]",
-        target_address
-    ])),PADDING_LR))
+        target_address,
+    ])
+
+    graph_row.append(Padding(Text.from_markup("\n".join(target_lines)),PADDING_LR))
 
     # Add graph-row in the render table
     tbl.add_row(*graph_row)

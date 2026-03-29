@@ -222,8 +222,8 @@ The Textual interface is launched separately with `ssht`, and you can inspect it
 Current TUI features:
 
 - left-side tree navigation for groups, normal hosts, and pattern hosts
-- host and group detail inspector in the main pane
-- host `Overview` and `Network` tabs
+- polished host and group detail inspector in the main pane
+- host `Overview` and `Connectivity` tabs
 - direct `ssh`, `sftp`, key-copy, and fingerprint-reset actions for normal hosts
 - centered action modal and destructive delete confirmation
 - right-side management drawers for creating and editing hosts, groups, and SSHClick config metadata
@@ -235,7 +235,7 @@ Current TUI limitations:
 
 - delete is available only when the loaded config is writable
 - current `Include` support stays strictly read-only
-- network diagnostics are still limited to the existing graph/tunnel-oriented view
+- connectivity diagnostics are still limited to the existing graph/tunnel-oriented view
 
 Useful key bindings in the current TUI:
 
@@ -245,8 +245,11 @@ Useful key bindings in the current TUI:
 - `f` open SFTP session for the selected host
 - `d` delete selected host or group when writable
 - `r` reload configuration from disk
+- `Up` / `Down` move through groups and hosts in the tree
+- `Left` / `Right` collapse and expand selected groups
+- `Left` / `Right` switch selected hosts between `Overview` and `Connectivity`
 - `Space` expand/collapse the selected group in the tree
-- `Enter` toggles group nodes in the tree
+- `Enter` toggles group nodes or opens actions for the selected host
 
 Example:
 

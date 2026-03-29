@@ -17,6 +17,13 @@ class SSHObjectTree(Tree[SSH_Group | SSH_Host | None]):
             super().__init__()
             self.node_data = node_data
 
+    class NodeDetailTabRequested(Message):
+        """Posted when left/right should switch the host details tab."""
+
+        def __init__(self, tab_id: str) -> None:
+            super().__init__()
+            self.tab_id = tab_id
+
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -58,9 +65,46 @@ class SSHObjectTree(Tree[SSH_Group | SSH_Host | None]):
 
         super().action_select_cursor()
 
+    def action_cursor_left(self) -> None:
+        """Use the left arrow to show the overview tab for the selected host."""
+
+        self._request_detail_tab("host_overview_tab")
+
+    def action_cursor_right(self) -> None:
+        """Use the right arrow to show the connectivity tab for the selected host."""
+
+        self._request_detail_tab("host_connectivity_tab")
+
+    def key_left(self) -> None:
+        """Use left-arrow for host overview or collapsing the current group."""
+
+        node_data = getattr(self.cursor_node, "data", None)
+        if isinstance(node_data, SSH_Host):
+            self._request_detail_tab("host_overview_tab")
+            return
+
+        if isinstance(node_data, SSH_Group) and self.cursor_node.is_expanded:
+            self.cursor_node.collapse()
+
+    def key_right(self) -> None:
+        """Use right-arrow for host connectivity or expanding the current group."""
+
+        node_data = getattr(self.cursor_node, "data", None)
+        if isinstance(node_data, SSH_Host):
+            self._request_detail_tab("host_connectivity_tab")
+            return
+
+        if isinstance(node_data, SSH_Group) and not self.cursor_node.is_expanded:
+            self.cursor_node.expand()
+
 
     def _clear_pending_click_button(self) -> None:
         self._pending_click_button = None
+
+    def _request_detail_tab(self, tab_id: str) -> None:
+        node_data = getattr(self.cursor_node, "data", None)
+        if isinstance(node_data, SSH_Host):
+            self.post_message(self.NodeDetailTabRequested(tab_id))
 
 
 class NavigationTree(Static):
@@ -86,6 +130,13 @@ class NavigationTree(Static):
         def __init__(self, node_data: SSH_Group | SSH_Host | None) -> None:
             super().__init__()
             self.node_data = node_data
+
+    class NodeDetailTabRequested(Message):
+        """Posted when the user wants to switch host details tabs from the tree."""
+
+        def __init__(self, tab_id: str) -> None:
+            super().__init__()
+            self.tab_id = tab_id
 
 
     def __init__(self, sshconf: SSH_Config, id: str | None = None) -> None:
@@ -187,6 +238,10 @@ class NavigationTree(Static):
     @on(SSHObjectTree.NodeActionRequested)
     def on_ssh_object_tree_node_action_requested(self, event: SSHObjectTree.NodeActionRequested) -> None:
         self.post_message(self.NodeActionRequested(event.node_data))
+
+    @on(SSHObjectTree.NodeDetailTabRequested)
+    def on_ssh_object_tree_node_detail_tab_requested(self, event: SSHObjectTree.NodeDetailTabRequested) -> None:
+        self.post_message(self.NodeDetailTabRequested(event.tab_id))
 
 
     def _find_tree_node(self, node, name: str):

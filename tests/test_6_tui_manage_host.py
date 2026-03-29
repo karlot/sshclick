@@ -187,7 +187,6 @@ def test_sshtui_create_host_flow_updates_config_and_selection(tmp_path):
 
             assert app.current_node is not None
             assert app.current_node.name == "lab-new1"
-            assert str(app.query_one("#details_header", Label).render()) == "Host: lab-new1"
             rendered = config_path.read_text(encoding="utf-8")
             assert "Host lab-new1" in rendered
             assert "port 2222" in rendered
@@ -232,7 +231,6 @@ def test_sshtui_edit_host_flow_updates_config_and_selection(tmp_path):
             assert app.current_node.group == "network"
             assert app.state.sshconf.check_host_by_name("lab-serv1") is False
             assert app.state.sshconf.check_host_by_name("lab-admin1") is True
-            assert str(app.query_one("#details_header", Label).render()) == "Host: lab-admin1"
 
             rendered = config_path.read_text(encoding="utf-8")
             assert "Host lab-admin1" in rendered
