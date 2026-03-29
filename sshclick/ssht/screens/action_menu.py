@@ -11,6 +11,14 @@ from sshclick.ssht.state import SSHNode
 class ActionMenuScreen(ModalScreen[str | None]):
     """Centered action picker for the current tree selection."""
 
+    DEFAULT_CSS = """
+    ActionMenuScreen {
+        layer: overlay;
+        align: center middle;
+        background: rgba(17, 17, 17, 0.72);
+    }
+    """
+
     BINDINGS = [("escape", "dismiss(None)")]
 
     def __init__(self, node: SSHNode, *, is_read_only: bool, read_only_reason: str) -> None:
@@ -26,7 +34,8 @@ class ActionMenuScreen(ModalScreen[str | None]):
         with Vertical(id="action_menu_dialog"):
             yield Label("Actions", id="action_menu_title")
             yield Static(context, id="action_menu_context")
-            yield Static(note, id="action_menu_note")
+            if self.is_read_only:
+                yield Static(note, id="action_menu_note")
             yield OptionList(*self._build_options(), id="action_menu_options")
 
 

@@ -74,8 +74,33 @@ class NavigationTree(Static):
             parent.expand()
             parent = parent.parent
 
-        tree.select_node(target_node)
+        tree.move_cursor(target_node)
         return True
+
+
+    def get_expanded_group_names(self) -> list[str]:
+        """Return the names of groups that are currently expanded in the tree."""
+
+        tree = self.query_one(Tree)
+        expanded_groups: list[str] = []
+
+        for node in tree.root.children:
+            if node.is_expanded and isinstance(node.data, SSH_Group):
+                expanded_groups.append(node.data.name)
+
+        return expanded_groups
+
+
+    def expand_groups(self, names: list[str]) -> None:
+        """Restore expanded state for the given group names after a rebuild."""
+
+        if not names:
+            return
+
+        tree = self.query_one(Tree)
+        for node in tree.root.children:
+            if isinstance(node.data, SSH_Group) and node.data.name in names:
+                node.expand()
 
 
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted) -> None:
@@ -83,10 +108,11 @@ class NavigationTree(Static):
 
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
-        # Enter on a group should behave like a folder toggle, while hosts keep
-        # the regular "selected item" flow for the parent app.
+        # Tree already handles expand/collapse on non-leaf submit. We only need
+        # to stop group submit from bubbling into the app-level action flow.
         if isinstance(event.node.data, SSH_Group):
-            event.node.toggle()
+            return
+
         self.post_message(self.NodeSubmitted(event.node.data))
 
 

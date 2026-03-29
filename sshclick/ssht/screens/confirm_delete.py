@@ -10,6 +10,14 @@ from sshclick.core import SSH_Group, SSH_Host
 class ConfirmDeleteScreen(ModalScreen[bool]):
     """Simple confirmation modal for destructive delete actions."""
 
+    DEFAULT_CSS = """
+    ConfirmDeleteScreen {
+        layer: overlay;
+        align: center middle;
+        background: rgba(17, 17, 17, 0.72);
+    }
+    """
+
     BINDINGS = [("escape", "dismiss(False)")]
 
     def __init__(self, node: SSH_Host | SSH_Group) -> None:

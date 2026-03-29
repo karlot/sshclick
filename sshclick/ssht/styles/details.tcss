@@ -1,0 +1,57 @@
+DetailsPane {
+    width: auto;
+    height: auto;
+    padding: 0 1 0 1;
+    background: $panel;
+    scrollbar-background: $surface;
+    scrollbar-color: $sshclick-scrollbar;
+    scrollbar-color-hover: $sshclick-scrollbar-hover;
+}
+
+#details_header {
+    padding: 1 0 0 0;
+    color: $foreground;
+    text-style: bold;
+}
+
+#details_switcher {
+    height: auto;
+    width: 1fr;
+}
+
+#details_empty {
+    padding-top: 1;
+}
+
+#host_tabs {
+    height: auto;
+    margin-top: 1;
+    width: 1fr;
+}
+
+#host_tabs Tab {
+    background: $surface;
+    color: $sshclick-muted;
+}
+
+#host_tabs Tab.-active {
+    background: $background;
+    color: $foreground;
+    text-style: bold;
+}
+
+#host_tabs TabPane {
+    padding: 0;
+    height: auto;
+}
+
+.details_section_title {
+    margin: 1 0 0 0;
+    color: $accent;
+    text-style: bold;
+}
+
+.details_section_body {
+    height: auto;
+    padding: 0 0 1 0;
+}

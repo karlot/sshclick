@@ -18,6 +18,7 @@ SSHCLICK_DARK_THEME = Theme(
     dark=True,
     variables={
         "sshclick-chrome": "#2D2D30",
+        "sshclick-overlay": "#111111",
         "sshclick-border": "#3C3C3C",
         "sshclick-muted": "#C8C8C8",
         "sshclick-tree-cursor": "#094771",

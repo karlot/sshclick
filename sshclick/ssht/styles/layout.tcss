@@ -1,0 +1,60 @@
+#shell {
+    layer: base;
+    height: 1fr;
+}
+
+#content_column {
+    width: 1fr;
+    height: 1fr;
+}
+
+#nav_column {
+    width: 30;
+    min-width: 24;
+    height: 100%;
+    background: $surface;
+    border-right: solid $sshclick-border;
+}
+
+NavigationTree {
+    width: 100%;
+    height: 1fr;
+    background: transparent;
+    padding: 0 1 0 0;
+    overflow-x: hidden;
+}
+
+NavigationTree Tree {
+    background: transparent;
+    color: $foreground;
+    overflow-x: hidden;
+}
+
+StatusBar {
+    layout: grid;
+    height: auto;
+    padding: 2 1 0 1;
+    border-bottom: hkey $sshclick-border;
+    background: $surface;
+    color: $sshclick-muted;
+    grid-size: 2 1;
+    grid-columns: auto 1fr;
+    width: 100%;
+}
+
+#status_config {
+    content-align: left middle;
+}
+
+#status_mode {
+    content-align: right middle;
+}
+
+TreeStats {
+    height: auto;
+    min-height: 4;
+    padding: 0 1 2 1;
+    border-top: solid $sshclick-border;
+    background: $surface;
+    color: $sshclick-muted;
+}

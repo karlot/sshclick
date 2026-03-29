@@ -13,6 +13,7 @@ def create_host(
     config: SSH_Config,
     name: str,
     *,
+    host_type: HostType | None = None,
     address: str | None = None,
     user: str | None = None,
     info: Sequence[str] = (),
@@ -27,7 +28,14 @@ def create_host(
         raise SSHClickOpsError(f"Cannot create host '{name}' as it already exists in configuration!")
 
     target_group = _resolve_target_group(config, name, target_group_name, force_group)
-    target_type = HostType.PATTERN if "*" in name else HostType.NORMAL
+    inferred_type = HostType.PATTERN if "*" in name else HostType.NORMAL
+    target_type = host_type or inferred_type
+
+    if target_type == HostType.NORMAL and "*" in name:
+        raise SSHClickOpsError("Normal host names cannot contain '*' wildcards. Switch the entry type to Pattern instead.")
+    if target_type == HostType.PATTERN and "*" not in name:
+        raise SSHClickOpsError("Pattern entries must include '*' in their name so OpenSSH treats them as match patterns.")
+
     new_host = SSH_Host(name=name, group=target_group_name, type=target_type, info=list(info))
 
     if user:

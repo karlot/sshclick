@@ -5,9 +5,9 @@ from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header
 
 from sshclick.globals import USER_SSH_CONFIG
-from sshclick.ops import delete_group, delete_host
-from sshclick.core import SSH_Config, SSH_Group
-from sshclick.ssht.screens import ActionMenuScreen, ConfirmDeleteScreen
+from sshclick.ops import SSHClickOpsError, create_host, delete_group, delete_host
+from sshclick.core import SSH_Config, SSH_Group, SSH_Host
+from sshclick.ssht.screens import ActionMenuScreen, ConfirmDeleteScreen, CreateHostRequest, CreateHostScreen
 from sshclick.ssht.state import SSHNode, TUIState
 from sshclick.ssht.theme import SSHCLICK_DARK_THEME, register_sshclick_theme
 from sshclick.ssht.utils import copy_ssh_keys, reset_fingerprint, run_connect
@@ -17,7 +17,12 @@ from sshclick.ssht.widgets import DetailsPane, NavigationTree, StatusBar, TreeSt
 class SSHTui(App):
     """Main Textual application for browsing and acting on SSHClick config data."""
 
-    CSS_PATH = "app.tcss"
+    CSS_PATH = [
+        "styles/base.tcss",
+        "styles/layout.tcss",
+        "styles/details.tcss",
+        "styles/modals.tcss",
+    ]
     TITLE = "SSHClick"
     SUB_TITLE = "Browser"
 
@@ -37,6 +42,7 @@ class SSHTui(App):
         sshconf = SSH_Config(file=config_path).read().parse()
         self.state = TUIState(config_file=config_path, sshconf=sshconf)
         self.current_node: SSHNode = None
+        self._tree_rebuilding = False
 
 
     def get_theme_variable_defaults(self) -> dict[str, str]:
@@ -64,15 +70,23 @@ class SSHTui(App):
 
 
     def on_navigation_tree_node_highlighted(self, event) -> None:
+        if self._tree_rebuilding:
+            return
         self._set_current_node(self._event_node(event))
 
 
     def on_navigation_tree_node_submitted(self, event: NavigationTree.NodeSubmitted) -> None:
+        if self._tree_rebuilding:
+            return
         self._set_current_node(event.node_data)
+        if isinstance(event.node_data, SSH_Host):
+            self.action_toggle_actions()
 
 
     # Compatibility bridge for older tests / event paths used by the previous TUI layout
     def on_tree_node_highlighted(self, event) -> None:
+        if self._tree_rebuilding:
+            return
         self._set_current_node(self._event_node(event))
 
 
@@ -95,7 +109,10 @@ class SSHTui(App):
             self._handle_connection_action(action_id)
         elif action_id in {"act_delete_host", "act_delete_group"}:
             self.action_delete()
-        elif action_id in {"act_edit_host", "act_edit_group", "act_create_host", "act_create_group"}:
+        elif action_id == "act_create_host":
+            self.push_screen(CreateHostScreen(self.state.sshconf, self.current_node), self._handle_create_host_result)
+            return
+        elif action_id in {"act_edit_host", "act_edit_group", "act_create_group"}:
             self._handle_unimplemented_action()
         self._focus_tree()
 
@@ -145,12 +162,57 @@ class SSHTui(App):
         if not confirmed or self.current_node is None:
             return
 
+        preferred_name = self._preferred_name_after_delete()
         item_type, deleted_name = self._delete_current_node()
 
         if self.state.sshconf.generate_ssh_config():
             self.notify(f"Deleted {item_type}: {deleted_name}", severity="information")
         self.current_node = None
-        self.action_reload()
+        self.state.current_node = None
+        self._refresh_view(preferred_name=preferred_name, rebuild_tree=True)
+        self._focus_tree()
+
+
+    def _handle_create_host_result(self, request: CreateHostRequest | None) -> None:
+        """
+        Persist a new host from the create drawer and refresh the UI around it.
+
+        The drawer only collects and validates user input. The real mutation is
+        still routed through the shared ops layer so CLI and TUI keep using the
+        same write semantics.
+        """
+
+        if request is None:
+            self._focus_tree()
+            return
+
+        try:
+            parameters: list[tuple[str, str]] = list(request.extra_parameters)
+            if request.port:
+                parameters.append(("port", request.port))
+            if request.identity_file:
+                parameters.append(("identityfile", request.identity_file))
+
+            created_host = create_host(
+                self.state.sshconf,
+                request.name,
+                address=request.hostname or None,
+                user=request.user or None,
+                info=(request.info_line,) if request.info_line else (),
+                parameters=parameters,
+                target_group_name=request.group_name,
+                force_group=request.create_group,
+            )
+        except SSHClickOpsError as exc:
+            self.notify(str(exc), title="Create host failed", severity="error")
+            self._focus_tree()
+            return
+
+        if self.state.sshconf.generate_ssh_config():
+            self.notify(f"Created host: {created_host.name}", severity="information")
+
+        self._refresh_view(preferred_name=created_host.name, rebuild_tree=True)
+        self._focus_tree()
 
 
     def _set_current_node(self, node: SSHNode) -> None:
@@ -167,14 +229,23 @@ class SSHTui(App):
         tree, details pane, status bar, and left-hand statistics while avoiding
         unnecessary tree rebuilds that would collapse expanded groups.
         """
-        self._restore_selection(preferred_name)
+        selection_name = preferred_name or self._selected_name()
 
         nav_tree = self.query_one_optional(NavigationTree)
         if nav_tree is not None and rebuild_tree:
+            expanded_group_names = nav_tree.get_expanded_group_names()
+            if selection_name and self.state.sshconf.check_group_by_name(selection_name) and selection_name not in expanded_group_names:
+                expanded_group_names.append(selection_name)
             # Rebuild the tree only on config reloads; doing it on every highlight
             # would collapse expanded groups and make navigation unusable.
+            self._tree_rebuilding = True
             nav_tree.rebuild(self.state.sshconf)
-            nav_tree.select_node_by_name(self._selected_name())
+            nav_tree.expand_groups(expanded_group_names)
+            nav_tree.select_node_by_name(selection_name)
+            self.call_after_refresh(self._finish_tree_rebuild, selection_name)
+
+        if rebuild_tree or preferred_name is not None:
+            self._restore_selection(selection_name)
 
         details = self.query_one_optional(DetailsPane)
         if details is not None:
@@ -253,8 +324,38 @@ class SSHTui(App):
         return ("host", deleted_host.name)
 
 
+    def _preferred_name_after_delete(self) -> str | None:
+        """Choose a sensible selection target after deleting the current node."""
+
+        if isinstance(self.current_node, SSH_Host):
+            return self.current_node.group
+
+        if self.state.sshconf.check_group_by_name("default") and self.current_node.name != "default":
+            return "default"
+
+        for group in self.state.sshconf.groups:
+            if group.name != self.current_node.name:
+                return group.name
+
+        return None
+
+
     def _restore_selection(self, preferred_name: str | None) -> None:
-        if preferred_name is None:
-            return
-        self.current_node = self._find_node_by_name(preferred_name)
+        self.current_node = self._find_node_by_name(preferred_name) if preferred_name is not None else None
         self.state.current_node = self.current_node
+
+
+    def _finish_tree_rebuild(self, preferred_name: str | None) -> None:
+        """Release the rebuild guard after queued tree events and restore selection once more."""
+
+        nav_tree = self.query_one_optional(NavigationTree)
+        if nav_tree is not None:
+            nav_tree.select_node_by_name(preferred_name)
+
+        self._restore_selection(preferred_name)
+
+        details = self.query_one_optional(DetailsPane)
+        if details is not None:
+            details.update_node(self.current_node)
+
+        self._tree_rebuilding = False

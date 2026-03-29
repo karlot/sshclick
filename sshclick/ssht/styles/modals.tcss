@@ -1,0 +1,57 @@
+#action_menu_dialog,
+#confirm_delete_dialog {
+    width: 56;
+    height: auto;
+    max-height: 26;
+    padding: 1 2;
+    border: round $sshclick-border;
+    background: $surface 100%;
+}
+
+#action_menu_title {
+    color: $foreground;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#action_menu_context {
+    color: $secondary;
+    margin-bottom: 1;
+}
+
+#action_menu_note {
+    color: $warning;
+    margin-bottom: 1;
+}
+
+#action_menu_options {
+    background: $background;
+    border: round $sshclick-border;
+    max-height: 18;
+}
+
+#action_menu_options > .option-list--option-highlighted {
+    background: $sshclick-tree-cursor;
+    color: $foreground;
+}
+
+#action_menu_options > .option-list--separator {
+    color: $sshclick-border;
+}
+
+#confirm_delete_label {
+    width: 100%;
+    margin-bottom: 1;
+    content-align: center middle;
+    color: $foreground;
+}
+
+#confirm_delete_buttons {
+    height: auto;
+    align: center middle;
+}
+
+#confirm_delete_buttons Button {
+    margin: 0 1;
+    min-width: 12;
+}

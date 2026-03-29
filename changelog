@@ -2,24 +2,14 @@
 
 ## Version 0.7.0 (2024-04-)
 
-- Updated packaging and development setup for modern `pyproject.toml` / `uv` / `hatch` workflow
-- Bumped minimum supported Python version to `3.10`
-- Updated development and runtime dependencies (`pytest`, `click`, `rich`, `textual`) to current releases
-- Added `ruff` configuration and small code cleanup/refactoring around logging and command helpers
-- Reworked `ssht` entrypoint to support `--help`, `--config`, `--version` and shared `SSHC_CONFIG` env variable
-- Rebuilt `ssht` into a dedicated Textual app shell with themed tree navigation, details inspector, action modal, read-only include mode, and higher-level integration coverage
-- Reorganized the Python package layout into clearer `cli`, `core`, `ops`, and `ssht` layers
-- Added a shared mutation/operations layer so CLI and TUI can reuse host, group, and config write logic
-- Removed the archived pre-refactor TUI reference code after the new Textual structure settled
-- Removed experimental `sshc host test` command for now
-- Hardened external command execution by removing `os.system`, `shell=True` and `host install --password`
-- Added CLI entrypoint coverage for `sshc` / `ssht` config handling and help output
-- Added explicit in-memory `SSH_Config(file=None)` support for tests and rendering without touching disk
-- Added top-level `Include` parsing in strict read-only mode, with merged logical groups and source tracking
-- Fixed `sshc config del --host-style` and improved exception handling around config loading/writing
-- Added dedicated higher-level test fixture config and include coverage
-- Added root `TODO.md` for deferred feature planning
-- Ignore local tooling and cache artifacts in git
+- Modernized packaging and development setup around `pyproject.toml`, `uv` / `hatch`, `ruff`, and a Python `3.10+` baseline
+- Reworked both entrypoints so `sshc` and `ssht` share `--config` handling and the `SSHC_CONFIG` environment variable
+- Rebuilt `ssht` into a dedicated Textual browser with themed navigation, a richer details inspector, action modals, and higher-level integration coverage
+- Added top-level `Include` support in strict read-only mode, with merged logical browsing of included hosts/groups and source tracking
+- Reorganized the package into clearer `cli`, `core`, `ops`, and `ssht` layers, including a shared mutation layer for CLI and TUI write flows
+- Hardened external command execution by removing `os.system`, `shell=True`, and `host install --password`
+- Removed the experimental `sshc host test` command
+- Expanded higher-level tests and supporting fixtures, including in-memory config rendering support for safer testing
 
 ## Version 0.6.1 (2023-06-19)
 

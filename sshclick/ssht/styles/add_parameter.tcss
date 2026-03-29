@@ -1,0 +1,68 @@
+AddParameterScreen {
+    layer: overlay;
+    align: center middle;
+    background: rgba(17, 17, 17, 0.72);
+}
+
+#add_param_dialog {
+    width: 56;
+    height: auto;
+    padding: 1 2;
+    border: round $sshclick-border;
+    background: $surface 100%;
+}
+
+#add_param_title {
+    color: $foreground;
+    text-style: bold;
+    margin: 0 0 1 0;
+}
+
+#add_param_description {
+    height: auto;
+    min-height: 2;
+    margin: 0 0 1 0;
+    padding: 0 1;
+    color: $secondary;
+}
+
+#add_param_dialog Input,
+#add_param_dialog Select {
+    margin: 0 0 1 0;
+    border: round $sshclick-border;
+    background: $background;
+}
+
+#add_param_dialog Input:focus,
+#add_param_dialog Select:focus {
+    border: round $primary;
+}
+
+#add_param_value_mode,
+#add_param_value_input_mode,
+#add_param_value_select_mode {
+    height: auto;
+}
+
+#add_param_value_input_mode Input,
+#add_param_value_select_mode Select {
+    margin: 0;
+}
+
+#add_param_error {
+    height: auto;
+    min-height: 1;
+    margin: 1 0 0 0;
+    color: $error;
+}
+
+#add_param_buttons {
+    height: auto;
+    margin-top: 1;
+    align-horizontal: right;
+}
+
+#add_param_buttons Button {
+    margin-left: 1;
+    min-width: 12;
+}
