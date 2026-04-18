@@ -327,7 +327,7 @@ class SSH_Config:
             # This NEW regex should fix this spec from ssh_config definition:
             # > "Configuration options may be separated by whitespace or optional whitespace and exactly one ‘=’ "
             # NOTE: I have tested clients like ssh or sftp, they dont complain, and allow multiple "=" symbols. :)
-            match = re.search(r"^(\w+)\s*(?:=\s*|\s+)([^=]+)$", line)
+            match = re.search(r"^(\w+)\s*=?\s*(.+)$", line)
             if not match:
                 warn(f"Ignoring unmatched keyword in configuration line '{line}' on SSH-config ({source_label})")
                 continue
