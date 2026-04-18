@@ -19,21 +19,25 @@ def run_interactive_command(argv: Sequence[str], tui: SupportsSuspend | None = N
 
     When a TUI instance is provided, the UI is suspended first so the child
     process can take over the terminal cleanly. The parent temporarily ignores
-    Ctrl-C and Ctrl-\ while waiting, which keeps those signals directed at the
-    interactive child instead of tearing down SSHClick itself.
+    Ctrl-C and Ctrl-\\ (where supported) while waiting, which keeps those
+    signals directed at the interactive child instead of tearing down SSHClick
+    itself.
     """
     suspend_context = tui.suspend() if tui is not None else nullcontext()
 
     with suspend_context:
-        original_sigint = signal.getsignal(signal.SIGINT)
-        original_sigquit = signal.getsignal(signal.SIGQUIT)
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-        signal.signal(signal.SIGQUIT, signal.SIG_IGN)
+        signals_to_ignore = [signal.SIGINT]
+        if hasattr(signal, "SIGQUIT"):
+            signals_to_ignore.append(signal.SIGQUIT)
+
+        original_handlers = {sig: signal.getsignal(sig) for sig in signals_to_ignore}
+        for sig in signals_to_ignore:
+            signal.signal(sig, signal.SIG_IGN)
         try:
             return subprocess.run(list(argv), check=False).returncode
         finally:
-            signal.signal(signal.SIGINT, original_sigint)
-            signal.signal(signal.SIGQUIT, original_sigquit)
+            for sig in signals_to_ignore:
+                signal.signal(sig, original_handlers[sig])
 
 
 def run_captured_command(argv: Sequence[str]) -> subprocess.CompletedProcess[str]:
