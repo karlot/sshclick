@@ -1,5 +1,11 @@
 # SSH Click change-log
 
+## Version 0.8.1 (2026-04-20)
+
+- Fixed SSH config parsing so option values can contain `=` characters without being rejected
+- Fixed interactive process signal handling to ignore `SIGQUIT` only on platforms where that signal exists
+- Thanks to @gschizas for both patch contributions included in this release
+
 ## Version 0.8.0 (2026-03-29)
 
 - Modernized packaging and development setup around `pyproject.toml`, `uv` / `hatch`, `ruff`, and a Python `3.10+` baseline
