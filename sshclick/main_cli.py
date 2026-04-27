@@ -16,7 +16,8 @@ using this software, as you might accidentally lose some configuration.
 
 # Parameters help:
 STDOUT_HELP = "Send changed SSH config to STDOUT instead to original file. Can be enabled with setting ENV variable (export SSHC_STDOUT=1)"
-DIFF_HELP = "Show only difference is config changes, instead of applying them. Can be enabled with setting ENV variable (export SSHC_DIFF=1)"
+DRYRUN_HELP = "Show only diff of config changes, instead of applying them. Can be enabled with setting ENV variable (export SSHC_DRYRUN=1)"
+DIFF_HELP = "Alias for --dry-run. Show only diff of config changes, instead of applying them. Can be enabled with setting ENV variable (export SSHC_DIFF=1)"
 # ------------------------------------------------------------------------------
 
 
@@ -25,11 +26,12 @@ DIFF_HELP = "Show only difference is config changes, instead of applying them. C
 @click.group(context_settings=CONTEXT_SETTINGS, help=MAIN_HELP)
 @click.option("--config", default=USER_SSH_CONFIG, envvar=SSHCONFIG_ENVVAR, help=SSHCONFIG_HELP)
 @click.option("--stdout", is_flag=True, envvar="SSHC_STDOUT", help=STDOUT_HELP)
+@click.option("--dry-run", "--dryrun", "dry_run", is_flag=True, envvar="SSHC_DRYRUN", help=DRYRUN_HELP)
 @click.option("--diff", is_flag=True, envvar="SSHC_DIFF", help=DIFF_HELP)
 @click.version_option(VERSION, message="SSHClick (sshc) - Version: %(version)s")
 @click.pass_context
-def cli(ctx: click.core.Context, config: str, stdout: bool, diff: bool):
-    ctx.obj = load_ssh_config(config, stdout=stdout, diff=diff)
+def cli(ctx: click.core.Context, config: str, stdout: bool, dry_run: bool, diff: bool):
+    ctx.obj = load_ssh_config(config, stdout=stdout, diff=dry_run or diff)
 
 
 # Link all commands to root command

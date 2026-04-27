@@ -26,4 +26,5 @@ def cmd(ctx, host_style):
         print(str(exc))
         return
 
-    config.generate_ssh_config()
+    if config.generate_ssh_config():
+        print("Deleted config: host-style")

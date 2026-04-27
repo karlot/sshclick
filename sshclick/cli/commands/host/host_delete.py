@@ -37,8 +37,8 @@ def cmd(ctx, names, yes):
     selected_hosts_list = expand_names(names, config.get_all_host_names())
     selected_hosts_list.sort()
     
-    # Deleting requires confirmation
-    if not yes:
+    # Deleting requires confirmation if not in dry-run mode
+    if not yes and not config.diff:
         print(f"Following hosts will be deleted: [{','.join(selected_hosts_list)}]")
         if not click.confirm('Are you sure?'):
             ctx.exit(1)
