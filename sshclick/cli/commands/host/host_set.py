@@ -60,8 +60,8 @@ def cmd(ctx, names, info, parameter, target_group_name, force, yes):
     selected_hosts_list = expand_names(names, config.get_all_host_names())
     selected_hosts_list.sort()
 
-    # For setting stuff, we confirm only if it applies on more hosts
-    if not yes:
+    # For setting stuff, we confirm only if it applies on more hosts and not in dry-run mode
+    if not yes and not config.diff:
         if len(selected_hosts_list) > 1:
             print(f"Following hosts will be changed: [{','.join(selected_hosts_list)}]")
             if not click.confirm('Are you sure?'):
