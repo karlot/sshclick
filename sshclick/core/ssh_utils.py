@@ -79,7 +79,7 @@ def expand_names(names: tuple, all_names: list) -> List[str]:
 
     for name in names:
         if name.startswith("r:"):
-            name_re = name.split(":")[1]
+            name_re = name.split(":", 1)[1]
             # print(f"Got regex type name def - '{name_re}'")
             for i_name in all_names:
                 match = re.search(name_re, i_name)
